@@ -1,0 +1,16 @@
+# LeadMonster
+
+LeadMonster ist ein KI-gestütztes Vertriebs-Content-System für Versicherungsprodukte. Das System generiert automatisch SEO- und AEO-optimierte Produktwebsites mit Landingpages, FAQs und Leadformularen.
+
+## Produkte
+
+### Sterbegeld24Plus
+
+- URL: https://leadmonster.de/sterbegeld24plus
+- Beschreibung: Sterbegeldversicherung für einen würdevollen Abschied — Sofortschutz für Senioren ab 50 Jahren.
+- Verfügbare Seiten:
+  - Hauptseite: /sterbegeld24plus
+  - FAQ: /sterbegeld24plus/faq
+  - Vergleich: /sterbegeld24plus/vergleich
+  - Tarife: /sterbegeld24plus/tarife
+  - Ratgeber: /sterbegeld24plus/ratgeber

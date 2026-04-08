@@ -1,0 +1,33 @@
+// Full-width hero section for public product landing pages.
+// Server Component — no client-side JS required. CTA is a plain anchor scroll.
+interface HeroProps {
+  headline: string
+  subline: string
+  cta_text: string
+  cta_anchor: string
+}
+
+export function Hero({ headline, subline, cta_text, cta_anchor }: HeroProps) {
+  return (
+    <section
+      aria-label={headline}
+      className="relative w-full py-[70px] md:py-[140px] bg-cover bg-center"
+      style={{ backgroundImage: "url('/images/hero-bg.jpg')" }}
+    >
+      {/* Navy overlay at 70% opacity */}
+      <div className="absolute inset-0 bg-[#1a365d]/70" />
+      <div className="relative max-w-4xl mx-auto px-6 text-center">
+        <h1 className="text-[2.5rem] md:text-4xl font-bold text-white font-heading mb-4">
+          {headline}
+        </h1>
+        <p className="text-white/90 text-lg mb-8 font-body">{subline}</p>
+        <a
+          href={cta_anchor}
+          className="inline-block bg-[#d4af37] hover:bg-[#b8860b] hover:-translate-y-0.5 text-white font-body font-semibold px-8 py-3 transition-all duration-150"
+        >
+          {cta_text}
+        </a>
+      </div>
+    </section>
+  )
+}

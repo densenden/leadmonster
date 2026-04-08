@@ -1,0 +1,17 @@
+task_groups:
+  - name: cli-and-project-scaffolding
+    claude_code_subagent: implementer
+    standards:
+      - global/*
+  - name: database-layer
+    claude_code_subagent: implementer
+    standards:
+      - global/*
+  - name: typescript-client-bootstrap
+    claude_code_subagent: implementer
+    standards:
+      - global/*
+  - name: verification
+    claude_code_subagent: implementer
+    standards:
+      - global/*
