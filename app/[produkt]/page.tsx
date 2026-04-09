@@ -13,11 +13,15 @@ import {
 import { Hero } from '@/components/sections/Hero'
 import { FeatureGrid } from '@/components/sections/FeatureGrid'
 import { TrustBar } from '@/components/sections/TrustBar'
+import { FAQ } from '@/components/sections/FAQ'
+import { LeadForm } from '@/components/sections/LeadForm'
 import type {
   ContentSection,
   HeroSection,
   FeaturesSection,
   TrustSection,
+  FaqSection,
+  LeadFormSection,
 } from '@/lib/types/content'
 
 // Re-render at most once per hour; allow slugs not pre-built at build time.
@@ -73,7 +77,11 @@ export async function generateMetadata({
 }
 
 // Map a section type to its component — unknown types return null (silently skipped).
-function renderSection(section: ContentSection, index: number) {
+function renderSection(
+  section: ContentSection,
+  index: number,
+  ctx: { produktId: string; zielgruppeTag: string; intentTag: string }
+) {
   switch (section.type) {
     case 'hero':
       return <Hero key={index} {...(section as HeroSection)} />
@@ -82,11 +90,32 @@ function renderSection(section: ContentSection, index: number) {
     case 'trust':
       return <TrustBar key={index} items={(section as TrustSection).stat_items} />
     case 'faq':
-      // FAQ component will be wired in a future spec
-      return null
+      return (
+        <section key={index} id="faq" className="py-16 bg-[#f8f8f8]">
+          <div className="max-w-4xl mx-auto px-6">
+            <h2 className="text-2xl font-bold text-[#1a365d] mb-8">Häufige Fragen</h2>
+            <FAQ items={(section as FaqSection).items} />
+          </div>
+        </section>
+      )
     case 'lead_form':
-      // LeadForm component will be wired in a future spec
-      return null
+      return (
+        <section key={index} id="formular" className="py-16 bg-white">
+          <div className="max-w-xl mx-auto px-6">
+            <h2 className="text-2xl font-bold text-[#1a365d] mb-2">
+              {(section as LeadFormSection).headline ?? 'Jetzt unverbindlich anfragen'}
+            </h2>
+            <p className="text-gray-500 mb-8">
+              {(section as LeadFormSection).subline ?? ''}
+            </p>
+            <LeadForm
+              produktId={ctx.produktId}
+              zielgruppeTag={ctx.zielgruppeTag}
+              intentTag={ctx.intentTag}
+            />
+          </div>
+        </section>
+      )
     default:
       return null
   }
@@ -94,14 +123,21 @@ function renderSection(section: ContentSection, index: number) {
 
 export default async function ProduktPage({ params }: { params: { produkt: string } }) {
   const supabase = createAdminClient()
-  const { data: row } = await supabase
-    .from('generierter_content')
-    .select('content, title, slug, status, produkte!inner(slug, name)')
-    .eq('page_type', 'hauptseite')
-    .eq('produkte.slug', params.produkt)
-    .single()
 
-  // 404 for missing rows or any non-published status
+  const [{ data: row }, { data: produkt }] = await Promise.all([
+    supabase
+      .from('generierter_content')
+      .select('content, title, slug, status, produkt_id, produkte!inner(id, slug, name)')
+      .eq('page_type', 'hauptseite')
+      .eq('produkte.slug', params.produkt)
+      .single(),
+    supabase
+      .from('produkte')
+      .select('id, produkt_config(zielgruppe, fokus)')
+      .eq('slug', params.produkt)
+      .single(),
+  ])
+
   if (!row || row.status !== 'publiziert') {
     notFound()
   }
@@ -114,9 +150,16 @@ export default async function ProduktPage({ params }: { params: { produkt: strin
     notFound()
   }
 
-  const baseUrl = `https://${process.env.NEXT_PUBLIC_BASE_URL ?? 'leadmonster.de'}`
-  const canonical = `${baseUrl}/${params.produkt}`
+  const produktId = (row.produkte as { id: string } | null)?.id ?? row.produkt_id ?? ''
   const produktName = (row.produkte as { name: string } | null)?.name ?? params.produkt
+  // produkt_config is returned as an array (one-to-many from produkte), take first entry.
+  const configs = produkt?.produkt_config
+  const config = (Array.isArray(configs) ? configs[0] : configs) as { zielgruppe?: string[]; fokus?: string } | null
+  const zielgruppeTag = config?.zielgruppe?.[0] ?? 'senioren_50plus'
+  const intentTag = config?.fokus ?? 'sicherheit'
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://leadmonster.de'
+  const canonical = `${baseUrl}/${params.produkt}`
 
   const combinedSchema = combineSchemas(
     buildInsuranceAgencySchema({ name: produktName, url: canonical }),
@@ -127,13 +170,15 @@ export default async function ProduktPage({ params }: { params: { produkt: strin
     ]),
   )
 
+  const ctx = { produktId, zielgruppeTag, intentTag }
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: combinedSchema }}
       />
-      <main>{sections.map((section, i) => renderSection(section, i))}</main>
+      <main>{sections.map((section, i) => renderSection(section, i, ctx))}</main>
     </>
   )
 }

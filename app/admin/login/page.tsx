@@ -39,7 +39,7 @@ export default function LoginPage() {
       <div className="bg-white shadow-md p-8 w-full max-w-md">
         <div className="flex justify-center mb-6">
           <Image
-            src="/assets/logo.png"
+            src="/logo.png"
             alt="LeadMonster Logo"
             width={150}
             height={45}

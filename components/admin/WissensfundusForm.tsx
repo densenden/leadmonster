@@ -82,7 +82,7 @@ export function WissensfundusForm({ artikel, action }: WissensfundusFormProps) {
       if (result.success) {
         router.push('/admin/wissensfundus')
       } else if (result.fieldErrors) {
-        setFieldErrors(result.fieldErrors)
+        setFieldErrors(result.fieldErrors as Record<string, string[]>)
       } else if (result.error) {
         setServerError(result.error)
       }

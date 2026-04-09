@@ -140,7 +140,7 @@ export default async function WissensfundusPage({ searchParams }: PageProps) {
                   </td>
                   <td className="hidden px-4 py-3 lg:table-cell">
                     <div className="flex flex-wrap gap-1">
-                      {row.tags.map((tag) => (
+                      {(row.tags ?? []).map((tag) => (
                         <Badge key={tag} variant="info">
                           {tag}
                         </Badge>

@@ -1,9 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import AdminNav from '@/app/admin/_components/admin-nav'
 
-// Server Component auth guard.
-// Protects all routes within app/admin/(protected)/ from unauthenticated access.
-// The login page at app/admin/login/page.tsx is outside this group and is NOT protected.
 export default async function AdminProtectedLayout({
   children,
 }: {
@@ -14,10 +12,16 @@ export default async function AdminProtectedLayout({
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Redirect unauthenticated visitors silently — never expose auth errors.
   if (!user) {
     redirect('/admin/login')
   }
 
-  return <div className="min-h-screen bg-gray-50">{children}</div>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <AdminNav email={user.email ?? ''} />
+      <main className="ml-56 min-h-screen">
+        <div className="px-8 py-8">{children}</div>
+      </main>
+    </div>
+  )
 }

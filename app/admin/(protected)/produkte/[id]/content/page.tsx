@@ -74,26 +74,7 @@ export default async function ContentManagementPage({ params }: PageProps) {
     .eq('produkt_id', params.id)
     .order('generated_at', { ascending: false })
 
-  const contentRows: GenerierterContent[] = (rows ?? []).map((row) => ({
-    id: row.id,
-    produkt_id: row.produkt_id,
-    page_type: row.page_type as GenerierterContent['page_type'],
-    slug: row.slug,
-    title: row.title,
-    meta_title: row.meta_title,
-    meta_desc: row.meta_desc,
-    content: row.content != null && typeof row.content === 'object' && !Array.isArray(row.content)
-      ? (row.content as Record<string, unknown>)
-      : null,
-    schema_markup: row.schema_markup != null && typeof row.schema_markup === 'object' && !Array.isArray(row.schema_markup)
-      ? (row.schema_markup as Record<string, unknown>)
-      : null,
-    status: row.status as GenerierterContent['status'],
-    generated_at: row.generated_at,
-    published_at: row.published_at,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-  }))
+  const contentRows: GenerierterContent[] = rows ?? []
 
   // Group rows by page_type for accordion rendering.
   const grouped = new Map<GenerierterContent['page_type'], GenerierterContent[]>()

@@ -65,7 +65,7 @@ export function ContentPreview({ row, produktId }: ContentPreviewProps) {
   const [title, setTitle] = useState(row.title ?? '')
   const [metaTitle, setMetaTitle] = useState(row.meta_title ?? '')
   const [metaDesc, setMetaDesc] = useState(row.meta_desc ?? '')
-  const [content, setContent] = useState<Record<string, unknown>>(row.content ?? {})
+  const [content, setContent] = useState<Record<string, unknown>>((row.content as Record<string, unknown>) ?? {})
   const [status, setStatus] = useState<GenerierterContent['status']>(row.status)
 
   // Error states for save and status actions.
@@ -85,7 +85,7 @@ export function ContentPreview({ row, produktId }: ContentPreviewProps) {
     setTitle(row.title ?? '')
     setMetaTitle(row.meta_title ?? '')
     setMetaDesc(row.meta_desc ?? '')
-    setContent(row.content ?? {})
+    setContent((row.content as Record<string, unknown>) ?? {})
     setStatus(row.status)
   }, [row.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
