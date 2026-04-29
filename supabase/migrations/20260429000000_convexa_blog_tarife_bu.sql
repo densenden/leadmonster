@@ -144,7 +144,11 @@ ALTER TABLE wissensfundus
   ADD COLUMN IF NOT EXISTS link_phrases  text[],     -- Begriffe, die im Generator als Cross-Link erkannt werden
   ADD COLUMN IF NOT EXISTS published     boolean NOT NULL DEFAULT true;
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_wissensfundus_slug ON wissensfundus(slug) WHERE slug IS NOT NULL;
+-- Full UNIQUE constraint on slug (not partial) so ON CONFLICT (slug) works in seed scripts.
+ALTER TABLE wissensfundus
+  DROP CONSTRAINT IF EXISTS wissensfundus_slug_key;
+ALTER TABLE wissensfundus
+  ADD CONSTRAINT wissensfundus_slug_key UNIQUE (slug);
 CREATE INDEX IF NOT EXISTS idx_wissensfundus_link_phrases ON wissensfundus USING GIN(link_phrases);
 
 
