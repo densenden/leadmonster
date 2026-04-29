@@ -138,8 +138,27 @@ export default async function ProduktPage({ params }: { params: { produkt: strin
       .single(),
   ])
 
-  if (!row || row.status !== 'publiziert') {
+  // Hard 404 only when the product itself doesn't exist.
+  if (!produkt) {
     notFound()
+  }
+
+  // Product exists but no published hauptseite content yet → render placeholder
+  // (admin can generate + publish content via /admin/produkte/[id]/content).
+  if (!row || row.status !== 'publiziert') {
+    return (
+      <main className="max-w-[800px] mx-auto px-6 py-24 text-center">
+        <h1 className="text-3xl font-bold text-[#1a3252] mb-4">
+          {params.produkt}
+        </h1>
+        <p className="text-lg text-[#4a5568] mb-2">
+          Diese Seite wird gerade erstellt.
+        </p>
+        <p className="text-sm text-[#718096]">
+          Inhalte folgen in Kürze.
+        </p>
+      </main>
+    )
   }
 
   let sections: ContentSection[] = []

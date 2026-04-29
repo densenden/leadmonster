@@ -6,6 +6,10 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { generateContent } from '@/lib/anthropic/generator'
 
+// Anthropic Claude Opus full-product generation can take 90–180s.
+// Default Vercel function timeout is 60s; we extend to 300s (Pro plan max).
+export const maxDuration = 300
+
 // Extend validation to support pageType-specific generation.
 // topic is optional and only used when pageType = 'ratgeber'.
 const bodySchema = z.object({
