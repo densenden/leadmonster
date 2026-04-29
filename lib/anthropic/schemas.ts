@@ -25,7 +25,7 @@ export const FeaturesSectionSchema = z.object({
 
 export const TrustSectionSchema = z.object({
   type: z.literal('trust'),
-  stat_items: z.array(z.object({ value: z.string(), label: z.string() })).length(3),
+  stat_items: z.array(z.object({ value: z.string(), label: z.string() })).min(3).max(6),
 })
 
 export const FaqSectionSchema = z.object({
@@ -38,11 +38,13 @@ export const VergleichSectionSchema = z.object({
   anbieter: z.array(
     z.object({
       name: z.string(),
-      preis_ab: z.string(),
-      leistungen: z.array(z.string()),
-      highlight: z.boolean(),
+      wartezeit: z.string(),
+      gesundheitsfragen: z.string(),
+      garantierte_aufnahme: z.boolean(),
+      beitrag_beispiel: z.string(),
+      besonderheit: z.string(),
     }),
-  ),
+  ).min(3).max(10),
 })
 
 export const RatgeberSectionSchema = z.object({

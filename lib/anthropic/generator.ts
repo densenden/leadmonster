@@ -102,7 +102,8 @@ async function callClaudeWithRetry(
 
       const content = response.content[0]
       if (content.type !== 'text') throw new Error('Unexpected response type from Claude')
-      return content.text
+      // Strip markdown code fences Claude occasionally wraps around JSON output
+      return content.text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
     } catch (err: unknown) {
       const isRateLimit = (err as ClaudeError).status === 429
       if (isRateLimit && attempt < MAX_ATTEMPTS - 1) {
@@ -347,6 +348,28 @@ export async function generateContent(
     failed.push({
       page_type: 'hauptseite',
       error_message: err instanceof Error ? err.message : 'Unknown error',
+      attempt_count: 0,
+    })
+  }
+
+  // Post-Processing: Auto-Cross-Linking + Hero-Bild über OpenAI gpt-image-1.
+  // Fehler hier verhindern niemals die regulären Erfolge — sie werden als
+  // weitere `failed`-Einträge angehängt, damit das UI sie anzeigen kann.
+  // Lazy-Import vermeidet Cycles und hält den Generator unabhängig.
+  try {
+    const { postProcessProduct } = await import('./post-processor')
+    const post = await postProcessProduct(produktId)
+    for (const e of post.errors) {
+      failed.push({
+        page_type: 'hauptseite',
+        error_message: `post-process: ${e}`,
+        attempt_count: 0,
+      })
+    }
+  } catch (err) {
+    failed.push({
+      page_type: 'hauptseite',
+      error_message: `post-process-load: ${err instanceof Error ? err.message : String(err)}`,
       attempt_count: 0,
     })
   }

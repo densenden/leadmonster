@@ -19,6 +19,7 @@ const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
 import { ProduktForm } from '@/components/admin/ProduktForm'
+import type { ProduktWithConfig } from '@/lib/supabase/types'
 import { Badge } from '@/components/ui/Badge'
 
 // Helper to create a Response-like mock object.
@@ -198,19 +199,29 @@ describe('ProduktForm — create mode', () => {
 })
 
 describe('ProduktForm — edit mode', () => {
-  const initialData = {
+  const initialData: ProduktWithConfig = {
     id: '123e4567-e89b-12d3-a456-426614174000',
     name: 'Sterbegeld24Plus',
     slug: 'sterbegeld24plus',
-    typ: 'sterbegeld' as const,
-    status: 'aktiv' as const,
+    typ: 'sterbegeld',
+    status: 'aktiv',
+    domain: null,
+    accent_color: null,
+    hero_image_url: null,
+    hero_image_alt: null,
+    og_image_url: null,
+    short_pitch: null,
+    created_at: '2026-04-01T00:00:00Z',
+    updated_at: '2026-04-01T00:00:00Z',
     produkt_config: {
       id: 'config-id',
       produkt_id: '123e4567-e89b-12d3-a456-426614174000',
       zielgruppe: ['senioren_50plus'],
-      fokus: 'sicherheit' as const,
+      fokus: 'sicherheit',
       anbieter: ['Allianz'],
       argumente: { vorteil: 'Sofortschutz' },
+      created_at: '2026-04-01T00:00:00Z',
+      updated_at: '2026-04-01T00:00:00Z',
     },
   }
 

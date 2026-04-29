@@ -1,3 +1,241 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── Brand CSS variables (finanzteam26.de palette) ─────────────────────── */
+:root {
+  /* Colors */
+  --color-cyan:         #02a9e6;
+  --color-cyan-light:   #e1f0fb;
+  --color-cyan-dark:    #0189bc;
+  --color-orange:       #f26522;
+  --color-orange-dark:  #d4511a;
+  --color-navy:         #1a3252;
+  --color-navy-mid:     #2c5282;
+  --color-body:         #4a5568;
+  --color-muted:        #718096;
+  --color-bg:           #ffffff;
+  --color-bg-muted:     #f7fafc;
+  --color-bg-brand:     #e1f0fb;
+  --color-border:       #e2e8f0;
+
+  /* Per-product accent (overridden by product layout) */
+  --accent:             #02a9e6;
+
+  /* Typography */
+  --font-size-base:   16px;
+  --line-height-base: 1.7;
+
+  /* Spacing */
+  --section-pad:  70px;
+  --content-max:  1200px;
+  --content-px:   24px;
+
+  /* Transitions */
+  --transition: all 0.2s ease;
+}
+
+/* ─── Base resets ────────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-nunito, 'Nunito Sans'), sans-serif;
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
+    color: var(--color-body);
+    background: var(--color-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-roboto, 'Roboto'), sans-serif;
+    color: var(--color-navy);
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  a {
+    color: var(--color-cyan);
+    text-decoration: none;
+    transition: var(--transition);
+  }
+  a:hover { color: var(--color-cyan-dark); }
+
+  p { margin-bottom: 1em; }
+  p:last-child { margin-bottom: 0; }
+}
+
+/* ─── Button component system ───────────────────────────────────────────── */
+@layer components {
+
+  /* Base button — outline style by default */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2;
+    padding: 10px 24px;
+    font-family: var(--font-nunito, 'Nunito Sans'), sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.025em;
+    border-radius: 6px;
+    border: 1.5px solid currentColor;
+    background: transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: var(--transition);
+    white-space: nowrap;
+  }
+  .btn:focus-visible {
+    outline: 2px solid var(--color-cyan);
+    outline-offset: 2px;
+  }
+
+  /* Cyan (primary) outline → filled on hover */
+  .btn-primary {
+    color: var(--color-cyan);
+    border-color: var(--color-cyan);
+  }
+  .btn-primary:hover {
+    background: var(--color-cyan);
+    color: #fff;
+  }
+
+  /* Navy outline → filled on hover */
+  .btn-secondary {
+    color: var(--color-navy);
+    border-color: var(--color-navy);
+  }
+  .btn-secondary:hover {
+    background: var(--color-navy);
+    color: #fff;
+  }
+
+  /* Orange CTA outline → filled on hover */
+  .btn-accent {
+    color: var(--color-orange);
+    border-color: var(--color-orange);
+  }
+  .btn-accent:hover {
+    background: var(--color-orange);
+    color: #fff;
+  }
+
+  /* White outline — for dark backgrounds */
+  .btn-inverse {
+    color: #fff;
+    border-color: #fff;
+  }
+  .btn-inverse:hover {
+    background: #fff;
+    color: var(--color-navy);
+  }
+
+  /* Solid filled variants */
+  .btn-solid-primary {
+    background: var(--color-cyan);
+    border-color: var(--color-cyan);
+    color: #fff;
+  }
+  .btn-solid-primary:hover {
+    background: var(--color-cyan-dark);
+    border-color: var(--color-cyan-dark);
+    color: #fff;
+  }
+
+  .btn-solid-accent {
+    background: var(--color-orange);
+    border-color: var(--color-orange);
+    color: #fff;
+  }
+  .btn-solid-accent:hover {
+    background: var(--color-orange-dark);
+    border-color: var(--color-orange-dark);
+    color: #fff;
+  }
+
+  /* Size modifiers */
+  .btn-sm { padding: 6px 16px; font-size: 13px; }
+  .btn-lg { padding: 14px 36px; font-size: 16px; }
+
+  /* ── Card ──────────────────────────────────────────────────────────────── */
+  .card {
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 24px;
+    transition: var(--transition);
+  }
+  .card:hover {
+    box-shadow: 0 4px 16px rgba(2, 169, 230, 0.12);
+    border-color: var(--color-cyan);
+  }
+
+  /* ── Section helpers ───────────────────────────────────────────────────── */
+  .section {
+    padding-top: var(--section-pad);
+    padding-bottom: var(--section-pad);
+  }
+  .container {
+    max-width: var(--content-max);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--content-px);
+    padding-right: var(--content-px);
+  }
+
+  /* ── Tag / badge ───────────────────────────────────────────────────────── */
+  .tag {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+    background: var(--color-cyan-light);
+    color: var(--color-cyan);
+    border: 1px solid var(--color-cyan);
+  }
+  .tag-orange {
+    background: #fff5f0;
+    color: var(--color-orange);
+    border-color: var(--color-orange);
+  }
+  .tag-navy {
+    background: var(--color-cyan-light);
+    color: var(--color-navy);
+    border-color: var(--color-navy);
+  }
+
+  /* ── Service icon wrapper ──────────────────────────────────────────────── */
+  .icon-service {
+    @apply flex-none;
+    width: 80px;
+    height: 80px;
+  }
+  .icon-service img,
+  .icon-service svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/* ─── Utilities ──────────────────────────────────────────────────────────── */
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+
+  /* Accent color (injected by product layout via CSS var) */
+  .text-accent  { color: var(--accent); }
+  .bg-accent    { background-color: var(--accent); }
+  .border-accent { border-color: var(--accent); }
+
+  /* Brand shortcuts */
+  .text-cyan    { color: var(--color-cyan); }
+  .text-navy    { color: var(--color-navy); }
+  .text-orange  { color: var(--color-orange); }
+  .bg-cyan-light { background: var(--color-cyan-light); }
+  .bg-navy      { background: var(--color-navy); }
+}

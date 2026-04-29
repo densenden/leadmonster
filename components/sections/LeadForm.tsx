@@ -63,7 +63,7 @@ export function LeadForm({ produktId, zielgruppeTag, intentTag }: LeadFormProps)
         body: JSON.stringify({
           produktId,
           zielgruppeTag,
-          intent_tag: intentTag,
+          intentTag,
           vorname,
           nachname,
           email,

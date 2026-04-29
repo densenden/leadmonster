@@ -237,7 +237,7 @@ export function SettingsForm(props: SettingsFormProps) {
         {/* Test connection */}
         <div className="mt-6 flex flex-col gap-2">
           <Button
-            variant="outline"
+            variant="secondary"
             onClick={handleTestConnection}
             disabled={isTesting}
             aria-label="Confluence-Verbindung testen"

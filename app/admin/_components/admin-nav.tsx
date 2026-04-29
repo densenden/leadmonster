@@ -1,15 +1,16 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { MonsterLogo } from '@/components/MonsterLogo'
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', exact: true },
   { href: '/admin/produkte', label: 'Produkte' },
   { href: '/admin/wissensfundus', label: 'Wissensfundus' },
+  { href: '/admin/scraper', label: 'Scraper' },
   { href: '/admin/leads', label: 'Leads' },
   { href: '/admin/einstellungen', label: 'Einstellungen' },
 ]
@@ -26,10 +27,10 @@ export default function AdminNav({ email }: { email: string }) {
   }
 
   return (
-    <aside className="fixed inset-y-0 left-0 w-56 bg-[#1a365d] flex flex-col z-30">
+    <aside className="fixed inset-y-0 left-0 w-56 bg-[#1a3252] flex flex-col z-30">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-white/10">
-        <Image src="/logo.png" alt="LeadMonster" width={120} height={36} priority />
+        <MonsterLogo size={34} showText textColor="white" />
       </div>
 
       {/* Nav links */}
@@ -42,7 +43,7 @@ export default function AdminNav({ email }: { email: string }) {
               href={href}
               className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 active
-                  ? 'bg-white/15 text-white'
+                  ? 'bg-[#02a9e6]/20 text-white border-l-2 border-[#02a9e6]'
                   : 'text-white/70 hover:text-white hover:bg-white/10'
               }`}
             >

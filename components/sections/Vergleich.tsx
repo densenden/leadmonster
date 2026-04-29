@@ -1,26 +1,29 @@
 // Insurer comparison table — Server Component, no interactivity required.
 // Renders a horizontally scrollable accessible table with checkmark / dash icons.
+// Each ROW is one insurer; each COLUMN is one criterion.
 // Design tokens: Navy #1a365d header, Gold #d4af37 for checkmarks.
 
-/** Props for the Vergleich comparison table component. */
+export interface AnbieterOffer {
+  name: string
+  wartezeit: string
+  gesundheitsfragen: string
+  garantierte_aufnahme: boolean
+  beitrag_beispiel: string
+  besonderheit: string
+}
+
 export interface VergleichProps {
-  /** Ordered list of insurer names — each becomes a column header. */
-  anbieter: string[]
-  /** Comparison rows — each has a label and a value per insurer (boolean or string). */
-  criteria: Array<{ label: string; values: Record<string, string | boolean> }>
-  /** Used for the screen-reader table caption. */
+  anbieter: AnbieterOffer[]
   produktName: string
-  /** Pre-formatted date string (DD.MM.YYYY) shown in the disclaimer line. */
   generatedAt: string
 }
 
-// Inline SVG checkmark — aria-label="Ja" for screen readers.
-// Gold colour (#d4af37) communicates a positive / available feature.
 const CheckIcon = () => (
   <svg
     aria-label="Ja"
     role="img"
-    className="text-[#d4af37] w-5 h-5 inline-block"
+    className="w-5 h-5 inline-block"
+    style={{ color: 'var(--accent, #d4af37)' }}
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -30,8 +33,6 @@ const CheckIcon = () => (
   </svg>
 )
 
-// Inline SVG dash — aria-label="Nein" for screen readers.
-// Muted grey communicates a feature that is not available or not applicable.
 const MinusIcon = () => (
   <svg
     aria-label="Nein"
@@ -46,47 +47,47 @@ const MinusIcon = () => (
   </svg>
 )
 
-/** Comparison table for insurer products.
- *  Each row is one criterion; each column is one insurer.
- *  Boolean values display as SVG icons; string values display as plain text. */
-export function Vergleich({ anbieter, criteria, produktName, generatedAt }: VergleichProps) {
+const COLUMNS: { key: keyof AnbieterOffer; label: string }[] = [
+  { key: 'wartezeit', label: 'Wartezeit' },
+  { key: 'gesundheitsfragen', label: 'Gesundheitsfragen' },
+  { key: 'garantierte_aufnahme', label: 'Garantierte Aufnahme' },
+  { key: 'beitrag_beispiel', label: 'Beitrag ab' },
+  { key: 'besonderheit', label: 'Besonderheit' },
+]
+
+export function Vergleich({ anbieter, produktName, generatedAt }: VergleichProps) {
   return (
-    <div className="overflow-x-auto rounded-xl shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)]">
+    <div className="overflow-x-auto shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)]">
       <table className="min-w-full table-auto">
-        {/* Screen-reader caption describing the table purpose */}
         <caption className="sr-only">{produktName} — Anbietervergleich</caption>
 
         <thead>
           <tr className="bg-[#1a365d] text-white">
-            {/* First column header — describes the row labels */}
             <th scope="col" className="px-4 py-3 text-left text-sm font-medium">
-              Kriterium
+              Anbieter
             </th>
-            {/* One column header per insurer */}
-            {anbieter.map(name => (
+            {COLUMNS.map(col => (
               <th
-                key={name}
+                key={col.key}
                 scope="col"
                 className="px-4 py-3 text-center text-sm font-medium min-w-[140px]"
               >
-                {name}
+                {col.label}
               </th>
             ))}
           </tr>
         </thead>
 
         <tbody>
-          {criteria.map((criterion, rowIdx) => (
-            <tr key={rowIdx} className={rowIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-              {/* Row header — criterion label */}
-              <th scope="row" className="px-4 py-3 text-left text-sm font-medium text-[#333333]">
-                {criterion.label}
+          {anbieter.map((a, rowIdx) => (
+            <tr key={a.name} className={rowIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+              <th scope="row" className="px-4 py-3 text-left text-sm font-semibold text-[#1a365d] whitespace-nowrap">
+                {a.name}
               </th>
-              {/* One data cell per insurer for this criterion */}
-              {anbieter.map(name => {
-                const value = criterion.values[name]
+              {COLUMNS.map(col => {
+                const value = a[col.key]
                 return (
-                  <td key={name} className="px-4 py-3 text-center">
+                  <td key={col.key} className="px-4 py-3 text-center">
                     {typeof value === 'boolean' ? (
                       value ? <CheckIcon /> : <MinusIcon />
                     ) : (
@@ -100,7 +101,6 @@ export function Vergleich({ anbieter, criteria, produktName, generatedAt }: Verg
         </tbody>
       </table>
 
-      {/* Disclaimer shown below the table inside the scroll container */}
       <p className="mt-2 text-sm text-gray-500 px-4 pb-3">
         Alle Angaben ohne Gewähr. Stand: {generatedAt}.
       </p>

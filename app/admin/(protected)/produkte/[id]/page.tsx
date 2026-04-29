@@ -34,14 +34,7 @@ export default async function ProduktBearbeitenPage({ params }: PageProps) {
 
   // Compose into the ProduktWithConfig shape.
   const initialData: ProduktWithConfig = {
-    id: produktRow.id,
-    slug: produktRow.slug,
-    name: produktRow.name,
-    typ: produktRow.typ as Produkt['typ'],
-    status: produktRow.status as Produkt['status'],
-    domain: produktRow.domain,
-    created_at: produktRow.created_at,
-    updated_at: produktRow.updated_at,
+    ...(produktRow as Produkt),
     produkt_config: configRow
       ? {
           id: configRow.id,

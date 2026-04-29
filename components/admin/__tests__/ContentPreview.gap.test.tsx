@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import React from 'react'
+import type { GenerierterContent } from '@/lib/supabase/types'
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -30,7 +31,7 @@ function makeRow(id: string, overrides: Partial<{
   title: string
   meta_title: string
   status: 'entwurf' | 'review' | 'publiziert'
-}> = {}) {
+}> = {}): GenerierterContent {
   return {
     id,
     produkt_id: 'prod-1',
@@ -44,7 +45,9 @@ function makeRow(id: string, overrides: Partial<{
     status: overrides.status ?? ('entwurf' as const),
     generated_at: '2026-04-07T10:00:00.000Z',
     published_at: null,
-  }
+    created_at: '2026-04-07T10:00:00.000Z',
+    updated_at: '2026-04-07T10:00:00.000Z',
+  } as unknown as GenerierterContent
 }
 
 // ---------------------------------------------------------------------------

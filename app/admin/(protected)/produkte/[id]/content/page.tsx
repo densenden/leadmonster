@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/Badge'
 import { ContentPreview } from '@/components/admin/ContentPreview'
 import { GenerateButton } from './_components/GenerateButton'
 import { GenerateRatgeberButton } from './_components/generate-ratgeber-button'
+import { ResetContentButton } from './_components/ResetContentButton'
 import { formatGermanDateTime } from '@/lib/utils/date'
 import type { GenerierterContent } from '@/lib/supabase/types'
 import type { BadgeVariant } from '@/components/ui/Badge'
@@ -25,15 +26,23 @@ const PAGE_TYPE_ORDER: GenerierterContent['page_type'][] = [
   'vergleich',
   'tarif',
   'ratgeber',
+  'impressum',
+  'kontakt',
+  'datenschutz',
+  'agb',
 ]
 
 // German display labels for page type keys.
-const PAGE_TYPE_LABELS: Record<GenerierterContent['page_type'], string> = {
+const PAGE_TYPE_LABELS: Record<string, string> = {
   hauptseite: 'Hauptseite',
   faq: 'FAQ',
   vergleich: 'Vergleich',
   tarif: 'Tarife',
   ratgeber: 'Ratgeber',
+  impressum: 'Impressum',
+  kontakt: 'Kontakt',
+  datenschutz: 'Datenschutz',
+  agb: 'AGB',
 }
 
 // Maps content status values to Badge variant names.
@@ -108,6 +117,7 @@ export default async function ContentManagementPage({ params }: PageProps) {
           >
             Zurück zum Produkt
           </Link>
+          <ResetContentButton produktId={params.id} />
           <GenerateButton produktId={params.id} />
         </div>
       </div>

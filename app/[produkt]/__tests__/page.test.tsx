@@ -1,7 +1,7 @@
 // Tests for app/[produkt]/page.tsx — generateStaticParams, generateMetadata, section renderer.
 // All Supabase calls are mocked — no real network requests.
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderToString } from 'react-dom/server'
+import { renderToString as _renderToString } from 'react-dom/server'
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -22,7 +22,7 @@ vi.mock('next/headers', () => ({
 }))
 
 // Build a chainable Supabase query mock
-function makeSupabaseChain(result: { data: unknown; error: unknown }) {
+function _makeSupabaseChain(result: { data: unknown; error: unknown }) {
   const chain = {
     from: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),

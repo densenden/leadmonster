@@ -65,6 +65,13 @@ const LEAD_ALL_NULL = {
   confluence_synced: false,
   resend_sent: false,
   created_at: '2026-04-07T10:30:00.000Z',
+  convexa_lead_id: null,
+  convexa_synced: false,
+  convexa_error: null,
+  source_url: null,
+  utm_source: null,
+  utm_medium: null,
+  utm_campaign: null,
 }
 
 // ---------------------------------------------------------------------------
@@ -222,6 +229,13 @@ describe('buildBody — all-null nullable fields', () => {
       confluence_synced: false,
       resend_sent: false,
       created_at: '2026-04-07T10:30:00.000Z',
+      convexa_lead_id: null,
+      convexa_synced: false,
+      convexa_error: null,
+      source_url: null,
+      utm_source: null,
+      utm_medium: null,
+      utm_campaign: null,
     }
 
     const bodiesSeen: string[] = []
@@ -293,6 +307,13 @@ describe('createLeadPage — label API failure', () => {
       interesse: null,
       zielgruppe_tag: 'familien',
       intent_tag: 'preis',
+      convexa_lead_id: null,
+      convexa_synced: false,
+      convexa_error: null,
+      source_url: null,
+      utm_source: null,
+      utm_medium: null,
+      utm_campaign: null,
       confluence_page_id: null,
       confluence_synced: false,
       resend_sent: false,

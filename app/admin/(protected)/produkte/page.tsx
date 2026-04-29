@@ -4,6 +4,7 @@
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/Badge'
+import { DeleteProduktButton } from './_components/DeleteProduktButton'
 import type { Produkt, ProduktStatus } from '@/lib/supabase/types'
 import type { BadgeVariant } from '@/components/ui/Badge'
 
@@ -29,16 +30,7 @@ export default async function ProdukteListPage() {
     .select('*')
     .order('created_at', { ascending: false })
 
-  const produkte: Produkt[] = (rows ?? []).map((row) => ({
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    typ: row.typ as Produkt['typ'],
-    status: row.status as Produkt['status'],
-    domain: row.domain,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-  }))
+  const produkte: Produkt[] = (rows ?? []) as Produkt[]
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
@@ -129,6 +121,7 @@ export default async function ProdukteListPage() {
                       >
                         Content
                       </Link>
+                      <DeleteProduktButton id={produkt.id} name={produkt.name} />
                     </div>
                   </td>
                 </tr>

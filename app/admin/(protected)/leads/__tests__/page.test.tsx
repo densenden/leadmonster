@@ -57,7 +57,6 @@ function makeLead(id: string) {
 // The chain ends with a resolved value after calling .range().
 function makeLeadsChain(leads: unknown[], count: number) {
   const chain: Record<string, unknown> = {}
-  const chainFn = () => chain
   chain.select = vi.fn().mockReturnValue(chain)
   chain.order = vi.fn().mockReturnValue(chain)
   chain.eq = vi.fn().mockReturnValue(chain)

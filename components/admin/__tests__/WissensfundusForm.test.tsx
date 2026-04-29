@@ -63,6 +63,11 @@ describe('WissensfundusForm — field rendering', () => {
       thema: 'Pflegeversicherung',
       inhalt: 'Die Pflegeversicherung hilft bei Pflegebedürftigkeit.',
       tags: ['pflege', 'grundlagen'],
+      slug: null,
+      link_phrases: null,
+      published: false,
+      created_at: '2026-04-01T00:00:00Z',
+      updated_at: '2026-04-01T00:00:00Z',
     }
 
     render(

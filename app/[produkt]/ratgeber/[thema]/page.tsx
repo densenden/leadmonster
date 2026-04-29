@@ -54,7 +54,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: params.thema, robots: { index: false, follow: false } }
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'leadmonster.de'
   const canonicalSlug = `${params.produkt}/ratgeber/${params.thema}`
 
   return buildProduktMetadata({

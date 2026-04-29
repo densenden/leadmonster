@@ -44,6 +44,13 @@ const BASE_LEAD: Lead = {
   confluence_synced: false,
   resend_sent: false,
   created_at: '2026-04-07T12:00:00.000Z',
+  convexa_lead_id: null,
+  convexa_synced: false,
+  convexa_error: null,
+  source_url: null,
+  utm_source: null,
+  utm_medium: null,
+  utm_campaign: null,
 }
 
 function makeEmailSeqChain(rows: unknown[]) {

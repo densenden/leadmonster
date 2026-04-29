@@ -30,9 +30,15 @@ export interface LeadFormSection {
   subline?: string
 }
 
+export interface LegalTextSection {
+  type: 'legal_text'
+  blocks: Array<{ heading: string; body: string }>
+}
+
 export type ContentSection =
   | HeroSection
   | FeaturesSection
   | TrustSection
   | FaqSection
   | LeadFormSection
+  | LegalTextSection

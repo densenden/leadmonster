@@ -10,6 +10,10 @@ import React from 'react'
 
 vi.mock('next/navigation', () => ({
   notFound: vi.fn(() => { throw new Error('NOT_FOUND') }),
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn(), back: vi.fn() }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+  redirect: vi.fn(),
 }))
 
 vi.mock('next/headers', () => ({

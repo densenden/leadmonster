@@ -1,82 +1,108 @@
 # Product Mission
 
+> Companion document to `CLAUDE.md` (full technical spec). This file defines the product vision; CLAUDE.md defines the implementation contract.
+
 ## Pitch
 
-LeadMonster is a SaaS content automation system that helps insurance sales teams (Finanzteam 26) scale their digital lead generation by turning a simple product configuration into a fully published, SEO- and AEO-optimized insurance website — complete with landing pages, FAQs, comparison pages, and working lead forms — in minutes instead of weeks.
-
----
+**LeadMonster** is a scalable sales-content platform that helps insurance sales teams at **Finanzteam 26** turn weeks of bespoke product launches into a minutes-long admin workflow — by auto-generating fully SEO- and AEO-optimized product microsites (landing page, FAQs, comparisons, pseudo tariff calculator, advisor articles, lead form) from a few configuration inputs, with built-in lead capture flowing directly into Confluence as the CRM.
 
 ## Users
 
 ### Primary Customers
 
-- **Insurance Sales Teams (Vertrieb):** Non-technical sales staff who need to launch product-specific websites quickly without involving developers or agencies for every new insurance product.
-- **Admin Users:** System configurators who manage API credentials, Confluence workspaces, email sequences, and overall platform settings.
+- **Finanzteam 26 — Vertrieb (Sales / Marketing Lead):** The internal operator who configures new insurance products in the admin, generates content via Claude, reviews and publishes. Wants speed and consistency without an engineering ticket per product.
+- **End Consumers (Insurance Prospects, DE market):** Individuals searching Google or asking AI assistants (ChatGPT, Perplexity, Gemini) for insurance information — Sterbegeld, Pflege, Lebensversicherung, Unfall. They land on a LeadMonster microsite, find the answer fast, and submit a lead.
+- **Finanzteam 26 — Insurance Advisors (Sales Follow-up):** The advisors who receive each new lead as a structured Confluence page, complete with target-group and intent tags, and call the prospect.
 
 ### User Personas
 
-**Sales Manager / Vertriebsmitarbeiter** (35–55)
-- **Role:** Insurance product manager or field sales lead at Finanzteam 26
-- **Context:** Responsible for multiple insurance products across different target audiences; currently spends days coordinating with external agencies to build each product's web presence
-- **Pain Points:** Every new product requires a full manual build cycle; no consistency between product pages; no visibility into leads generated per product; content updates require external help
-- **Goals:** Launch a new product website the same day a product is configured; see all leads in one place; hand off lead details to Confluence automatically without manual data entry
+**Sales Lead at Finanzteam 26** (35–55)
+- **Role:** Sales / Marketing Manager responsible for product launches.
+- **Context:** Needs to launch new insurance products quickly. Today: every product is a manual project with engineering, copywriting, design, and CRM-wiring effort.
+- **Pain Points:** Time-to-market is weeks; copy is inconsistent across products; FAQs are written by hand; lead forms are wired bespoke each time; no SEO/AEO baseline.
+- **Goals:** Add a new product in under an hour; ship a publishable microsite the same day; trust that lead intake just works.
 
-**Insurance Prospect / End User** (50+, families, individuals)
-- **Role:** Person researching insurance options online or via AI search
-- **Context:** May arrive via Google search, AI assistant recommendation, or a direct link from the sales team
-- **Pain Points:** Confusing insurance jargon; difficulty comparing providers; uncertainty about costs before speaking to an agent
-- **Goals:** Quickly understand what the product covers, get a cost estimate, and request a personal consultation with minimal friction
+**Insurance Prospect — Sterbegeld / Pflege Buyer** (45–70)
+- **Role:** Private individual researching financial protection for themselves or family.
+- **Context:** Found the page via Google search or asked an AI assistant a question; wants clear, trustworthy answers in German, no marketing jargon.
+- **Pain Points:** Insurance topics feel opaque; comparison sites are noisy; unsure who to trust.
+- **Goals:** Understand the product in 60 seconds; see a price ballpark; submit interest without a 20-field form.
 
----
+**Insurance Advisor — Sales Follow-up** (30–55)
+- **Role:** Telephone advisor at Finanzteam 26.
+- **Context:** Works from a Confluence space ("Leads 2026"). Each new lead arrives as a structured page with all context pre-filled.
+- **Pain Points:** Generic CRM leads with no context — no idea why the prospect submitted; no intent signal.
+- **Goals:** Open the lead, see product / target-group / intent tags / message at a glance, call within minutes.
 
 ## The Problem
 
-### Manual Product Website Creation Does Not Scale
+### Every Insurance Product Is a One-Off Project
+Launching a new insurance product traditionally means manual landing pages, hand-written FAQs, bespoke comparison tables, and one-off lead-form wiring. A single product can take **2–4 weeks** of cross-team effort. Brand consistency drifts and SEO/AEO baselines are inconsistent.
 
-Each new insurance product today requires building a standalone website from scratch — writing copy, structuring pages, handling SEO, setting up forms, and wiring lead delivery to the CRM. This takes days to weeks per product and produces inconsistent quality with no reuse across campaigns.
+**Our Solution:** A structured admin where the sales lead configures Product + Target Group + Focus, and the Content Engine (Anthropic Claude) generates a complete microsite in JSON, ready to review, edit, and publish — same brand DNA, same SEO/AEO standard, distinct accent color per product.
 
-**Our Solution:** A configuration-driven system where entering a product type, target audience, and sales focus triggers automatic generation of a complete, high-quality website via Claude AI — stored in a database, rendered with SSG for SEO, and connected to lead capture and CRM delivery from day one.
+### Lead Intake Is Disconnected from Content
+Leads from product pages typically land in a generic mailbox, an Excel sheet, or a CRM with no product or intent context. Advisors waste time on cold outreach.
 
-### Lead Capture is Disconnected from CRM Workflows
+**Our Solution:** Every lead flows automatically into Confluence as a fully-formatted page in the team's existing workspace — labeled with product slug, target-group tag, and intent tag — plus an instant Resend confirmation to the prospect and notification to sales.
 
-Leads collected via web forms are either lost in email inboxes or require manual re-entry into the sales team's Confluence workspace, creating delays and errors in follow-up.
+### AI Search Is a New Distribution Channel That Generic Sites Ignore
+ChatGPT, Perplexity, and Gemini are increasingly answering insurance questions directly. Most insurance sites are optimized only for classic Google SEO and are invisible to AI crawlers.
 
-**Our Solution:** Every submitted lead is automatically saved to Supabase, creates a structured Confluence page in the correct space, and triggers both a prospect confirmation email and a sales team notification — with zero manual steps.
-
----
+**Our Solution:** Every page ships with AEO-grade structure: 2–3-sentence opening definition, FAQ phrasing matching real user queries, complete Schema.org JSON-LD (FAQPage, Product, InsuranceAgency, Article), an `llms.txt` describing the system, and AI-crawler-friendly `robots.txt`.
 
 ## Differentiators
 
-### AI-Powered, Not Template-Based
+### Minutes, Not Weeks, From Idea to Live Microsite
+Unlike traditional WordPress or hand-coded landing pages, LeadMonster generates an entire SEO/AEO-optimized microsite — landing, FAQ, comparison, pseudo tariff calculator, advisor articles — from a 5-field admin form. **Result:** time-to-market drops from weeks to under a day per product.
 
-Unlike page builders or CMS platforms, LeadMonster uses Claude AI to generate context-aware content tailored to a specific product type, target audience, and sales focus. The output is not a filled-in template — it is audience-appropriate copy with SEO metadata, Schema.org markup, and conversion-optimized CTAs built in.
+### AEO-Native, Not Just SEO-Bolted-On
+Unlike SEO plugins added to generic CMSs, LeadMonster bakes AEO into the content model itself — Claude prompts enforce direct-answer FAQ phrasing, every page emits Schema.org JSON-LD, and `llms.txt` describes the full system to AI crawlers. **Result:** product pages surface in both Google and AI-assistant answers.
 
-### AEO-First: Built for AI Search
+### CRM Built In — No Integration Project
+Unlike landing-page tools that hand off leads to email or third-party CRMs, LeadMonster turns each lead into a fully-tagged Confluence page in the team's existing workspace, with Resend confirming the prospect and notifying the advisor in the same request. **Result:** zero CRM-integration work per product.
 
-Unlike traditional SEO tools, LeadMonster generates content structured for AI-powered search engines (ChatGPT, Perplexity, Gemini) from the ground up. Every page starts with a direct definitional answer, every FAQ mirrors natural language queries, and an `llms.txt` file makes the entire product catalog machine-readable for LLM crawlers. This results in visibility in both classical and AI-driven search surfaces.
+### Brand-Consistent, Yet Distinct Per Product
+Unlike multi-tenant SaaS landing builders, every LeadMonster microsite shares the Finanzteam 26 design system (Nunito Sans + Roboto, cyan/navy/orange palette, MonsterLogo) but each product gets its own accent color. **Result:** trust-building consistency without monotony.
 
-### Confluence as the Sales CRM
-
-Unlike systems that require a separate CRM purchase or integration layer, LeadMonster writes leads directly into the sales team's existing Confluence workspace as structured, labeled pages — fitting seamlessly into the workflow Finanzteam 26 already uses.
-
----
+### Editable After Generation — No AI Lock-In
+Unlike fully-generative AI website builders, every Claude-generated page is stored as structured JSON in Supabase and editable in the admin Content Preview. **Result:** the sales team owns the final word, not the model.
 
 ## Key Features
 
-### Core Features
+### Core Features (Content Engine)
 
-- **AI Content Generation:** Enter product type, audience, and focus — Claude generates complete page content (hero, features, FAQ, comparison, guides), SEO metadata, and Schema.org markup as structured JSON, ready to publish.
-- **Admin Dashboard:** A protected, role-based UI where the sales team creates products, triggers generation, previews content, reviews leads, and manages system settings — no developer required for daily operations.
-- **Dynamic Public Pages:** Every product automatically gets a full set of SSG-rendered pages (`/[produkt]`, `/faq`, `/vergleich`, `/tarife`, `/ratgeber/[thema]`) optimized for both Google and AI search engines.
+- **Produkt-Konfigurator:** Sales enters product name, type (Sterbegeld / Pflege / Leben / Unfall), target groups, focus tag (Sicherheit / Preis / Sofortschutz), and providers. The Produkt-DNA is stored in Supabase.
+- **KI-Content-Generierung:** Anthropic Claude (`claude-opus-4-6`) consumes the Wissensfundus knowledge base + Produkt-DNA + Vertriebssteuerung and emits structured JSON for every page type.
+- **Content Preview & Editor:** Generated content is reviewable section-by-section in the admin. Manual edits persist alongside the generated structure — no AI lock-in.
+- **Wissensfundus-Verwaltung:** A first-class admin section to maintain reusable insurance domain content (definitions, regulatory facts, comparisons) that informs every Claude generation.
+- **Web-Scraper:** Pulls reference content from competitor and source sites (e.g. sterbegeld24plus origin) into the Wissensfundus, available both as CLI script and admin UI.
 
-### Lead Capture Features
+### Public-Facing Features (Per Product Microsite)
 
-- **Lead Forms with Intent Tagging:** Every form submission is tagged with the product, target audience segment, and sales intent (security / price / instant coverage) derived from how the user navigated the site.
-- **Automated Confluence CRM Sync:** Leads are written to the team's Confluence space as structured pages with all contact data, intent signals, and timestamps — immediately accessible to the sales team.
-- **Email Automation via Resend:** Prospects receive an instant confirmation email; the sales team receives a notification with lead details — both triggered automatically on form submission.
+- **Hauptseite (Landing):** Hero, feature grid, trust bar, integrated lead form. Server-rendered for SEO.
+- **FAQ-Seite:** AEO-optimized question-and-answer format with FAQPage Schema.org markup.
+- **Vergleichsseite:** Provider comparison table with ItemList + Product schema.
+- **Pseudo-Tarifrechner:** Conversion-optimized example calculator (age + sum input → ballpark range → CTA to lead form). Auto-tags lead intent as "preis".
+- **Ratgeber-Artikel:** Long-form advisor articles with Article + HowTo schema, addressing target-group-specific decisions.
+- **Rechtsseiten:** Per-product Impressum, Datenschutz, AGB, Kontakt — auto-generated and customizable.
 
-### Advanced Features
+### Lead-Flow Features
 
-- **Knowledge Base (Wissensfundus):** A managed library of categorized insurance knowledge articles that serve as factual grounding context for every AI generation request — ensuring accuracy and consistency across products.
-- **Pseudo-Tariff Calculator:** A conversion-optimized cost estimator using pre-loaded example data that gives prospects a realistic price range and channels them into the lead form with the intent tag `preis` pre-set.
-- **SEO/AEO Automation:** Auto-generated `sitemap.xml`, `robots.txt`, `llms.txt`, and per-page Schema.org JSON-LD ensure every published product is immediately indexable by both search engines and AI crawlers.
+- **Lead-Formular:** Brand-consistent React component embedded across every microsite page. Validated with Zod.
+- **Confluence-Sync:** Each submitted lead becomes a structured Confluence page with title, table of fields, and labels (product slug, target-group tag, intent tag) under the configured parent page.
+- **Resend-E-Mails:** Instant confirmation to the prospect and notification to the sales team — both customizable per product via the Email-Sequenzen table.
+- **Lead-Inbox:** Admin view listing all leads with sync status and product context.
+
+### SEO / AEO Features
+
+- **generateMetadata pro Route:** Dynamic per-page meta titles and descriptions sourced from the database.
+- **Schema.org JSON-LD:** Auto-emitted per page type (FAQPage, Product, InsuranceAgency, Article, BreadcrumbList).
+- **sitemap.xml + robots.txt + llms.txt:** Auto-generated; AI crawlers explicitly welcomed.
+- **Per-Produkt-Akzentfarbe:** Each product receives a distinct accent color while inheriting the Finanzteam 26 brand system.
+
+### Admin Platform Features
+
+- **Supabase-Auth-geschützter Admin-Bereich:** Login required; all admin routes guarded.
+- **Produkt-CRUD + Status-Workflow:** Entwurf → Review → Publiziert state machine.
+- **Einstellungen:** Confluence credentials and other secrets are managed in-DB (encrypted) with `.env` fallbacks — rotatable without redeploy.

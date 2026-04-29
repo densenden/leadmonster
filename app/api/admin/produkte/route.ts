@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createAdminClient()
-  const { name, slug, typ, status, zielgruppe, fokus, anbieter, argumente } =
+  const { name, slug, typ, status, accent_color, zielgruppe, fokus, anbieter, argumente } =
     parsed.data
 
   // Check slug uniqueness before inserting.
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
   // Insert into produkte first to obtain the generated id.
   const { data: produkt, error: produktError } = await supabase
     .from('produkte')
-    .insert({ name, slug, typ, status: status ?? 'entwurf' })
+    .insert({ name, slug, typ, status: status ?? 'entwurf', accent_color: accent_color ?? null })
     .select('id')
     .single()
 
@@ -144,13 +144,13 @@ export async function PATCH(request: NextRequest) {
   }
 
   const supabase = createAdminClient()
-  const { id, name, slug, typ, status, zielgruppe, fokus, anbieter, argumente } =
+  const { id, name, slug, typ, status, accent_color, zielgruppe, fokus, anbieter, argumente } =
     parsed.data
 
   // Update the produkte row first.
   const { error: produktError } = await supabase
     .from('produkte')
-    .update({ name, slug, typ, status, updated_at: new Date().toISOString() })
+    .update({ name, slug, typ, status, accent_color: accent_color ?? null, updated_at: new Date().toISOString() })
     .eq('id', id)
 
   if (produktError) {

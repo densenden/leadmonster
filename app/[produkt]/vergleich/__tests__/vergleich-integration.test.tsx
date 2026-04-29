@@ -1,60 +1,63 @@
-// Integration tests for the Vergleich component — criteria from DB shape → rendered table cells.
-// This file does NOT mock the Vergleich component; it tests real rendering.
-// These tests cover the data-flow gap identified in Task Group 4: Supabase row → table cells.
+// Integration tests for Vergleich — DB content shape → rendered insurer rows.
+// New schema: vergleich section contains { type: 'vergleich', anbieter: AnbieterOffer[] }
 import { describe, it, expect } from 'vitest'
-import { render } from '@testing-library/react'
-import { Vergleich } from '@/components/sections/Vergleich'
+import { render, screen } from '@testing-library/react'
+import { Vergleich, type AnbieterOffer } from '@/components/sections/Vergleich'
 
-// Simulate the criteria shape that the vergleich page would extract from generierter_content.content
+// Simulate the shape that the vergleich page extracts from generierter_content.content
 const dbContentShape = {
   sections: [
     {
       type: 'vergleich',
-      intro: 'Im folgenden Vergleich stellen wir AXA und Allianz gegenüber.',
-      criteria: [
-        { label: 'Sofortleistung', values: { AXA: true, Allianz: false } },
-        { label: 'Online-Abschluss', values: { AXA: false, Allianz: true } },
-        { label: 'Monatsbeitrag ab', values: { AXA: '7,99 €', Allianz: '9,50 €' } },
+      anbieter: [
+        {
+          name: 'AXA',
+          wartezeit: 'Keine bei Unfalltod',
+          gesundheitsfragen: 'Vereinfacht',
+          garantierte_aufnahme: true,
+          beitrag_beispiel: '7,99 €/Monat',
+          besonderheit: 'Direktauszahlung in 24h',
+        },
+        {
+          name: 'Allianz',
+          wartezeit: '6 Monate',
+          gesundheitsfragen: 'Ja',
+          garantierte_aufnahme: false,
+          beitrag_beispiel: '9,50 €/Monat',
+          besonderheit: 'Familienbonus',
+        },
       ],
     },
   ],
 }
 
-// Replicate the extraction logic from the page component
-function extractCriteria(content: typeof dbContentShape) {
+function extractAnbieter(content: typeof dbContentShape): AnbieterOffer[] {
   const vergleichSection = content.sections.find(s => s.type === 'vergleich')
-  return vergleichSection?.criteria ?? []
+  return (vergleichSection?.anbieter ?? []) as AnbieterOffer[]
 }
 
-describe('Vergleich integration — DB content shape → rendered table cells', () => {
-  it('renders a th[scope="row"] for each criterion label from the DB content', () => {
-    const criteria = extractCriteria(dbContentShape)
-    const anbieter = ['AXA', 'Allianz']
+describe('Vergleich integration — DB content shape → rendered insurer rows', () => {
+  it('renders one row per insurer extracted from DB content', () => {
+    const anbieter = extractAnbieter(dbContentShape)
 
     render(
       <Vergleich
         anbieter={anbieter}
-        criteria={criteria}
         produktName="Sterbegeld24Plus"
         generatedAt="02.04.2026"
       />
     )
 
-    const rowHeaders = document.querySelectorAll('th[scope="row"]')
-    expect(rowHeaders).toHaveLength(3)
-    expect(rowHeaders[0].textContent).toBe('Sofortleistung')
-    expect(rowHeaders[1].textContent).toBe('Online-Abschluss')
-    expect(rowHeaders[2].textContent).toBe('Monatsbeitrag ab')
+    expect(screen.getByText('AXA')).toBeDefined()
+    expect(screen.getByText('Allianz')).toBeDefined()
   })
 
-  it('renders check icon for AXA and minus icon for Allianz on the Sofortleistung row', () => {
-    const criteria = extractCriteria(dbContentShape)
-    const anbieter = ['AXA', 'Allianz']
+  it('renders check icon for AXA garantierte_aufnahme=true and minus for Allianz=false', () => {
+    const anbieter = extractAnbieter(dbContentShape)
 
     render(
       <Vergleich
         anbieter={anbieter}
-        criteria={criteria}
         produktName="Sterbegeld24Plus"
         generatedAt="02.04.2026"
       />
@@ -63,30 +66,22 @@ describe('Vergleich integration — DB content shape → rendered table cells', 
     const checkIcons = document.querySelectorAll('svg[aria-label="Ja"]')
     const minusIcons = document.querySelectorAll('svg[aria-label="Nein"]')
 
-    // AXA: Sofortleistung=true, Online-Abschluss=false → 1 Ja, 1 Nein
-    // Allianz: Sofortleistung=false, Online-Abschluss=true → 1 Nein, 1 Ja
-    // Total: 2 Ja icons, 2 Nein icons
-    expect(checkIcons.length).toBe(2)
-    expect(minusIcons.length).toBe(2)
+    expect(checkIcons.length).toBe(1)
+    expect(minusIcons.length).toBe(1)
   })
 
-  it('renders string values as plain text spans (no SVG icons)', () => {
-    const criteria = extractCriteria(dbContentShape)
-    const anbieter = ['AXA', 'Allianz']
+  it('renders beitrag_beispiel strings as plain text in cells', () => {
+    const anbieter = extractAnbieter(dbContentShape)
 
-    const { container } = render(
+    render(
       <Vergleich
         anbieter={anbieter}
-        criteria={criteria}
         produktName="Sterbegeld24Plus"
         generatedAt="02.04.2026"
       />
     )
 
-    // Monatsbeitrag row should contain text spans, not SVG icons
-    const spans = container.querySelectorAll('td span')
-    const spanTexts = Array.from(spans).map(s => s.textContent)
-    expect(spanTexts).toContain('7,99 €')
-    expect(spanTexts).toContain('9,50 €')
+    expect(screen.getByText('7,99 €/Monat')).toBeDefined()
+    expect(screen.getByText('9,50 €/Monat')).toBeDefined()
   })
 })

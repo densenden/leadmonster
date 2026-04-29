@@ -8,6 +8,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { ProduktWithConfig, ProduktStatus } from '@/lib/supabase/types'
+import { MonsterLogo } from '@/components/MonsterLogo'
+import { resolveAccentColor, ACCENT_DEFAULTS } from '@/lib/utils/accent'
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -85,6 +87,9 @@ export function ProduktForm({ mode, initialData }: ProduktFormProps) {
   const [slug, setSlug] = useState(initialData?.slug ?? '')
   const [typ, setTyp] = useState(initialData?.typ ?? '')
   const [status, setStatus] = useState(initialData?.status ?? 'entwurf')
+  const [accentColor, setAccentColor] = useState(
+    resolveAccentColor(initialData?.typ ?? '', initialData?.accent_color)
+  )
 
   // Slug pristine flag — when true, slug auto-updates from name.
   const [slugPristine, setSlugPristine] = useState(mode === 'create')
@@ -195,6 +200,7 @@ export function ProduktForm({ mode, initialData }: ProduktFormProps) {
             slug,
             typ,
             status,
+            accent_color: /^#[0-9a-fA-F]{6}$/.test(accentColor) ? accentColor : undefined,
             zielgruppe,
             fokus: fokus || undefined,
             anbieter,
@@ -204,6 +210,7 @@ export function ProduktForm({ mode, initialData }: ProduktFormProps) {
             name,
             slug,
             typ,
+            accent_color: /^#[0-9a-fA-F]{6}$/.test(accentColor) ? accentColor : undefined,
             zielgruppe,
             fokus: fokus || undefined,
             anbieter,
@@ -319,7 +326,14 @@ export function ProduktForm({ mode, initialData }: ProduktFormProps) {
           name="typ"
           required
           value={typ}
-          onChange={(e) => setTyp(e.target.value)}
+          onChange={(e) => {
+            const newTyp = e.target.value
+            setTyp(newTyp)
+            // Auto-fill accent color from type default only if user hasn't customised it
+            if (newTyp in ACCENT_DEFAULTS) {
+              setAccentColor(ACCENT_DEFAULTS[newTyp])
+            }
+          }}
           className={INPUT_CLASS}
         >
           <option value="">Bitte wählen …</option>
@@ -332,6 +346,36 @@ export function ProduktForm({ mode, initialData }: ProduktFormProps) {
         {fieldErrors.typ && (
           <p className={ERROR_CLASS}>{fieldErrors.typ}</p>
         )}
+      </div>
+
+      {/* Akzentfarbe */}
+      <div>
+        <label htmlFor="accent_color" className={LABEL_CLASS}>
+          Akzentfarbe
+        </label>
+        <div className="flex items-center gap-3">
+          <MonsterLogo color={accentColor} size={36} />
+          <input
+            id="accent_color"
+            name="accent_color"
+            type="color"
+            value={accentColor}
+            onChange={(e) => setAccentColor(e.target.value)}
+            className="h-9 w-14 cursor-pointer border border-gray-300 bg-white p-0.5"
+          />
+          <input
+            type="text"
+            value={accentColor}
+            onChange={(e) => {
+              if (/^#[0-9a-fA-F]{0,6}$/.test(e.target.value)) setAccentColor(e.target.value)
+            }}
+            maxLength={7}
+            className="w-28 border border-gray-300 px-2 py-1.5 text-sm font-mono text-[#333333] focus:outline-none focus:ring-2 focus:ring-[#abd5f4] rounded-none"
+          />
+        </div>
+        <p className="mt-1 text-xs text-[#999999]">
+          Wird automatisch nach Produkttyp vorausgefüllt — frei anpassbar.
+        </p>
       </div>
 
       {/* Zielgruppe */}

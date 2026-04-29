@@ -8,7 +8,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/server'
-import { createLeadPage } from '@/lib/confluence/client'
+import { pushLeadToConvexa } from '@/lib/convexa/client'
 import { sendLeadConfirmation, sendSalesNotification } from '@/lib/resend/mailer'
 
 // IP-based rate limiting: max 3 submissions per IP per 60-minute window.
@@ -19,7 +19,7 @@ const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
 const leadSchema = z.object({
   produktId: z.string().min(1),
   zielgruppeTag: z.string().min(1),
-  intentTag: z.string().min(1),
+  intentTag: z.string().min(1).optional(),
   vorname: z.string().max(100).optional(),
   nachname: z.string().max(100).optional(),
   email: z.string().email(),
@@ -128,27 +128,40 @@ export async function POST(request: NextRequest) {
     try {
       const { data: produkt } = await supabase
         .from('produkte')
-        .select('name, slug')
+        .select('name, slug, typ')
         .eq('id', parsed.data.produktId)
         .single()
 
       const produktName = produkt?.name ?? 'Unbekannt'
       const produktSlug = produkt?.slug ?? ''
+      const produktTyp = produkt?.typ ?? ''
 
-      // Fetch full lead row for downstream Confluence + email use.
+      // Fetch full lead row for downstream Convexa + email use.
       const { data: fullLead } = await supabase.from('leads').select('*').eq('id', lead.id).single()
       if (!fullLead) return
 
-      // Confluence sync — failure is non-blocking; sets confluence_synced=false for re-sync.
+      // Convexa CRM sync — failure is non-blocking; sets convexa_synced=false for re-sync.
       try {
-        const { pageId } = await createLeadPage(fullLead, produktName, produktSlug)
+        const result = await pushLeadToConvexa(fullLead, {
+          produktName,
+          produktSlug,
+          produktTyp,
+        })
         await supabase
           .from('leads')
-          .update({ confluence_page_id: pageId, confluence_synced: true })
+          .update({
+            convexa_lead_id: result.id,
+            convexa_synced: true,
+            convexa_error: null,
+          })
           .eq('id', lead.id)
       } catch (err) {
-        console.error(`[api/leads] Confluence sync failed lead=${lead.id}:`, err)
-        await supabase.from('leads').update({ confluence_synced: false }).eq('id', lead.id)
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error(`[api/leads] Convexa sync failed lead=${lead.id}:`, msg)
+        await supabase
+          .from('leads')
+          .update({ convexa_synced: false, convexa_error: msg })
+          .eq('id', lead.id)
       }
 
       // Email dispatch — both sends run in parallel to minimise total latency.

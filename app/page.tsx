@@ -1,22 +1,32 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/server'
+import { MonsterLogo } from '@/components/MonsterLogo'
+import { resolveAccentColor } from '@/lib/utils/accent'
 
 export const metadata: Metadata = {
   title: 'LeadMonster — Versicherungsprodukte',
   description: 'Übersicht aller Versicherungsprodukte im LeadMonster System',
 }
 
+const TYP_LABELS: Record<string, string> = {
+  sterbegeld: 'Sterbegeld',
+  pflege:     'Pflege',
+  leben:      'Lebensversicherung',
+  unfall:     'Unfall',
+}
+
 export default async function HomePage() {
-  let produkte: { slug: string; name: string; status: string }[] = []
+  let produkte: {
+    slug: string; name: string; status: string; typ: string; accent_color: string | null
+  }[] = []
 
   try {
     const supabase = createAdminClient()
     const { data } = await supabase
       .from('produkte')
-      .select('slug, name, status')
-      .eq('status', 'aktiv')
+      .select('slug, name, status, typ, accent_color')
+      .not('status', 'eq', 'archiviert')
       .order('name')
     produkte = data ?? []
   } catch {
@@ -24,48 +34,100 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <Image src="/logo.png" alt="LeadMonster" width={140} height={42} priority />
+    <main className="min-h-screen bg-[#f7fafc]" style={{ fontFamily: 'var(--font-nunito, Nunito Sans), sans-serif' }}>
+
+      {/* ── Header ────────────────────────────────────────────────────────── */}
+      <header className="bg-white border-b border-[#e2e8f0] px-6 py-4 flex items-center justify-between">
+        <MonsterLogo showText size={40} color="#02a9e6" />
         <Link
           href="/admin"
-          className="bg-[#abd5f4] hover:bg-[#8fc4e8] text-white text-sm font-medium px-4 py-2 transition-colors"
+          className="text-sm font-semibold border-[1.5px] border-[#1a3252] text-[#1a3252] px-4 py-1.5 rounded-md hover:bg-[#1a3252] hover:text-white transition-all duration-200"
         >
-          Admin →
+          Admin
         </Link>
       </header>
 
-      <div className="container mx-auto px-6 py-16 max-w-4xl">
-        {produkte.length > 0 ? (
-          <>
-            <h1 className="text-3xl font-bold text-[#1a365d] mb-8">Versicherungsprodukte</h1>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {produkte.map((p) => (
-                <Link
-                  key={p.slug}
-                  href={`/${p.slug}`}
-                  className="block border border-gray-200 rounded-xl p-6 hover:shadow-md hover:border-[#abd5f4] transition-all"
-                >
-                  <h2 className="font-semibold text-[#1a365d] text-lg">{p.name}</h2>
-                  <p className="text-sm text-gray-500 mt-1">/{p.slug}</p>
-                </Link>
-              ))}
+      {/* ── Hero band ─────────────────────────────────────────────────────── */}
+      <div className="bg-[#1a3252] text-white">
+        <div className="max-w-[1200px] mx-auto px-6 py-14">
+          <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'var(--font-roboto, Roboto), sans-serif' }}>
+            Versicherungsprodukte
+          </h1>
+          <p className="text-white/60 text-sm">
+            Alle Microsites und Landingpages auf einen Blick
+          </p>
+        </div>
+      </div>
+
+      {/* ── Product grid ──────────────────────────────────────────────────── */}
+      <div className="max-w-[1200px] mx-auto px-6 py-12">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {produkte.map((p) => {
+            const accent = resolveAccentColor(p.typ, p.accent_color)
+            return (
+              <Link
+                key={p.slug}
+                href={`/${p.slug}`}
+                className="group block bg-white border border-[#e2e8f0] rounded-lg overflow-hidden hover:shadow-md hover:border-[#02a9e6] transition-all duration-200"
+              >
+                {/* Accent top bar */}
+                <div className="h-1" style={{ backgroundColor: accent }} />
+
+                <div className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <MonsterLogo color={accent} size={36} />
+                    <span className="text-xs font-semibold text-[#718096] uppercase tracking-widest">
+                      {TYP_LABELS[p.typ] ?? p.typ}
+                    </span>
+                  </div>
+
+                  <h2 className="font-bold text-[#1a3252] text-lg leading-snug mb-1"
+                    style={{ fontFamily: 'var(--font-roboto, Roboto), sans-serif' }}>
+                    {p.name}
+                  </h2>
+                  <p className="text-xs text-[#718096] font-mono mb-4">/{p.slug}</p>
+
+                  <div className="flex items-center justify-between">
+                    {/* Status tag — outline style */}
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold border ${
+                        p.status === 'aktiv'
+                          ? 'border-green-500 text-green-700 bg-green-50'
+                          : 'border-amber-400 text-amber-700 bg-amber-50'
+                      }`}
+                    >
+                      {p.status}
+                    </span>
+                    <span
+                      className="text-sm font-semibold border-b border-transparent group-hover:border-current transition-colors"
+                      style={{ color: accent }}
+                    >
+                      Zur Seite →
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            )
+          })}
+
+          {/* Add new product — outline dashed card */}
+          <Link
+            href="/admin/produkte/neu"
+            className="group flex flex-col items-center justify-center bg-white border-[1.5px] border-dashed border-[#cbd5e0] rounded-lg hover:border-[#02a9e6] hover:bg-[#e1f0fb] transition-all duration-200 p-6 min-h-[180px]"
+          >
+            <div className="w-10 h-10 rounded-full border-[1.5px] border-[#cbd5e0] group-hover:border-[#02a9e6] flex items-center justify-center mb-3 transition-colors">
+              <span className="text-xl text-[#a0aec0] group-hover:text-[#02a9e6] leading-none transition-colors">+</span>
             </div>
-          </>
-        ) : (
-          <div className="text-center py-24">
-            <h1 className="text-3xl font-bold text-[#1a365d] mb-4">LeadMonster</h1>
-            <p className="text-gray-500 mb-8 max-w-md mx-auto">
-              Das System ist bereit. Legen Sie Ihr erstes Produkt im Admin-Bereich an.
-            </p>
-            <Link
-              href="/admin"
-              className="inline-block bg-[#1a365d] text-white font-medium px-8 py-3 hover:bg-[#15284d] transition-colors"
-            >
-              Admin-Bereich öffnen
-            </Link>
-          </div>
+            <span className="text-sm font-semibold text-[#718096] group-hover:text-[#02a9e6] transition-colors">
+              Neues Produkt
+            </span>
+          </Link>
+        </div>
+
+        {produkte.length === 0 && (
+          <p className="mt-8 text-center text-sm text-[#a0aec0]">
+            Noch keine Produkte — starten Sie mit &quot;Neues Produkt&quot;.
+          </p>
         )}
       </div>
     </main>

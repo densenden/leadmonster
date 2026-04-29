@@ -97,3 +97,24 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
   return Response.json({ data: row, error: null }, { status: 200 })
 }
+
+// DELETE /api/admin/content/[id]
+export async function DELETE(_request: NextRequest, { params }: RouteContext) {
+  const sessionClient = createClient()
+  const { data: { user } } = await sessionClient.auth.getUser()
+  if (!user) {
+    return Response.json({ data: null, error: { code: 'UNAUTHORIZED' } }, { status: 401 })
+  }
+
+  const supabase = createAdminClient()
+  const { error } = await supabase
+    .from('generierter_content')
+    .delete()
+    .eq('id', params.id)
+
+  if (error) {
+    return Response.json({ data: null, error: { code: 'DB_ERROR' } }, { status: 500 })
+  }
+
+  return Response.json({ data: { id: params.id }, error: null }, { status: 200 })
+}

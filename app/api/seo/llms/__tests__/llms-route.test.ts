@@ -101,7 +101,7 @@ describe('POST /api/seo/llms', () => {
     vi.mocked(createAdminClient).mockReturnValue(
       buildSupabaseMock([
         { id: 'uuid-1', slug: 'sterbegeld24plus', name: 'Sterbegeld24Plus' },
-      ]) as ReturnType<typeof createAdminClient>,
+      ]) as unknown as ReturnType<typeof createAdminClient>,
     )
 
     const { POST } = await import('@/app/api/seo/llms/route')
@@ -117,7 +117,7 @@ describe('POST /api/seo/llms', () => {
     vi.mocked(createAdminClient).mockReturnValue(
       buildSupabaseMock([
         { id: 'uuid-1', slug: 'sterbegeld24plus', name: 'Sterbegeld24Plus' },
-      ]) as ReturnType<typeof createAdminClient>,
+      ]) as unknown as ReturnType<typeof createAdminClient>,
     )
 
     const { POST } = await import('@/app/api/seo/llms/route')

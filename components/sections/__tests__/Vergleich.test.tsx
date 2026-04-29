@@ -1,47 +1,55 @@
 // Tests for components/sections/Vergleich.tsx — comparison table component.
-// Uses React Testing Library; all tests are pure presentational (no Supabase).
+// Component renders one row per insurer (AnbieterOffer); columns are fixed criteria.
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { Vergleich } from '../Vergleich'
+import { Vergleich, type AnbieterOffer } from '../Vergleich'
 
-const sampleAnbieter = ['AXA', 'Allianz', 'Zurich']
-const sampleCriteria = [
+const sampleAnbieter: AnbieterOffer[] = [
   {
-    label: 'Sofortleistung',
-    values: { AXA: true, Allianz: false, Zurich: true } as Record<string, string | boolean>,
+    name: 'AXA',
+    wartezeit: 'Keine bei Unfalltod',
+    gesundheitsfragen: 'Vereinfacht',
+    garantierte_aufnahme: true,
+    beitrag_beispiel: 'ab 7,99 €/Monat',
+    besonderheit: 'Direktauszahlung in 24h',
   },
   {
-    label: 'Monatsbeitrag',
-    values: { AXA: 'ab 7,99 €', Allianz: 'ab 9,50 €', Zurich: 'auf Anfrage' } as Record<string, string | boolean>,
+    name: 'Allianz',
+    wartezeit: '6 Monate',
+    gesundheitsfragen: 'Ja',
+    garantierte_aufnahme: false,
+    beitrag_beispiel: 'ab 9,50 €/Monat',
+    besonderheit: 'Familienbonus',
+  },
+  {
+    name: 'Zurich',
+    wartezeit: '12 Monate',
+    gesundheitsfragen: 'Nein',
+    garantierte_aufnahme: true,
+    beitrag_beispiel: 'auf Anfrage',
+    besonderheit: 'Beratungs-Hotline',
   },
 ]
 
 describe('Vergleich component', () => {
-  it('renders one <th scope="col"> per insurer name', () => {
+  it('renders one row per insurer with the insurer name', () => {
     render(
       <Vergleich
         anbieter={sampleAnbieter}
-        criteria={sampleCriteria}
         produktName="Sterbegeld24Plus"
         generatedAt="02.04.2026"
       />
     )
 
-    const colHeaders = document
-      .querySelectorAll('th[scope="col"]')
-    // There is one col header for "Kriterium" plus one per insurer
-    const insurer = Array.from(colHeaders).filter(th => sampleAnbieter.includes(th.textContent ?? ''))
-    expect(insurer).toHaveLength(sampleAnbieter.length)
-    expect(insurer[0].textContent).toBe('AXA')
-    expect(insurer[1].textContent).toBe('Allianz')
-    expect(insurer[2].textContent).toBe('Zurich')
+    expect(screen.getByText('AXA')).toBeDefined()
+    expect(screen.getByText('Allianz')).toBeDefined()
+    expect(screen.getByText('Zurich')).toBeDefined()
   })
 
-  it('boolean true renders an SVG element with aria-label="Ja"', () => {
+  it('boolean garantierte_aufnahme=true renders a checkmark with aria-label="Ja"', () => {
     render(
       <Vergleich
-        anbieter={['AXA']}
-        criteria={[{ label: 'Sofortleistung', values: { AXA: true } }]}
+        anbieter={[sampleAnbieter[0]]}
         produktName="Sterbegeld24Plus"
         generatedAt="02.04.2026"
       />
@@ -51,11 +59,10 @@ describe('Vergleich component', () => {
     expect(jaIcon).not.toBeNull()
   })
 
-  it('boolean false renders an element with aria-label="Nein"', () => {
+  it('boolean garantierte_aufnahme=false renders a minus with aria-label="Nein"', () => {
     render(
       <Vergleich
-        anbieter={['Allianz']}
-        criteria={[{ label: 'Sofortleistung', values: { Allianz: false } }]}
+        anbieter={[sampleAnbieter[1]]}
         produktName="Sterbegeld24Plus"
         generatedAt="02.04.2026"
       />
@@ -65,28 +72,22 @@ describe('Vergleich component', () => {
     expect(neinIcon).not.toBeNull()
   })
 
-  it('string value renders as plain text inside a <td>', () => {
+  it('renders beitrag_beispiel string value as plain text', () => {
     render(
       <Vergleich
-        anbieter={['AXA']}
-        criteria={[{ label: 'Monatsbeitrag', values: { AXA: 'ab 7,99 €' } }]}
+        anbieter={[sampleAnbieter[0]]}
         produktName="Sterbegeld24Plus"
         generatedAt="02.04.2026"
       />
     )
 
-    const cell = screen.getByText('ab 7,99 €')
-    expect(cell).toBeDefined()
-    // The text is inside a <td> via a <span>
-    expect(cell.tagName.toLowerCase()).toBe('span')
-    expect(cell.closest('td')).not.toBeNull()
+    expect(screen.getByText('ab 7,99 €/Monat')).toBeDefined()
   })
 
-  it('wrapping div has overflow-x-auto class', () => {
+  it('wrapping container has overflow-x-auto class for horizontal scrolling', () => {
     const { container } = render(
       <Vergleich
         anbieter={sampleAnbieter}
-        criteria={sampleCriteria}
         produktName="Sterbegeld24Plus"
         generatedAt="02.04.2026"
       />
@@ -96,11 +97,10 @@ describe('Vergleich component', () => {
     expect(wrapper.className).toContain('overflow-x-auto')
   })
 
-  it('disclaimer renders with the generatedAt string', () => {
+  it('disclaimer renders with the generatedAt date', () => {
     render(
       <Vergleich
         anbieter={sampleAnbieter}
-        criteria={sampleCriteria}
         produktName="Sterbegeld24Plus"
         generatedAt="02.04.2026"
       />

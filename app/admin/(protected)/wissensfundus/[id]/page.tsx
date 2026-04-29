@@ -14,13 +14,23 @@ interface PageProps {
 export default async function ArtikelBearbeitenPage({ params }: PageProps) {
   const supabase = createAdminClient()
 
-  const { data: row } = await supabase
+  const { data: row, error } = await supabase
     .from('wissensfundus')
     .select('*')
     .eq('id', params.id)
     .single()
 
-  // Redirect to 404 when the article does not exist.
+  if (error) {
+    // PGRST116 = "no rows returned" — genuine not-found.
+    // Any other error (auth, network) is a server fault; log it and throw so the
+    // error boundary surfaces a useful message instead of silently returning 404.
+    if (error.code === 'PGRST116') {
+      notFound()
+    }
+    console.error('[wissensfundus/[id]] DB error:', error.code, error.message)
+    throw new Error(`Datenbankfehler: ${error.message}`)
+  }
+
   if (!row) {
     notFound()
   }

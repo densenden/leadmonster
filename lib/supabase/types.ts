@@ -148,6 +148,9 @@ export type Database = {
         Row: {
           confluence_page_id: string | null
           confluence_synced: boolean
+          convexa_error: string | null
+          convexa_lead_id: string | null
+          convexa_synced: boolean
           created_at: string
           email: string
           id: string
@@ -156,13 +159,20 @@ export type Database = {
           nachname: string | null
           produkt_id: string | null
           resend_sent: boolean
+          source_url: string | null
           telefon: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
           vorname: string | null
           zielgruppe_tag: string | null
         }
         Insert: {
           confluence_page_id?: string | null
           confluence_synced?: boolean
+          convexa_error?: string | null
+          convexa_lead_id?: string | null
+          convexa_synced?: boolean
           created_at?: string
           email: string
           id?: string
@@ -171,13 +181,20 @@ export type Database = {
           nachname?: string | null
           produkt_id?: string | null
           resend_sent?: boolean
+          source_url?: string | null
           telefon?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
           vorname?: string | null
           zielgruppe_tag?: string | null
         }
         Update: {
           confluence_page_id?: string | null
           confluence_synced?: boolean
+          convexa_error?: string | null
+          convexa_lead_id?: string | null
+          convexa_synced?: boolean
           created_at?: string
           email?: string
           id?: string
@@ -186,7 +203,11 @@ export type Database = {
           nachname?: string | null
           produkt_id?: string | null
           resend_sent?: boolean
+          source_url?: string | null
           telefon?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
           vorname?: string | null
           zielgruppe_tag?: string | null
         }
@@ -243,30 +264,45 @@ export type Database = {
       }
       produkte: {
         Row: {
+          accent_color: string | null
           created_at: string
           domain: string | null
+          hero_image_alt: string | null
+          hero_image_url: string | null
           id: string
           name: string
+          og_image_url: string | null
+          short_pitch: string | null
           slug: string
           status: string
           typ: string
           updated_at: string
         }
         Insert: {
+          accent_color?: string | null
           created_at?: string
           domain?: string | null
+          hero_image_alt?: string | null
+          hero_image_url?: string | null
           id?: string
           name: string
+          og_image_url?: string | null
+          short_pitch?: string | null
           slug: string
           status?: string
           typ: string
           updated_at?: string
         }
         Update: {
+          accent_color?: string | null
           created_at?: string
           domain?: string | null
+          hero_image_alt?: string | null
+          hero_image_url?: string | null
           id?: string
           name?: string
+          og_image_url?: string | null
+          short_pitch?: string | null
           slug?: string
           status?: string
           typ?: string
@@ -280,6 +316,9 @@ export type Database = {
           id: string
           inhalt: string
           kategorie: string
+          link_phrases: string[] | null
+          published: boolean
+          slug: string | null
           tags: string[] | null
           thema: string
           updated_at: string
@@ -289,6 +328,9 @@ export type Database = {
           id?: string
           inhalt: string
           kategorie: string
+          link_phrases?: string[] | null
+          published?: boolean
+          slug?: string | null
           tags?: string[] | null
           thema: string
           updated_at?: string
@@ -298,11 +340,201 @@ export type Database = {
           id?: string
           inhalt?: string
           kategorie?: string
+          link_phrases?: string[] | null
+          published?: boolean
+          slug?: string | null
           tags?: string[] | null
           thema?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      tarife: {
+        Row: {
+          alter_bis: number
+          alter_von: number
+          beitrag_high: number
+          beitrag_low: number
+          created_at: string
+          einheit: string
+          id: string
+          produkt_id: string
+          summe: number
+          updated_at: string
+        }
+        Insert: {
+          alter_bis: number
+          alter_von: number
+          beitrag_high: number
+          beitrag_low: number
+          created_at?: string
+          einheit?: string
+          id?: string
+          produkt_id: string
+          summe: number
+          updated_at?: string
+        }
+        Update: {
+          alter_bis?: number
+          alter_von?: number
+          beitrag_high?: number
+          beitrag_low?: number
+          created_at?: string
+          einheit?: string
+          id?: string
+          produkt_id?: string
+          summe?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarife_produkt_id_fkey"
+            columns: ["produkt_id"]
+            isOneToOne: false
+            referencedRelation: "produkte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_posts: {
+        Row: {
+          author: string | null
+          content_md: string
+          cover_image_alt: string | null
+          cover_image_url: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          kategorien: string[] | null
+          meta_desc: string | null
+          meta_title: string | null
+          produkt_id: string | null
+          published_at: string | null
+          reading_time: number | null
+          schema_markup: Json | null
+          slug: string
+          source_origin: string | null
+          source_url: string | null
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          content_md: string
+          cover_image_alt?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          kategorien?: string[] | null
+          meta_desc?: string | null
+          meta_title?: string | null
+          produkt_id?: string | null
+          published_at?: string | null
+          reading_time?: number | null
+          schema_markup?: Json | null
+          slug: string
+          source_origin?: string | null
+          source_url?: string | null
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          content_md?: string
+          cover_image_alt?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          kategorien?: string[] | null
+          meta_desc?: string | null
+          meta_title?: string | null
+          produkt_id?: string | null
+          published_at?: string | null
+          reading_time?: number | null
+          schema_markup?: Json | null
+          slug?: string
+          source_origin?: string | null
+          source_url?: string | null
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_posts_produkt_id_fkey"
+            columns: ["produkt_id"]
+            isOneToOne: false
+            referencedRelation: "produkte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bilder: {
+        Row: {
+          alt_text: string
+          blog_post_id: string | null
+          created_at: string
+          height: number | null
+          id: string
+          page_type: string | null
+          produkt_id: string | null
+          prompt_used: string | null
+          provider: string
+          slot: string | null
+          url: string
+          width: number | null
+        }
+        Insert: {
+          alt_text: string
+          blog_post_id?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          page_type?: string | null
+          produkt_id?: string | null
+          prompt_used?: string | null
+          provider?: string
+          slot?: string | null
+          url: string
+          width?: number | null
+        }
+        Update: {
+          alt_text?: string
+          blog_post_id?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          page_type?: string | null
+          produkt_id?: string | null
+          prompt_used?: string | null
+          provider?: string
+          slot?: string | null
+          url?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bilder_produkt_id_fkey"
+            columns: ["produkt_id"]
+            isOneToOne: false
+            referencedRelation: "produkte"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bilder_blog_post_id_fkey"
+            columns: ["blog_post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

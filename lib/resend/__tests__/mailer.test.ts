@@ -46,6 +46,13 @@ const SAMPLE_LEAD: Lead = {
   confluence_synced: true,
   resend_sent: false,
   created_at: '2026-04-07T10:30:00.000Z',
+  convexa_lead_id: null,
+  convexa_synced: false,
+  convexa_error: null,
+  source_url: null,
+  utm_source: null,
+  utm_medium: null,
+  utm_campaign: null,
 }
 
 // Builds a thenable Supabase chain for email_sequenzen queries.

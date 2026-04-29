@@ -157,7 +157,7 @@ describe('TarifRechner — CTA and LeadForm reveal (Step 2)', () => {
       expect(fetchMock).toHaveBeenCalledWith(
         '/api/leads',
         expect.objectContaining({
-          body: expect.stringContaining('"intent_tag":"preis"'),
+          body: expect.stringContaining('"intentTag":"preis"'),
         })
       )
     })

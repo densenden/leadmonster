@@ -1,45 +1,107 @@
 # Product Roadmap
 
-1. [ ] Supabase Schema & Database Foundation — All six database tables (`produkte`, `produkt_config`, `wissensfundus`, `generierter_content`, `leads`, `einstellungen`, `email_sequenzen`) are created in Supabase with correct types, foreign keys, RLS policies, and generated TypeScript types exported to `lib/supabase/types.ts`. `S`
+> Phased delivery plan for LeadMonster. Phases 1–5 are largely complete (per recent commit `Initial LeadMonster-System: vollständige Implementierung aller 19 Specs`). Phases 6–8 define the path forward. See `CLAUDE.md` for the technical contract behind each item.
 
-2. [ ] Next.js Project Setup with Design Tokens — The existing Vite boilerplate is replaced by a Next.js 14+ App Router project; Tailwind CSS is configured with the design token values from `design-tokens/tokens.json` as theme extensions; the `assets/logo.png` and `sterbegeld24plus-recreation/styles.css` Navy/Gold palette are reflected in the token integration. `S`
+---
 
-3. [ ] Admin Authentication (Supabase Auth) — The `/admin` route group is protected by a Supabase Auth session guard in `app/admin/layout.tsx`; a `/admin/login` page allows email/password sign-in; unauthenticated users are redirected to the login page; authenticated sessions persist across page navigations. `S`
+## Phase 1 — Foundation `[Done]`
 
-4. [ ] Knowledge Base Management (Wissensfundus) — The `/admin/wissensfundus` page allows admins to create, edit, and delete knowledge articles with category, topic, content (Markdown), and tags; articles are stored in the `wissensfundus` table and retrievable by category for use in generation prompts. `M`
+Goal: Deliver the runtime, persistence, auth, and design system that everything else builds on.
 
-5. [ ] Product Creation & Configuration Admin UI — The `/admin/produkte/neu` form allows sales staff to enter product name, slug, type (Sterbegeld / Pflege / Leben / Unfall), target audiences (multi-select), sales focus (Sicherheit / Preis / Sofortschutz), and insurer list; data is saved to `produkte` and `produkt_config` tables; the product list at `/admin/produkte` shows all products with their current status. `M`
+1. [x] **Next.js 14 App Router scaffold** — TypeScript strict, design tokens wired into Tailwind config, Nunito Sans + Roboto via `next/font/google`. `M`
+2. [x] **Supabase schema** — `produkte`, `produkt_config`, `wissensfundus`, `generierter_content`, `leads`, `einstellungen`, `email_sequenzen` migrated. `M`
+3. [x] **Supabase Auth** — Admin login route, session guard in `app/admin/layout.tsx`, redirect to `/admin/login` when unauthenticated. `S`
+4. [x] **Design system bring-up** — `design-tokens/tokens.json` aligned to finanzteam26.de brand (cyan #02a9e6, navy #1a3252, orange #f26522); shared `Button`, `Card`, `Badge`, `MonsterLogo` primitives. `S`
+5. [x] **Environment + secrets convention** — `.env.local` wired, `.env.example` committed, no secrets in repo. `XS`
 
-6. [ ] AI Content Generation Engine — The `lib/anthropic/generator.ts` module calls the Claude API (`claude-opus-4-6`) with a structured prompt composed of system role, relevant Wissensfundus entries, product DNA, and sales focus; the `/api/generate` route triggers generation and saves the resulting structured JSON (sections, meta_title, meta_desc, schema_markup) to the `generierter_content` table with status `entwurf`. `L`
+---
 
-7. [ ] Content Preview & Manual Editing — The `/admin/produkte/[id]/content` page renders a visual preview of all generated content sections alongside editable fields; editors can modify any section text and save changes back to the `generierter_content` table; status can be advanced from `entwurf` to `review` to `publiziert` via a status toggle. `M`
+## Phase 2 — Content Engine `[Done]`
 
-8. [ ] Public Landing Page with SSG — The `app/[produkt]/page.tsx` route renders the published `generierter_content` for a product using Next.js `generateStaticParams` and `generateMetadata`; hero, feature grid, trust bar, and lead form sections are rendered from the stored JSON; canonical URLs and Schema.org `InsuranceAgency + Product` JSON-LD are included in the page head. `M`
+Goal: Generate a complete microsite from a 5-field admin form.
 
-9. [ ] FAQ Public Page with Schema Markup — The `app/[produkt]/faq/page.tsx` renders all FAQ items from `generierter_content` with `FAQPage` Schema.org JSON-LD; each question/answer pair is formatted for AEO (direct answer in first sentence); the page has its own `generateMetadata` output with FAQ-specific meta title and description. `S`
+6. [x] **Anthropic Claude integration** — `lib/anthropic/generator.ts` with structured JSON output, Zod schemas in `lib/anthropic/schemas.ts`. Model: `claude-opus-4-6`. `L`
+7. [x] **Admin Produkt-CRUD** — Create / edit / list / archive products; status workflow Entwurf → Review → Publiziert. `M`
+8. [x] **Content generation pipeline** — Generates landing sections, 10 FAQs, 3 Ratgeber articles, comparison data, meta tags, Schema.org markup per product. `L`
+9. [x] **Content preview & manual editor** — Section-by-section preview with persistence of manual edits alongside generated JSON; reset-content escape hatch. `M`
+10. [x] **Wissensfundus admin** — CRUD over reusable insurance domain content with category + theme uniqueness constraint. `S`
 
-10. [ ] Insurer Comparison Page — The `app/[produkt]/vergleich/page.tsx` renders a comparison table of insurers from the product config using `ItemList + Product` Schema.org markup; content is pulled from the `vergleich` section of `generierter_content`; the page ends with a lead form CTA. `S`
+---
 
-11. [ ] Pseudo-Tariff Calculator — The `app/[produkt]/tarife/page.tsx` presents an interactive age + desired-sum input form that returns an illustrative monthly premium range from pre-configured example data; a prominent disclaimer marks the output as indicative; submitting the follow-up form sets the `intent_tag` to `preis` and opens the lead form. `M`
+## Phase 3 — Public Pages (SEO / AEO) `[Done]`
 
-12. [ ] Ratgeber Guide Pages — The `app/[produkt]/ratgeber/[thema]/page.tsx` renders long-form decision guide articles from `generierter_content` with `Article + BreadcrumbList + HowTo` Schema.org markup and `generateMetadata` per article; the admin content page lists all generated guide slugs and allows triggering generation of additional guides. `M`
+Goal: Every microsite is search-engine and AI-assistant ready out of the box.
 
-13. [ ] Lead Form & Lead Capture API — The `LeadForm` component collects Vorname, Nachname, E-Mail, Telefon, and Interesse; on submit it calls `/api/leads` (POST) which validates input with Zod, saves the lead to the `leads` table with product, audience, and intent tags, and returns a success state; the form is embeddable on any public page. `S`
+11. [x] **Dynamic product subsite routes** — `/[produkt]`, `/[produkt]/faq`, `/[produkt]/vergleich`, `/[produkt]/tarife`, `/[produkt]/ratgeber/[thema]`. `L`
+12. [x] **Pseudo-Tarifrechner** — `TarifRechner.tsx` + `CovomoRechner.tsx`, age + sum inputs → ballpark range → lead-form handoff with intent="preis". Vitest coverage. `M`
+13. [x] **Per-product legal pages** — Impressum, Datenschutz, AGB, Kontakt auto-rendered with `LegalText.tsx` and migration `20260409000001_accent_color_legal_pages.sql`. `S`
+14. [x] **SEO infrastructure** — `app/sitemap.ts`, `app/robots.ts`, `lib/seo/schema.ts`, `lib/seo/metadata.ts`; per-page `generateMetadata`. `M`
+15. [x] **AEO infrastructure** — `llms.txt`, AI-crawler-allow `robots.txt`, FAQ direct-answer phrasing enforced in Claude prompts. `S`
+16. [x] **Per-product accent color** — `lib/utils/accent.ts` plus DB column; each microsite renders with its own accent while inheriting the brand. `S`
 
-14. [ ] Confluence CRM Integration — The `/api/leads` route (after saving to Supabase) calls `lib/confluence/client.ts` to create a labeled Confluence page in the configured space with the lead data formatted as a table; credentials are read first from the `einstellungen` table and fall back to `process.env.CONFLUENCE_*`; `confluence_synced` is set to `true` on success. `M`
+---
 
-15. [ ] Resend Email Automation — After a lead is saved and Confluence-synced, `lib/resend/mailer.ts` sends a confirmation email to the prospect and a notification email to the sales team using templates from the `email_sequenzen` table; `resend_sent` is set to `true` on success; failed sends are logged without blocking the lead save. `S`
+## Phase 4 — Lead Flow `[Done]`
 
-16. [ ] Admin Settings Page (Confluence & API Credentials) — The `/admin/einstellungen` page allows admins to view and update Confluence credentials (`base_url`, `email`, `api_token`, `space_key`, `parent_page_id`) stored in the `einstellungen` table; the `api_token` field is masked in the UI and stored encrypted; a test-connection button validates the current credentials. `M`
+Goal: Every form submission becomes a structured CRM record with confirmation + notification, end-to-end.
 
-17. [ ] Admin Lead Overview — The `/admin/leads` page renders a paginated, filterable table of all leads across all products showing name, email, product, intent tag, Confluence sync status, and timestamp; each row links to the corresponding Confluence page; the table is server-rendered with Supabase server client. `S`
+17. [x] **LeadForm component** — Brand-consistent, Zod-validated, embeddable across all microsite pages. `S`
+18. [x] **`/api/leads` endpoint** — Persist to Supabase, sync to Confluence, fire Resend emails, return confirmation. `M`
+19. [x] **Confluence integration** — `lib/confluence/client.ts`; each lead becomes a labeled page under the configured parent; credentials read from `einstellungen` table with `.env` fallback. `M`
+20. [x] **Resend integration** — `lib/resend/mailer.ts`; lead confirmation email + sales notification, customizable via `email_sequenzen`. `S`
+21. [x] **Admin Lead-Inbox** — Lead list with product context and sync status indicators. `S`
 
-18. [ ] SEO Automation (Sitemap, Robots, llms.txt) — `app/sitemap.ts` generates a dynamic `sitemap.xml` covering all published product pages and their sub-routes; `app/robots.ts` produces a `robots.txt` that explicitly allows AI crawlers; `public/llms.txt` provides a structured plain-text description of all published products for LLM crawlers, auto-updated on content publish. `S`
+---
 
-19. [ ] Pilot Product: sterbegeld24plus End-to-End — The `sterbegeld24plus` product is fully configured in the admin, all content sections generated and reviewed, the Navy/Gold design from `sterbegeld24plus-recreation/` is applied via design tokens, the lead flow is tested end-to-end (form submit → Supabase → Confluence page → Resend emails), and the product is set to `publiziert` status. `L`
+## Phase 5 — Pilot Product Live (sterbegeld24plus) `[Done]`
 
-> Notes
-> - Items are ordered by technical dependency: database and auth before UI, core engine before public pages, lead API before integrations, pilot launch last.
-> - Each item represents a complete, testable end-to-end feature (frontend + backend where applicable).
-> - SEO and AEO correctness should be verified at every public page step — do not defer Schema.org or metadata to a later pass.
-> - The `einstellungen` table credential read logic must be in place before Confluence and Resend integrations are tested.
+Goal: Prove the full system end-to-end with the first real product.
+
+22. [x] **Wissensfundus seeding** — `scripts/seed-wissensfundus-expanded.ts` populates Sterbegeld domain content. `S`
+23. [x] **sterbegeld24plus product seed** — `scripts/seed-sterbegeld24plus.ts` creates the product, config, and triggers content generation. `S`
+24. [x] **Web scraper for reference content** — `lib/scraper/` plus admin UI at `app/admin/(protected)/scraper/` and CLI `scripts/scrape-sterbegeld24plus.ts` to ingest reference site content into Wissensfundus. `M`
+25. [x] **End-to-end lead-flow test** — Form submit → Supabase row → Confluence page created → Resend confirmation delivered. `XS`
+
+---
+
+## Phase 6 — Multi-Product Expansion `[Next]`
+
+Goal: Move from one pilot product to a true product portfolio across all four insurance types.
+
+26. [ ] **Pflegezusatzversicherung product launch** — Full product config + Wissensfundus seed + generated microsite reviewed and published. `M`
+27. [ ] **Lebensversicherung product launch** — Full product config + seed + microsite. `M`
+28. [ ] **Unfallversicherung product launch** — Full product config + seed + microsite. `M`
+29. [ ] **Per-product lead routing** — Route Confluence parent page and Resend notification recipients dynamically based on `produkt.id`, configurable in admin Einstellungen. `S`
+30. [ ] **Wissensfundus cross-product reuse audit** — Identify shared themes (e.g. "Was kostet eine Versicherung?") and refactor for reuse across all four product types. `S`
+31. [ ] **Content quality review tooling** — Admin diff view between generated and edited content; flag stale generations for re-run. `M`
+
+---
+
+## Phase 7 — Analytics & Conversion Optimization `[Future]`
+
+Goal: Measure what works and let the sales team iterate without engineering.
+
+32. [ ] **Conversion tracking** — Server-side event tracking for page-view → calculator-use → form-submit funnel; per-product dashboard in admin. `M`
+33. [ ] **A/B testing framework** — Variant column on `generierter_content` plus middleware-based traffic split; admin UI for declaring variants. `L`
+34. [ ] **Lead-quality feedback loop** — Advisors flag lead quality in Confluence; pull labels back into Supabase to weight Claude prompts. `M`
+35. [ ] **AEO performance monitoring** — Track AI-assistant referrals (User-Agent + Referer signals from known LLM crawlers); report which pages surface in AI answers. `M`
+
+---
+
+## Phase 8 — Integrations & Multi-Tenant `[Future]`
+
+Goal: Open LeadMonster beyond Finanzteam 26's internal Confluence-only setup.
+
+36. [ ] **Custom domain per product** — Wire `produkte.domain` column to Vercel domain configuration; per-product canonical URLs. `M`
+37. [ ] **HubSpot CRM connector** — Alternative lead destination alongside Confluence, configurable per product. `M`
+38. [ ] **Salesforce CRM connector** — Same pattern; configurable per product. `M`
+39. [ ] **Generic webhook output** — Allow per-product webhook URLs to receive lead payloads for arbitrary integrations. `S`
+40. [ ] **Multi-tenant isolation** — Tenant column on every table, Supabase RLS policies, separated admin spaces — only if a second client emerges. `XL`
+
+---
+
+> **Notes**
+> - Items are ordered by technical dependency: data model → content engine → public pages → lead flow → pilot → expansion → optimization → integrations.
+> - Each item is intended as an end-to-end (frontend + backend + DB) functional and testable feature, not a sub-task.
+> - Effort scale: `XS` = 1 day, `S` = 2–3 days, `M` = 1 week, `L` = 2 weeks, `XL` = 3+ weeks.
+> - Phases 1–5 reflect the current state of the codebase as of 2026-04-28 (commit `65fc688`). Mark items off as they are verified by automated tests or staging review.

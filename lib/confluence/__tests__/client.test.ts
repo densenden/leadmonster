@@ -50,7 +50,7 @@ function mockDbCreds(overrides: Partial<typeof VALID_CREDS> = {}) {
 }
 
 // Sets up environment variables for the five Confluence keys.
-function setEnvCreds(overrides: Partial<Record<string, string>> = {}) {
+function _setEnvCreds(overrides: Partial<Record<string, string>> = {}) {
   const defaults: Record<string, string> = {
     CONFLUENCE_BASE_URL: 'https://env.atlassian.net',
     CONFLUENCE_EMAIL: 'env@example.com',
@@ -89,6 +89,13 @@ const LEAD_FULL = {
   confluence_synced: false,
   resend_sent: false,
   created_at: '2026-04-07T10:30:00.000Z',
+  convexa_lead_id: null,
+  convexa_synced: false,
+  convexa_error: null,
+  source_url: null,
+  utm_source: null,
+  utm_medium: null,
+  utm_campaign: null,
 }
 
 const LEAD_NULL_FIELDS = {
@@ -105,6 +112,13 @@ const LEAD_NULL_FIELDS = {
   confluence_synced: false,
   resend_sent: false,
   created_at: '2026-04-07T10:30:00.000Z',
+  convexa_lead_id: null,
+  convexa_synced: false,
+  convexa_error: null,
+  source_url: null,
+  utm_source: null,
+  utm_medium: null,
+  utm_campaign: null,
 }
 
 // ---------------------------------------------------------------------------

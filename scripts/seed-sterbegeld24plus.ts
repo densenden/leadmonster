@@ -105,7 +105,8 @@ const PRODUKT = {
   slug: 'sterbegeld24plus',
   name: 'Sterbegeld24Plus',
   typ: 'sterbegeld',
-  status: 'entwurf',
+  status: 'aktiv',
+  accent_color: '#d4af37',
 }
 
 const PRODUKT_CONFIG = {
@@ -511,13 +512,7 @@ async function main() {
     }
   }
 
-  // 7. Set product to aktiv
-  console.log('\n🚀 Step 6: Publishing product…')
-  const { error: statusErr } = await supabase.from('produkte').update({ status: 'aktiv' }).eq('id', produktId)
-  if (statusErr) console.warn('  ⚠️  Could not set product aktiv:', statusErr.message)
-  else console.log('  ✓ Product status → aktiv')
-
-  console.log('\n✅ Done! Visit http://localhost:3001/sterbegeld24plus')
+  console.log('\n✅ Done! Visit http://localhost:3003/sterbegeld24plus')
 }
 
 main().catch(e => { console.error(e); process.exit(1) })

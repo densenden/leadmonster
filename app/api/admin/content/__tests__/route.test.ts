@@ -10,7 +10,7 @@ const mockGetUser = vi.fn()
 const mockUpdate = vi.fn()
 
 // Chainable query builder mock: update().eq().select().single()
-function makeQueryChain(result: { data: unknown; error: unknown }) {
+function _makeQueryChain(result: { data: unknown; error: unknown }) {
   const chain = {
     eq: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),

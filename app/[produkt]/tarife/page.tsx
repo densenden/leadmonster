@@ -109,8 +109,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function TarifePage({ params }: PageProps) {
   const result = await fetchTarifePageData(params.produkt)
 
-  // 404 for unknown slugs or inactive products
-  if (!result || result.produkt.status !== 'aktiv') {
+  // 404 for unknown slugs
+  if (!result) {
     notFound()
   }
 
@@ -144,13 +144,15 @@ export default async function TarifePage({ params }: PageProps) {
           {produkt.name} Tarifrechner
         </h1>
 
-        {/* Two-step calculator client component */}
+        {/* Eigener Tarif-Kalkulator für alle Produkte (Covomo wurde 2026-04 abgeschaltet,
+            wir behalten 100 % Lead- und Tracking-Hoheit). */}
         <TarifRechner
           produktTyp={produkt.typ as ProduktTyp}
           produktName={produkt.name}
           anbieter={config?.anbieter ?? []}
           produktId={produkt.id}
         />
+
 
         {/* Regulatory disclaimer below the calculator */}
         <p className="mt-8 text-xs text-[#999999] text-center max-w-2xl mx-auto">

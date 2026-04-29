@@ -9,6 +9,7 @@ export const produktSchema = z.object({
   slug: z.string().min(2).max(80).regex(/^[a-z0-9-]+$/),
   typ: z.enum(['sterbegeld', 'pflege', 'leben', 'unfall']),
   status: z.enum(['entwurf', 'aktiv', 'archiviert']).optional(),
+  accent_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   zielgruppe: z.array(z.string()).optional(),
   fokus: z.enum(['sicherheit', 'preis', 'sofortschutz']).optional(),
   anbieter: z.array(z.string().min(1)).optional(),

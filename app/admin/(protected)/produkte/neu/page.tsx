@@ -11,7 +11,7 @@ export default function NeuesProduktPage() {
           Neues Produkt anlegen
         </h1>
         <p className="mt-1 text-sm text-[#666666]">
-          Füllen Sie alle Felder aus und klicken Sie auf „Produkt speichern".
+          Füllen Sie alle Felder aus und klicken Sie auf &bdquo;Produkt speichern&ldquo;.
         </p>
       </div>
 

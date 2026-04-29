@@ -12,6 +12,9 @@ const mockRefresh = vi.fn()
 vi.mock('next/navigation', () => ({
   redirect: vi.fn((path: string) => { throw new Error(`REDIRECT:${path}`) }),
   useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+  notFound: vi.fn(),
 }))
 
 vi.mock('next/image', () => ({

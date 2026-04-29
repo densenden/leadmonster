@@ -49,13 +49,13 @@ vi.mock('@/app/admin/einstellungen/actions', () => ({
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeFormData(fields: Record<string, string>): FormData {
+function _makeFormData(fields: Record<string, string>): FormData {
   const fd = new FormData()
   for (const [key, value] of Object.entries(fields)) fd.append(key, value)
   return fd
 }
 
-const VALID_FIELDS = {
+const _VALID_FIELDS = {
   confluence_base_url: 'https://company.atlassian.net',
   confluence_email: 'admin@company.com',
   confluence_api_token: 'secret-token-xyz',

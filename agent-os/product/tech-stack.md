@@ -1,196 +1,159 @@
 # Tech Stack
 
-Complete technical stack for LeadMonster — the AI-powered insurance product website and lead generation system for Finanzteam 26.
+> Comprehensive technology inventory for LeadMonster. This document complements `CLAUDE.md`, which holds the full system specification, schema, and prompt architecture. When choices conflict, `CLAUDE.md` is authoritative.
 
 ---
 
-## Framework & Runtime
+## Architectural Layers
 
-| Layer | Choice | Notes |
+LeadMonster is a single Next.js application that exposes a public, SSR/SSG product microsite per insurance product and a Supabase-Auth-protected admin section for content generation, content review, lead intake, and Wissensfundus management. Persistence is Supabase Postgres; AI content comes from Anthropic Claude; lead intake goes out to Confluence and Resend.
+
+---
+
+## Application & Runtime
+
+| Layer | Choice | Why |
 |---|---|---|
-| Application Framework | Next.js 14+ (App Router) | SSR/SSG required for SEO; `generateStaticParams` for product pages |
-| Language | TypeScript (strict mode) | No `any` types without justification; types generated from Supabase schema |
-| Runtime | Node.js 20+ | Required by Next.js 14+ |
-| Package Manager | npm | Default for this project |
+| Framework | **Next.js 14+ (App Router)** | SSR/SSG required for SEO/AEO; file-based dynamic routes (`[produkt]`); server components by default. |
+| Language | **TypeScript (strict mode)** | Type safety across DB, API, and component boundaries; aligns with global standards. |
+| Runtime | **Node.js (LTS)** | Required by Next.js; matches Vercel default. |
+| Module system | **ESM** | Next.js App Router native. |
+| Package manager | **npm** | `package-lock.json` committed; matches CI default on Vercel. |
 
 ---
 
 ## Frontend
 
-| Layer | Choice | Notes |
+| Layer | Choice | Why |
 |---|---|---|
-| React Version | React 18+ | Server Components preferred for SEO; Client Components only for interactivity |
-| CSS Framework | Tailwind CSS | Extended with design tokens from `design-tokens/tokens.json` as theme config |
-| Design Tokens | `design-tokens/tokens.json` | Source of truth for all colors, typography, spacing |
-| UI Components | Custom components following token system | shadcn/ui (New York style) available for admin UI primitives |
-| State Management | React Context (simple), Zustand (complex admin state), TanStack Query (server state / data fetching) | |
-| Typography | Nunito Sans (body, 300/400), Roboto (headings, 400/700) | Defined in `design-tokens/tokens.json` |
-
-### Design Token Color Palette (from `tokens.json`)
-
-| Token | Hex | Usage |
-|---|---|---|
-| Primary (Brand Blue) | `#abd5f4` | Primary buttons, accents, icons |
-| Secondary / Accent (Brand Orange) | `#ff9651` | Secondary buttons, highlights, CTA indicators |
-| Link Base | `#36afeb` | Anchor text |
-| Link Hover | `#1e85c8` | Anchor hover state |
-| Heading Text | `#333333` | All heading elements |
-| Body Text | `#666666` | Paragraph content |
-| Page Background | `#ffffff` | Default page background |
-| Muted Background | `#f8f8f8` | Section backgrounds |
-| Primary Background | `#e1f0fb` | Highlighted/feature sections |
-| Border Divider | `#e5e5e5` | Dividers, card borders |
-
-Note: The pilot product `sterbegeld24plus` uses a Navy + Gold premium palette from `sterbegeld24plus-recreation/styles.css`. These values are to be added to the design token system as a product-specific theme extension.
+| Rendering | **React Server Components (default)** + Client Components only for interactivity | Maximizes SEO surface; minimizes client JS. |
+| Styling | **Tailwind CSS** | Utility-first; pairs cleanly with design tokens. |
+| Design tokens | **Custom JSON in `design-tokens/tokens.json`** + `tailwind-config-snippet.js` | Single source of truth for color, spacing, type. Aligned with finanzteam26.de brand: cyan `#02a9e6`, navy `#1a3252`, orange `#f26522`. |
+| CSS variables | **Per-product accent via CSS custom properties** | Each product microsite reads its accent color from `lib/utils/accent.ts` and applies it through CSS vars. |
+| Fonts | **Nunito Sans (body) + Roboto (headings)** via `next/font/google` | Matches Finanzteam 26 brand; self-hosted by Next for performance. |
+| Iconography | **Custom SVG components** (`MonsterLogo.tsx`) + static SVGs in `public/icons/` | Brand-specific; no icon library bloat. |
+| Component primitives | **In-house** (`components/ui/Button.tsx`, `Card.tsx`, `Badge.tsx`) | Tight coupling to design tokens; no third-party UI kit. |
 
 ---
 
-## Database & Storage
+## Backend & Data
 
-| Layer | Choice | Notes |
+| Layer | Choice | Why |
 |---|---|---|
-| Database | Supabase (PostgreSQL) | Hosted Postgres; project URL: `https://dwlopmxtiokdvjjowfke.supabase.co` |
-| ORM / Query | Supabase JS client (`@supabase/supabase-js`) | Browser client (`lib/supabase/client.ts`), server client with service role (`lib/supabase/server.ts`) |
-| Type Generation | Supabase CLI (`supabase gen types`) | Types output to `lib/supabase/types.ts` |
-| Row-Level Security | Enabled on all tables | Admin tables protected; `leads` and `generierter_content` write-accessible via service role only |
-
-### Database Tables
-
-| Table | Purpose |
-|---|---|
-| `produkte` | Insurance product registry (slug, name, type, status) |
-| `produkt_config` | Per-product configuration (audience, focus, insurers, arguments) |
-| `wissensfundus` | Knowledge base articles used as AI generation context |
-| `generierter_content` | AI-generated page content stored as structured JSON |
-| `leads` | Lead submissions with CRM sync status |
-| `einstellungen` | System settings including encrypted Confluence credentials |
-| `email_sequenzen` | Email templates and trigger configurations per product |
+| Database | **Supabase (PostgreSQL)** | Managed Postgres with built-in Auth, REST, and Realtime; matches global standard. |
+| Schema migrations | **Supabase migrations** in `supabase/migrations/` | Versioned SQL, replayable. |
+| Auth | **Supabase Auth** | Email/password for admin users; session checked in `app/admin/layout.tsx`. |
+| Server-side DB client | **`lib/supabase/server.ts`** (service role) | Used in API routes and server components. |
+| Browser DB client | **`lib/supabase/client.ts`** (anon key) | Used in admin client components only. |
+| Generated types | **`lib/supabase/types.ts`** | Generated from schema; keeps TS strictness end-to-end. |
+| API routes | **Next.js Route Handlers (`app/api/*/route.ts`)** | Co-located with the app; no separate API server. |
+| Input validation | **Zod** (`lib/validations/*`) | Required by global standards; every API route validates inputs. |
 
 ---
 
-## Authentication
+## Content Generation (AI)
 
-| Layer | Choice | Notes |
+| Layer | Choice | Why |
 |---|---|---|
-| Auth Provider | Supabase Auth | Email/password for admin users |
-| Session Guard | `app/admin/layout.tsx` | Server-side session check; redirects to `/admin/login` if unauthenticated |
-| Public Access | No auth required | All `/[produkt]/*` routes are fully public |
+| LLM | **Anthropic Claude (`claude-opus-4-6`)** | Highest content quality for German-language SEO copy; structured JSON output mode. |
+| Generator module | **`lib/anthropic/generator.ts`** | Encapsulates system prompt, Wissensfundus context assembly, target-group/focus injection, and JSON parse. |
+| Output schemas | **`lib/anthropic/schemas.ts`** (Zod) | Validates Claude's JSON before persisting to `generierter_content`. |
+| Persistence | **`generierter_content` table** (JSONB column) | Structured sections survive prompt evolution; manual edits coexist with generated structure. |
 
 ---
 
-## AI Content Generation
+## Lead Flow & Communications
 
-| Layer | Choice | Notes |
+| Layer | Choice | Why |
 |---|---|---|
-| AI Provider | Anthropic Claude API | Primary content generation engine |
-| Model | `claude-opus-4-6` | Used for all content generation (quality requirement) |
-| Integration | `lib/anthropic/generator.ts` | Structured prompt builder + JSON output parser |
-| Input | Product type + audience + focus + Wissensfundus context | Assembled server-side before API call |
-| Output Format | Structured JSON (`sections[]` array) | Stored in `generierter_content.content` (jsonb) |
-| Trigger | `/api/generate` POST route | Admin-triggered; never public-facing |
+| Lead CRM | **Atlassian Confluence REST API** | Sales team already lives in Confluence; each lead becomes a labeled page under a configured parent. |
+| Confluence client | **`lib/confluence/client.ts`** | Reads credentials from `einstellungen` table first, falls back to `.env`. |
+| Transactional email | **Resend** | Lead confirmation to prospect + notification to sales; modern API, easy DKIM. |
+| Email module | **`lib/resend/mailer.ts`** | Templated emails; per-product overrides via `email_sequenzen` table. |
+| Lead validation | **Zod** | Same validation surface as the rest of the app. |
 
 ---
 
-## Email
+## SEO / AEO Infrastructure
 
-| Layer | Choice | Notes |
+| Layer | Choice | Why |
 |---|---|---|
-| Email Provider | Resend | Transactional email for lead confirmations and sales notifications |
-| Integration | `lib/resend/mailer.ts` | Called from `/api/leads` after lead is saved |
-| Templates | `email_sequenzen` table | HTML body + subject stored per product, trigger type, and delay |
-| Triggers | `form_submit` (immediate), `manual` | `delay_hours` field supports future drip sequences |
+| Per-page metadata | **Next.js `generateMetadata()`** | Dynamic per-product titles, descriptions, OpenGraph. |
+| Sitemap | **`app/sitemap.ts`** | Auto-emitted from DB. |
+| Robots | **`app/robots.ts`** | Explicitly allows AI crawlers (GPTBot, PerplexityBot, ClaudeBot, etc.). |
+| LLM directive | **`llms.txt`** at site root | Describes the system and content scope for AI crawlers. |
+| Structured data | **Schema.org JSON-LD** generated by `lib/seo/schema.ts` | Per page type: `FAQPage`, `Product`, `InsuranceAgency`, `Article`, `BreadcrumbList`, `HowTo`, `ItemList`. |
+| Canonical URLs | **Set on every route via metadata** | Prevents duplicate-content penalties on alternate domains. |
 
 ---
 
-## Lead CRM
+## Auxiliary Services
 
-| Layer | Choice | Notes |
+| Layer | Choice | Why |
 |---|---|---|
-| CRM Platform | Confluence (Atlassian) | Leads created as structured Confluence pages |
-| Integration | `lib/confluence/client.ts` | Confluence REST API v2 |
-| Credential Resolution | DB-first with env fallback | Reads `einstellungen` table first; falls back to `process.env.CONFLUENCE_*` |
-| Page Format | Confluence table with lead fields + labels | Labels: product slug, audience tag, intent tag |
-| Sync Status | `confluence_synced` boolean in `leads` table | Set to `true` after successful page creation |
+| Stock images | **Unsplash API** | Free commercial-use stock photography; no AI image generation. |
+| Web scraping | **Cheerio** in `lib/scraper/` | Server-side HTML parsing; pulls reference content from competitor / source sites into Wissensfundus. Exposed as CLI script (`scripts/scrape-*.ts`) and admin UI (`app/admin/(protected)/scraper/`). |
+| Encryption (settings) | **pgcrypto / Supabase Vault** for `einstellungen.wert` | Confluence API tokens stored encrypted at rest. |
 
 ---
 
-## Images
+## Testing & Quality
 
-| Layer | Choice | Notes |
+| Layer | Choice | Why |
 |---|---|---|
-| Image Source | Unsplash API | Stock photography only; no AI image generation |
-| Integration | Unsplash API key via `UNSPLASH_ACCESS_KEY` | Fetched server-side during content generation |
-| Existing Assets | `assets/logo.png`, `sterbegeld24plus-recreation/assets/hero-bg.jpg` | Used directly; committed to repository |
-
----
-
-## SEO & AEO
-
-| Layer | Choice | Notes |
-|---|---|---|
-| Metadata | Next.js `generateMetadata()` | Dynamic per-route; sourced from `generierter_content` DB fields |
-| Sitemap | `app/sitemap.ts` | Auto-generated; covers all published product routes |
-| Robots | `app/robots.ts` | AI crawlers (`GPTBot`, `PerplexityBot`, etc.) explicitly allowed |
-| LLMs.txt | `public/llms.txt` | Structured plain-text product catalog for LLM crawlers; updated on publish |
-| Structured Data | Schema.org JSON-LD | Per page type: `InsuranceAgency+Product` / `FAQPage` / `ItemList` / `Article+HowTo` |
-| Canonical URLs | Always set | Via `generateMetadata` `alternates.canonical` |
+| Unit / component tests | **Vitest** | Tests live next to components in `__tests__/` (e.g. `components/sections/__tests__/TarifRechner.test.tsx`). |
+| TypeScript checking | **`tsc --noEmit`** | Strict mode enforced in CI. |
+| Linting | **ESLint** (Next.js + TypeScript config) | Standard Next.js preset. |
+| Pre-commit | Local hooks (no `--no-verify` bypasses) | Per global standards. |
 
 ---
 
 ## Deployment & Infrastructure
 
-| Layer | Choice | Notes |
+| Layer | Choice | Why |
 |---|---|---|
-| Hosting | Vercel | Native Next.js deployment; Edge functions for API routes |
-| CI/CD | GitHub Actions | Lint, type check, and build validation on pull requests |
-| Environment Variables | Vercel environment variables (production), `.env.local` (development) | Never committed to repository |
-| Env Template | `.env.example` | Committed with all variable names, empty values |
+| Hosting | **Vercel** | Native Next.js; ISR + Edge Functions; preview deployments per PR. |
+| Database hosting | **Supabase Cloud** | Managed Postgres + Auth + Storage. |
+| Domain & DNS | **Vercel Domains** (managed) + per-product custom domain (Phase 8) | Each product can later get its own domain via the `produkte.domain` column. |
+| Secrets | **Vercel env vars** for build/runtime + **Supabase `einstellungen` table** for in-app rotatable secrets | API tokens (Confluence) can be rotated without redeploy. |
+| Logs | **Vercel runtime logs** + **Supabase logs** | No third-party log aggregator yet. |
 
 ---
 
-## Input Validation
+## Environment Variables
 
-| Layer | Choice | Notes |
-|---|---|---|
-| Schema Validation | Zod | All API route inputs validated with Zod schemas before processing |
-| TypeScript | Strict mode | `tsc --noEmit` run in CI |
-| Linting | ESLint + Prettier | Auto-format on save; errors block commits |
+All managed in `.env.local` (local) and Vercel (production). See `CLAUDE.md` for the canonical list. Categories:
 
----
+- **Anthropic:** `ANTHROPIC_API_KEY`
+- **Supabase:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- **Resend:** `RESEND_API_KEY`
+- **Confluence:** `CONFLUENCE_BASE_URL`, `CONFLUENCE_EMAIL`, `CONFLUENCE_API_TOKEN`, `CONFLUENCE_SPACE_KEY`, `CONFLUENCE_PARENT_PAGE_ID` (each overridable from the `einstellungen` DB table)
+- **Unsplash:** `UNSPLASH_ACCESS_KEY`
 
-## Testing
-
-| Layer | Choice | Notes |
-|---|---|---|
-| Unit Tests | Vitest | Utility functions, content generators, Zod schemas |
-| End-to-End Tests | Playwright | Critical flows: admin product creation, lead form submission, Confluence sync |
-| Test Coverage Priority | Lead flow, content generation pipeline, auth guard | These are the highest-risk paths |
+`.env.example` is committed; real values never are.
 
 ---
 
-## Environment Variables Reference
+## Conventions Cross-Reference
 
-```
-# Anthropic
-ANTHROPIC_API_KEY=
+| Concern | Source of truth |
+|---|---|
+| Coding style | `agent-os/standards/global/coding-style.md` |
+| Comments | `agent-os/standards/global/commenting.md` |
+| Naming / file conventions | `agent-os/standards/global/conventions.md` |
+| Error handling | `agent-os/standards/global/error-handling.md` |
+| Validation | `agent-os/standards/global/validation.md` |
+| Brand compliance | `agent-os/standards/global/brand-compliance.md` |
+| Tech stack defaults | `agent-os/standards/global/tech-stack.md` |
+| System spec | `CLAUDE.md` (root) |
 
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://dwlopmxtiokdvjjowfke.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+---
 
-# Resend
-RESEND_API_KEY=
+## Out of Scope (Explicitly Not Used)
 
-# Confluence
-CONFLUENCE_BASE_URL=
-CONFLUENCE_EMAIL=
-CONFLUENCE_API_TOKEN=
-CONFLUENCE_SPACE_KEY=
-CONFLUENCE_PARENT_PAGE_ID=
-
-# Unsplash
-UNSPLASH_ACCESS_KEY=
-```
-
-All values managed via Vercel environment variables in production. Locally via `.env.local` (gitignored).
+- **AI image generation** — Stock photos only (Unsplash); brand-illustrative SVGs in-house.
+- **Headless CMS** (Sanity, Contentful, Strapi, etc.) — Replaced by `generierter_content` JSONB + admin Content Preview.
+- **Third-party UI libraries** (MUI, Chakra, shadcn) — Custom primitives bound to design tokens.
+- **External CSS-in-JS** (styled-components, Emotion) — Tailwind only.
+- **Live tariff rate engines** — Pseudo-Tarifrechner with disclaimer; goal is conversion, not real quoting.
+- **Multi-tenant infrastructure** — Single tenant (Finanzteam 26) until Phase 8 demand emerges.

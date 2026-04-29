@@ -1,18 +1,26 @@
 # LeadMonster — CLAUDE.md
 
-Vollständige Systembeschreibung für KI-gestützten Aufbau des LeadMonster-Systems für Finanzteam 26.
+Vollständige Systembeschreibung für die KI-gestützte Weiterentwicklung von LeadMonster für **finanzteam26**.
+
+> **Stand: 2026-04-29** — Diese Version ersetzt das frühere Confluence/HubSpot-Setup. Lead-CRM ist jetzt **Convexa** (https://app.convexa.app), Bilder werden mit **OpenAI gpt-image-1** erzeugt, Tarife kommen aus der eigenen DB-Tabelle, das Covomo-iframe ist abgeschaltet.
 
 ---
 
 ## Vision & Kontext
 
-**LeadMonster** ist ein skalierbares Vertriebs-Content-System für Versicherungsprodukte.
+**LeadMonster** ist ein skalierbares SEO/AEO-Vertriebs-Content-System für Versicherungsprodukte.
 
-**Problem bisher:** Jedes Versicherungsprodukt = manuelles Einzelprojekt. Kein System, keine Skalierung.
+**Problem bisher:** Jedes Versicherungsprodukt = manuelles Einzelprojekt. Drittanbieter-Rechner (Covomo) lieferten Tarife, aber Leads liefen über deren Tracking — wir hatten keine eigene SEO-/GEO-/Lead-Hoheit.
 
-**Ziel:** Ein Admin-System, bei dem der Vertrieb Produkt + Zielgruppe + Fokus eingibt — und automatisch eine vollständige, SEO- und AEO-optimierte Produktwebsite mit Landingpages, FAQs, Vergleichen und Leadformularen entsteht.
+**Ziel:** Ein Admin-System, in dem Vertrieb Produkt + Zielgruppe + Fokus eingibt — und automatisch eine vollständige, SEO/AEO-optimierte Produktwebsite mit Landingpages, Tarif-Kalkulator, FAQs, Vergleichen, Ratgeber-Artikeln, Hero-/Inhaltsbildern und Lead-Formular entsteht. Leads landen direkt in **Convexa**.
 
-**Pilot-Produkt:** `sterbegeld24plus` — dessen Content in `/sterbegeld24plus-recreation/` als Referenz dient.
+**Pilot-Produkt:** `sterbegeld24plus` — Referenz-Design liegt in `/sterbegeld24plus-recreation/`. Optisch orientiert sich das System grundsätzlich an `https://finanzteam26.de/`.
+
+**Vier weitere Produkte stehen als nächstes an:**
+1. Pflegezusatzversicherung (`pflege`)
+2. Risikolebensversicherung (`leben`)
+3. Berufsunfähigkeitsversicherung (`bu` — neu eingeführt 2026-04-29)
+4. Unfallversicherung (`unfall`)
 
 ---
 
@@ -20,469 +28,405 @@ Vollständige Systembeschreibung für KI-gestützten Aufbau des LeadMonster-Syst
 
 | Schicht | Technologie | Warum |
 |---|---|---|
-| Framework | **Next.js 14+ (App Router)** | SSR/SSG zwingend für SEO |
-| Styling | **Tailwind CSS** + Design Tokens | Tokens in `/design-tokens/tokens.json` |
-| Datenbank | **Supabase (PostgreSQL)** | Produkt-Konfigurationen, Leads, Content |
-| Auth | **Supabase Auth** | Admin-Bereich absichern |
-| KI-Texte | **Anthropic Claude API** | Modell: `claude-opus-4-6` für Content-Qualität |
-| E-Mail | **Resend** | Lead-Bestätigungen, Admin-Notifications |
-| Lead-CRM | **Confluence API** | Leads aus Formularen als Confluence-Pages |
-| Bilder | **Stock-Photos** (Unsplash API o.ä.) | Keine KI-Bildgenerierung |
-| Deployment | **Vercel** | Next.js nativ, Edge-Funktionen |
+| Framework | **Next.js 14 App Router** | SSR/SSG zwingend für SEO |
+| Styling | **Tailwind CSS** + Design-Tokens (`/design-tokens/tokens.json`) | Konsistenz mit finanzteam26-Brand |
+| Datenbank | **Supabase (PostgreSQL)** | Produkte, Leads, Content, Tarife, Blog, Bilder |
+| Auth | **Supabase Auth** | Admin-Bereich |
+| KI-Texte | **Anthropic Claude API** (`claude-opus-4-6`) | Content-Qualität für SEO/AEO |
+| KI-Bilder | **OpenAI Images API** (`gpt-image-1`) | Hero- + Inline-Bilder pro Seite |
+| E-Mail | **Resend** | Lead-Bestätigungen + Vertriebs-Notifications |
+| **Lead-CRM** | **Convexa** (https://app.convexa.app) | Ersetzt Confluence/HubSpot |
+| Stock-Bilder (Fallback) | **Unsplash API** | nur wenn KI-Bild nicht greift |
+| Deployment | **Vercel** | Next.js-nativ |
+
+> ⚠️ **Confluence/HubSpot sind abgeschaltet.** Code-Reste (`lib/confluence/*`) bleiben im Repo, bis Convexa-Anbindung live ist; danach werden sie entfernt.
 
 ---
 
 ## Umgebungsvariablen
 
-Alle Secrets ausschliesslich in `.env.local` (nie in Git):
+Alle Secrets ausschließlich in `.env.local` (nie in Git):
 
 ```
-# Anthropic
+# Anthropic (Texte)
 ANTHROPIC_API_KEY=
 
+# OpenAI (Bilder)
+OPENAI_API_KEY=
+
 # Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://dwlopmxtiokdvjjowfke.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SECRET_KEY=
+DATABASE_URL=
 
 # Resend
 RESEND_API_KEY=
+RESEND_FROM_ADDRESS=
+SALES_NOTIFICATION_EMAIL=
 
-# Confluence
-CONFLUENCE_BASE_URL=
-CONFLUENCE_EMAIL=
-CONFLUENCE_API_TOKEN=
-CONFLUENCE_SPACE_KEY=
-CONFLUENCE_PARENT_PAGE_ID=
+# Convexa CRM (API-Doku ausstehend → /docs/convexa-api-anfrage.md)
+CONVEXA_BASE_URL=https://app.convexa.app
+CONVEXA_API_TOKEN=
+CONVEXA_WORKSPACE_ID=
 
-# Unsplash (Stock-Bilder)
+# Public
+NEXT_PUBLIC_BASE_URL=https://finanzteam26.de
+INTERNAL_SECRET=
+
+# Optional Stock-Fallback
 UNSPLASH_ACCESS_KEY=
 ```
 
-`.env.example` mit diesen leeren Keys ins Repo committen.
+`.env.example` mit leeren Keys ist commit-sicher.
 
 ---
 
-## System-Architektur (4 Ebenen)
+## System-Architektur (5 Ebenen)
 
 ```
-1. WISSENSFUNDUS          →    2. PRODUKT-DNA
-   Versicherungslogik,             z.B. Sterbegeld, Pflege,
-   allg. Fach-Content              Lebensversicherung
-        ↓                                ↓
-3. VERTRIEBSSTEUERUNG     →    4. CONTENT ENGINE
-   Zielgruppe + Fokus               Seiten + Texte generieren
-   (Admin-Eingabe)                  SEO-Struktur + Formulare
-```
-
----
-
-## Datenbankschema (Supabase PostgreSQL)
-
-### Tabelle: `produkte`
-```sql
-id            uuid primary key default gen_random_uuid()
-slug          text unique not null          -- z.B. "sterbegeld24plus"
-name          text not null                 -- z.B. "Sterbegeld24Plus"
-typ           text not null                 -- sterbegeld | pflege | leben | unfall
-status        text default 'entwurf'        -- entwurf | aktiv | archiviert
-domain        text                          -- optional: eigene Domain später
-created_at    timestamp default now()
-updated_at    timestamp default now()
-```
-
-### Tabelle: `produkt_config`
-```sql
-id            uuid primary key default gen_random_uuid()
-produkt_id    uuid references produkte(id) on delete cascade
-zielgruppe    text[]                         -- ["senioren_50plus", "familien"]
-fokus         text                           -- sicherheit | preis | sofortschutz
-anbieter      text[]                         -- Liste der Versicherer
-argumente     jsonb                          -- Key-Selling-Points als JSON
-```
-
-### Tabelle: `wissensfundus`
-```sql
-id            uuid primary key default gen_random_uuid()
-kategorie     text not null                  -- produkt-typ als Kategorie
-thema         text not null                  -- z.B. "was_ist_sterbegeld"
-inhalt        text not null                  -- Fach-Content, Markdown
-tags          text[]
-```
-
-### Tabelle: `generierter_content`
-```sql
-id            uuid primary key default gen_random_uuid()
-produkt_id    uuid references produkte(id) on delete cascade
-page_type     text not null                  -- hauptseite | faq | vergleich | ratgeber | tarif
-slug          text                           -- URL-Segment
-title         text
-meta_title    text                           -- SEO max 60 Zeichen
-meta_desc     text                           -- SEO max 160 Zeichen
-content       jsonb                          -- strukturierter Content (Sektionen)
-schema_markup jsonb                          -- Schema.org JSON-LD
-status        text default 'entwurf'         -- entwurf | review | publiziert
-generated_at  timestamp default now()
-published_at  timestamp
-```
-
-### Tabelle: `leads`
-```sql
-id                  uuid primary key default gen_random_uuid()
-produkt_id          uuid references produkte(id)
-vorname             text
-nachname            text
-email               text not null
-telefon             text
-interesse           text                     -- Freitext oder Auswahl
-zielgruppe_tag      text                     -- aus Produkt-Config
-intent_tag          text                     -- sicherheit | preis | sofortschutz
-confluence_page_id  text                     -- ID der erstellten Confluence-Page
-confluence_synced   boolean default false
-resend_sent         boolean default false
-created_at          timestamp default now()
-```
-
-### Tabelle: `einstellungen`
-```sql
-id            uuid primary key default gen_random_uuid()
-schluessel    text unique not null               -- z.B. "confluence_base_url"
-wert          text                               -- verschlüsselt gespeichert (sensible Keys)
-beschreibung  text
-updated_at    timestamp default now()
-updated_by    uuid references auth.users(id)
-```
-
-Confluence-Credentials werden hier gespeichert und überschreiben die `.env`-Fallbacks:
-- `confluence_base_url`
-- `confluence_email`
-- `confluence_api_token` ← verschlüsselt (AES via Supabase Vault oder pgcrypto)
-- `confluence_space_key`
-- `confluence_parent_page_id`
-
-**Lese-Logik in `lib/confluence/client.ts`:**
-1. Erst DB-Tabelle `einstellungen` prüfen
-2. Fallback: `process.env.CONFLUENCE_*`
-
-### Tabelle: `email_sequenzen`
-```sql
-id            uuid primary key default gen_random_uuid()
-produkt_id    uuid references produkte(id)
-trigger       text                           -- form_submit | manual
-betreff       text
-html_body     text
-delay_hours   integer default 0
-aktiv         boolean default true
+1. WISSENSFUNDUS (DB + MD-Editor)
+   Versicherungslogik, allg. Fach-Content, alte finanzteam26-Blog-Inhalte
+        ↓
+2. PRODUKT-DNA (produkte + produkt_config)
+   z. B. sterbegeld, pflege, leben, bu, unfall
+        ↓
+3. VERTRIEBSSTEUERUNG (Admin-Eingabe)
+   Zielgruppe + Fokus (Sicherheit / Preis / Sofortschutz)
+        ↓
+4. CONTENT ENGINE (Claude + OpenAI Image)
+   Pro Seite: Texte (JSON-Sektionen) + Hero-Bild + Inline-Bilder
+   Auto-Cross-Linking auf Wissensfundus-Slugs
+        ↓
+5. LEAD-FLOW (Supabase + Convexa + Resend)
+   Formular → Supabase → Convexa-Push → Bestätigungs-Mail
 ```
 
 ---
 
-## Dateistruktur (Next.js App Router)
+## Datenbankschema (Supabase / PostgreSQL)
+
+Stand nach Migration `20260429000000_convexa_blog_tarife_bu.sql`.
+
+### `produkte`
+- `id` uuid PK
+- `slug` text UNIQUE
+- `name` text
+- `typ` text — **`'sterbegeld' | 'pflege' | 'leben' | 'unfall' | 'bu'`**
+- `status` text — `entwurf | aktiv | archiviert`
+- `domain` text
+- `hero_image_url` text — KI-generiert
+- `hero_image_alt` text
+- `og_image_url` text
+- `short_pitch` text — 2-3-Satz-Definition für AEO
+
+### `produkt_config`
+- `produkt_id` uuid FK
+- `zielgruppe` text[]
+- `fokus` text — `sicherheit | preis | sofortschutz`
+- `anbieter` text[]
+- `argumente` jsonb
+
+### `wissensfundus`
+- `id` uuid PK
+- `kategorie` text — Produkttyp oder `'allgemein'`
+- `thema` text
+- `inhalt` text — Markdown, vom Admin editierbar
+- `slug` text UNIQUE — für Auto-Cross-Linking auf `/wissen/{slug}`
+- `link_phrases` text[] — Trigger-Begriffe, die der Generator zu Cross-Links umbaut
+- `tags` text[]
+- `published` boolean
+
+### `generierter_content`
+- `produkt_id` uuid FK
+- `page_type` — `hauptseite | faq | vergleich | tarif | ratgeber`
+- `slug` (für Ratgeber)
+- `title`, `meta_title`, `meta_desc`
+- `content` jsonb — strukturierte Sektionen
+- `schema_markup` jsonb — Schema.org JSON-LD
+- `status` — `entwurf | review | publiziert`
+
+### `tarife` (NEU – ersetzt statisches `lib/tarif-data.ts`)
+- `produkt_id` uuid FK
+- `alter_von`, `alter_bis` int
+- `summe` int — Versicherungssumme oder BU-Monatsrente
+- `beitrag_low`, `beitrag_high` numeric — monatlich
+- `einheit` text — `eur_summe | eur_monat`
+
+### `blog_posts` (NEU)
+- `id` uuid PK
+- `slug` text UNIQUE
+- `title`, `excerpt`, `content_md` (Markdown, editierbar)
+- `cover_image_url`, `cover_image_alt`
+- `meta_title`, `meta_desc`, `schema_markup` jsonb
+- `kategorien` text[], `tags` text[]
+- `produkt_id` FK (optional)
+- `status` — `entwurf | review | publiziert`
+- `source_url`, `source_origin` — z. B. `'finanzteam26'` für reimportierte Beiträge
+- `author`, `reading_time`, `published_at`
+
+### `bilder` (NEU)
+- `produkt_id` / `blog_post_id` FK
+- `page_type`, `slot` (`hero | feature | inline | og`)
+- `url`, `alt_text`, `prompt_used`
+- `provider` — `openai | replicate | unsplash | manual`
+- `width`, `height`
+
+### `leads` (erweitert)
+- bestehende Felder
+- **`convexa_lead_id`** text
+- **`convexa_synced`** boolean
+- `convexa_error` text
+- `source_url`, `utm_source`, `utm_medium`, `utm_campaign`
+- (Confluence-Felder bleiben bis zur finalen Convexa-Migration)
+
+### `einstellungen`
+Verschlüsselte Schlüssel werden hier gespeichert. Reihen für Convexa, OpenAI, Image-Provider sind via Migration registriert.
+
+### `email_sequenzen`
+unverändert.
+
+---
+
+## Dateistruktur
 
 ```
 /
 ├── app/
-│   ├── layout.tsx                    # Root Layout, Global SEO defaults
-│   ├── page.tsx                      # Startseite (Produktübersicht)
+│   ├── page.tsx                          # Startseite (alle aktiven Produkte)
+│   ├── blog/                             # NEU
+│   │   ├── page.tsx                      # Blog-Übersicht
+│   │   └── [slug]/page.tsx               # Einzelartikel
+│   ├── wissen/                           # NEU — öffentliche Wissensbasis
+│   │   ├── page.tsx
+│   │   └── [slug]/page.tsx
 │   │
-│   ├── [produkt]/                    # Dynamische Produktrouten
-│   │   ├── page.tsx                  # Haupt-Landingpage
-│   │   ├── faq/page.tsx              # FAQ (FAQ-Schema)
-│   │   ├── vergleich/page.tsx        # Vergleichslogik
-│   │   ├── tarife/page.tsx           # Pseudo-Tarifrechner
-│   │   └── ratgeber/
-│   │       └── [thema]/page.tsx      # Entscheidungs-Guides
+│   ├── [produkt]/
+│   │   ├── page.tsx                      # Hauptseite
+│   │   ├── faq/page.tsx
+│   │   ├── vergleich/page.tsx
+│   │   ├── tarife/page.tsx               # eigener Kalkulator (kein Covomo mehr)
+│   │   └── ratgeber/[thema]/page.tsx
 │   │
-│   ├── admin/                        # Geschützter Admin-Bereich
-│   │   ├── layout.tsx                # Auth-Guard
-│   │   ├── page.tsx                  # Dashboard
-│   │   ├── produkte/
-│   │   │   ├── page.tsx              # Produktliste
-│   │   │   ├── neu/page.tsx          # Neues Produkt anlegen
-│   │   │   └── [id]/
-│   │   │       ├── page.tsx          # Produkt bearbeiten
-│   │   │       └── content/page.tsx  # Content generieren/reviewen
-│   │   ├── leads/page.tsx            # Lead-Übersicht
-│   │   ├── wissensfundus/page.tsx    # Wissensdatenbank pflegen
-│   │   └── einstellungen/page.tsx    # Confluence-Account + API-Credentials ändern
+│   ├── admin/
+│   │   ├── produkte/                     # Produkt-CRUD + Content-Generierung
+│   │   ├── leads/                        # Lead-Übersicht + Convexa-Sync-Status
+│   │   ├── wissensfundus/                # MD-Editor
+│   │   ├── blog/                         # NEU — Blog-MD-CRUD
+│   │   ├── tarife/                       # NEU — Tarif-Tabelle pflegen
+│   │   ├── bilder/                       # NEU — Bilder-Bibliothek
+│   │   └── einstellungen/                # Convexa-Credentials etc.
 │   │
 │   └── api/
-│       ├── generate/route.ts         # Claude Content-Generierung
-│       ├── leads/route.ts            # Lead-Eingang + Confluence + Resend
-│       ├── confluence/route.ts       # Confluence-Sync
-│       └── admin/
-│           ├── produkte/route.ts
-│           └── content/route.ts
+│       ├── generate/                     # Texte (Claude)
+│       ├── generate-image/               # NEU — Bilder (OpenAI gpt-image-1)
+│       ├── leads/                        # Lead-Eingang → Supabase → Convexa
+│       ├── convexa/                      # NEU — Adapter für Convexa-API
+│       │   ├── push/route.ts             # Push einzelner Lead
+│       │   └── webhook/route.ts          # Convexa-Inbound (falls so vereinbart)
+│       └── seo/llms/route.ts             # llms.txt
 │
 ├── components/
-│   ├── ui/                           # Atomare UI-Komponenten (Design Tokens)
-│   │   ├── Button.tsx
-│   │   ├── Card.tsx
-│   │   └── Badge.tsx
-│   ├── sections/                     # Seitenabschnitte (wiederverwendbar)
-│   │   ├── Hero.tsx
-│   │   ├── FeatureGrid.tsx
-│   │   ├── TrustBar.tsx
-│   │   ├── FAQ.tsx
-│   │   ├── Vergleich.tsx
-│   │   ├── TarifRechner.tsx          # Pseudo-Rechner für Conversion
-│   │   └── LeadForm.tsx
+│   ├── ui/                               # Atoms
+│   ├── sections/                         # Hero, FeatureGrid, FAQ, Vergleich, TarifRechner, LeadForm
+│   │                                     # (CovomoRechner wurde entfernt)
+│   ├── blog/                             # NEU — BlogCard, MarkdownRenderer
 │   └── admin/
-│       ├── ProduktForm.tsx
-│       ├── ContentPreview.tsx
-│       └── LeadTable.tsx
 │
 ├── lib/
 │   ├── supabase/
-│   │   ├── client.ts                 # Browser-Client
-│   │   └── server.ts                 # Server-Client (Service Role)
 │   ├── anthropic/
-│   │   └── generator.ts              # Content-Generierungs-Prompts
-│   ├── confluence/
-│   │   └── client.ts                 # Lead als Confluence-Page anlegen
+│   │   ├── generator.ts                  # Texte
+│   │   ├── prompt-builder.ts
+│   │   └── schemas.ts
+│   ├── openai/                           # NEU
+│   │   └── image-generator.ts            # gpt-image-1
+│   ├── convexa/                          # NEU — ersetzt lib/confluence
+│   │   ├── client.ts                     # Lead-Push, Auth, Mapping
+│   │   └── types.ts
+│   ├── confluence/                       # DEPRECATED — wird entfernt
+│   ├── linker/                           # NEU — Auto-Cross-Linking
+│   │   └── auto-link.ts
+│   ├── markdown/                         # NEU
+│   │   └── render.ts                     # MD → React (Server-Component-safe)
+│   ├── seo/
 │   ├── resend/
-│   │   └── mailer.ts                 # E-Mail-Versand
-│   └── seo/
-│       ├── schema.ts                 # Schema.org JSON-LD Generator
-│       └── metadata.ts               # Next.js Metadata Generator
+│   └── tarife/                           # NEU — DB-basierte Tarif-Lookups (löst lib/tarif-data.ts ab)
+│       └── lookup.ts
 │
-├── design-tokens/                    # BESTEHEND — nicht löschen
-│   ├── tokens.json
-│   └── tailwind-config-snippet.js
+├── scripts/
+│   ├── seed-wissensfundus.ts             # NEU — seedt MD-Dateien aus /wissensfundus-seeds/
+│   ├── seed-tarife.ts                    # NEU — seedt Tarife pro Produkt
+│   └── import-finanzteam26-blog.ts       # NEU — alte HTML → blog_posts (sobald Egress freigeschaltet)
 │
-├── sterbegeld24plus-recreation/      # BESTEHEND — Referenz-Content
-│   ├── assets/hero-bg.jpg
-│   └── styles.css
+├── wissensfundus-seeds/                  # NEU — editierbare MD-Files je Thema
+│   ├── allgemein/
+│   ├── sterbegeld/
+│   ├── pflege/
+│   ├── leben/
+│   ├── bu/
+│   └── unfall/
 │
-└── assets/
-    └── logo.png                      # BESTEHEND
+├── docs/
+│   └── convexa-api-anfrage.md            # E-Mail-Vorlage an Convexa-Support
+│
+├── design-tokens/                        # bestehend
+├── sterbegeld24plus-recreation/          # Referenz-Content für Pilot
+└── supabase/migrations/
 ```
 
 ---
 
-## SEO & AEO Strategie (höchste Priorität)
+## SEO / AEO / GEO (höchste Priorität)
 
-**SEO = klassische Suchmaschinen, AEO = KI-Suche (ChatGPT, Perplexity, Gemini)**
+**SEO** = klassische Suche · **AEO** = KI-Antworten (ChatGPT, Perplexity, Gemini) · **GEO** = Generative Engine Optimization (Erwähnung in LLM-Outputs).
 
-### Technisches SEO
-- Next.js `generateMetadata()` für jede Route, dynamisch aus DB
-- `sitemap.xml` auto-generiert via `app/sitemap.ts`
-- `robots.txt` via `app/robots.ts` — AI-Crawler explizit erlauben
-- `llms.txt` im Root — strukturierte Beschreibung für LLM-Crawler
-- Canonical URLs immer gesetzt
-- Strukturierte Daten (Schema.org) für jede Seite als JSON-LD
+### Pflicht pro Produktseite
+- `generateMetadata()` aus `generierter_content`
+- Schema.org JSON-LD (Insurance / FAQ / Product / BreadcrumbList / HowTo / Article)
+- Hero startet mit 2-3-Satz-Definition (`produkte.short_pitch`)
+- FAQs im Frage-User-Wording, Antwort im 1. Satz
+- Auto-Cross-Links zu Wissensfundus-Einträgen (`/wissen/<slug>`)
+- Cover-/Hero-Bild mit echtem `alt`-Text (vom Generator gesetzt)
 
-### Schema.org pro Seitentyp
-```
-Hauptseite    →  InsuranceAgency + Product + BreadcrumbList
-FAQ           →  FAQPage (jede Frage als Question + Answer)
-Vergleich     →  ItemList + Product
-Ratgeber      →  Article + BreadcrumbList + HowTo
-```
-
-### AEO — Optimierung für KI-Antworten
-- Jede Seite beginnt mit einer klaren 2-3 Satz Definition ("Was ist X?")
-- FAQs im Format: Frage exakt wie User sie stellen würde + direkte Antwort im 1. Satz
-- Klare Entitäten: Produktname, Anbieter, Zielgruppe immer explizit benannt
-- `llms.txt` Datei beschreibt das gesamte System für LLM-Crawler
-- Kein Marketing-Jargon in Headings — direkte, informative H-Tags
-
-### URL-Struktur
-```
-/sterbegeld24plus                          Hauptseite
-/sterbegeld24plus/faq                      FAQ
-/sterbegeld24plus/vergleich                Vergleich Anbieter
-/sterbegeld24plus/tarife                   Tarifrechner
-/sterbegeld24plus/ratgeber/was-ist-das     Ratgeber-Artikel
-/sterbegeld24plus/ratgeber/fuer-wen        Zielgruppen-Guide
-```
+### Globale Pflicht
+- `app/sitemap.ts` enthält alle Produkte + Blog + Wissen
+- `app/robots.ts` erlaubt KI-Crawler explizit (GPTBot, ClaudeBot, PerplexityBot, Google-Extended)
+- `app/api/seo/llms/route.ts` liefert `llms.txt`
 
 ---
 
-## KI-Content-Generierung (Anthropic Claude)
+## KI-Content-Generierung
 
-### Pipeline
+### Texte (Anthropic Claude)
+Pipeline und Prompt-Schichten siehe `lib/anthropic/prompt-builder.ts`. Der Generator wird erweitert um:
+- Aufruf der Bild-Pipeline pro Sektion mit Slot-Bedarf
+- Aufruf des Auto-Linkers vor dem DB-Write (injiziert `<a href="/wissen/...">` Anker in Body-Texte)
+- Erzeugung von **Blog-Beiträgen** (separater Generator, schreibt in `blog_posts`)
 
-```
-Admin gibt ein:                    Claude generiert:
-  Produkt-Typ                  →    Wissensfundus-Content
-  + Zielgruppe                 →    Zielgruppen-spezifischer Ton
-  + Fokus (Sicherheit/Preis)   →    Passende Argumente + CTAs
-  + Anbieter                   →    Vergleichstabelle
-                               →    10 FAQs
-                               →    3 Ratgeber-Artikel
-                               →    Meta-Titles + Descriptions
-                               →    Schema.org Markup
-```
-
-### Prompt-Architektur (`lib/anthropic/generator.ts`)
-
-Jede Generierungsfunktion erhält:
-1. **System-Prompt:** Rolle (dt. SEO-Texter für Versicherungen), Ton, AEO-Regeln
-2. **Wissensfundus-Kontext:** Relevante Einträge aus DB per Kategorie
-3. **Produkt-DNA:** Typ, Anbieter, USPs
-4. **Vertriebssteuerung:** Zielgruppe, Fokus
-5. **Output-Format:** Strukturiertes JSON (nie Markdown direkt)
-
-### Content-Output-Format (JSON in DB)
-```json
-{
-  "sections": [
-    {
-      "type": "hero",
-      "headline": "...",
-      "subline": "...",
-      "cta_text": "Jetzt Angebot anfordern",
-      "cta_anchor": "#formular"
-    },
-    {
-      "type": "features",
-      "items": [{ "icon": "shield", "title": "...", "text": "..." }]
-    },
-    {
-      "type": "faq",
-      "items": [{ "frage": "...", "antwort": "..." }]
-    }
-  ]
-}
-```
+### Bilder (OpenAI gpt-image-1)
+- `lib/openai/image-generator.ts` → `generateImage({ prompt, size, slot })`
+- Generierte Bilder werden in **Supabase Storage** abgelegt, URL + Prompt in `bilder` gespeichert
+- Default-Größen: Hero 1792×1024, Inline 1024×1024, OG 1200×630
+- Stil-Guard im Prompt: „professionell, deutsch, photorealistisch, ruhige Farben, keine Text-Einblendungen"
 
 ---
 
-## Admin-Bereich
+## Auto-Cross-Linking
 
-### Produkt anlegen — Workflow
-1. Name + Slug eingeben
-2. Produkttyp wählen (Sterbegeld / Pflege / Lebensversicherung / Unfall)
-3. Zielgruppe definieren (Multi-Select: Senioren 50+, Familien, Alleinstehende...)
-4. Fokus setzen: Sicherheit | Preis | Sofortschutz
-5. Anbieter eintragen (Liste)
-6. **"Content generieren"** — Claude API wird aufgerufen
-7. Preview + manuelle Nachbearbeitung möglich
-8. Status: Entwurf → Review → Publiziert
-
-### Admin-Routen absichern
-- Supabase Auth Session prüfen in `app/admin/layout.tsx`
-- Kein öffentlicher Zugang ohne Login
-- Redirect zu `/admin/login` wenn keine Session
+Im Wissensfundus pflegt der Admin pro Eintrag `link_phrases` (z. B. `["Sterbegeld", "Bestattungsvorsorge"]`). Der Generator (und der Blog-Editor beim Save) ersetzt diese Phrasen in Body-Texten durch Markdown-Links auf `/wissen/{slug}`. Mehrfach-Vorkommen werden nur einmal pro Sektion verlinkt. Implementierung: `lib/linker/auto-link.ts`.
 
 ---
 
-## Lead-Flow (Confluence als CRM)
+## Tarif-Kalkulator (eigener)
 
-### Wenn ein Lead-Formular abgesendet wird:
+Covomo-iframe ist entfernt. Statt dessen:
+- **`tarife`-Tabelle** je Produkt mit Alters-Brackets + Summen
+- `components/sections/TarifRechner.tsx` liest pro Produkt aus DB, rendert Step-1 (Auswahl) + Step-2 (Lead-Form)
+- `intent_tag = 'preis'` wird automatisch gesetzt
+- Pflichtdisclaimer: „Beispielwerte aus Marktbeobachtung — verbindliches Angebot nach Anfrage"
 
-```
-1. Formular-Submit → /api/leads POST
-2. Lead in Supabase speichern (leads-Tabelle)
-3. Confluence-Page anlegen:
-   - Space: CONFLUENCE_SPACE_KEY
-   - Parent: CONFLUENCE_PARENT_PAGE_ID (z.B. "Leads 2026")
-   - Titel: "Lead: {Vorname} {Nachname} — {Produkt} — {Datum}"
-   - Inhalt: Alle Felder als Confluence-Tabelle
-   - Labels: produkt-slug, zielgruppe-tag, intent-tag
-4. Resend: Bestätigungs-E-Mail an Lead
-5. Resend: Notification an Vertrieb (konfigurierbar)
-6. confluence_synced = true in Supabase setzen
-```
-
-### Confluence-Page-Format
-```
-Neuer Lead: Max Mustermann
-Produkt: Sterbegeld24Plus
-Interesse: Sofortschutz für Eltern
-Zielgruppe: Senioren 50+
-Intent: sofortschutz
-
-| Feld       | Wert              |
-|------------|-------------------|
-| Vorname    | Max               |
-| Nachname   | Mustermann        |
-| E-Mail     | max@example.de    |
-| Telefon    | 0151 1234567      |
-| Nachricht  | ...               |
-| Zeitstempel| 2026-04-02 10:30  |
-```
+Für BU ist die Logik leicht abweichend (`einheit = 'eur_monat'` statt `'eur_summe'`).
 
 ---
 
-## Tarifrechner (Pseudo-Rechner für Conversion)
+## Lead-Flow (Convexa)
 
-Kein echter Tarifrechner mit Live-API. Stattdessen Conversion-optimierter Pseudo-Rechner:
+```
+Formular-Submit
+  → POST /api/leads
+  → Zod-Validation + Honeypot + Rate-Limit
+  → Insert leads (Supabase)
+  → Async parallel:
+       a) sendLeadConfirmation (Resend)
+       b) sendSalesNotification (Resend)
+       c) convexa.push(lead) → setzt convexa_lead_id, convexa_synced=true
+  → 201 Response
+```
 
-1. User gibt ein: Alter, gewünschte Summe (z.B. 5.000–15.000 €)
-2. System zeigt: Beispielbeitrag-Spanne (aus hinterlegten Muster-Daten)
-3. CTA: "Ihren genauen Beitrag jetzt anfragen" → Lead-Formular
-4. Intent-Tag wird automatisch gesetzt: "preis" wenn Rechner genutzt
-
-**Wichtig:** Klar als Beispielrechnung kennzeichnen (Disclaimer).
-
----
-
-## Pilot-Produkt: sterbegeld24plus
-
-Der Content in `/sterbegeld24plus-recreation/` ist die Referenz:
-- `styles.css` zeigt das Design-System (Navy + Gold, Premium-Look)
-- `assets/hero-bg.jpg` ist das Hero-Bild
-
-Dieses Produkt soll als erstes vollständig gebaut werden:
-- Alle Seiten generiert
-- Echter Lead-Flow aktiv
-- Als Template für alle weiteren Produkte
+`lib/convexa/client.ts` ist initial Skeleton (POST `/v1/leads` als Annahme), wird scharfgeschaltet sobald Anbieter API-Doku liefert. Solange API fehlt: Leads bleiben mit `convexa_synced=false` in der DB; ein Cron/Manual-Sync-Button im Admin holt sie nach. **E-Mail-Vorlage für die API-Anfrage liegt unter `docs/convexa-api-anfrage.md`.**
 
 ---
 
-## Entwicklungs-Phasen
+## Bilder-Pipeline (OpenAI)
 
-### Phase 1 — Fundament
-- [ ] Next.js Projekt aufsetzen (Design Tokens integrieren)
-- [ ] Supabase-Schema anlegen (alle Tabellen)
-- [ ] Auth-System (Supabase Auth, Admin-Login)
-- [ ] `.env.local` Setup-Doku
+```
+1. Generator entscheidet pro Sektion: "Bild nötig?"
+2. Prompt-Builder erstellt Bild-Prompt aus
+   Produktname + Zielgruppe + Section-Kontext + Stil-Guard
+3. lib/openai/image-generator.ts → gpt-image-1 (Base64)
+4. Upload nach Supabase Storage Bucket "produkt-bilder"
+5. Insert bilder-Row mit URL, alt_text (= short headline), prompt_used
+6. URL wird in der Section gespeichert
+```
 
-### Phase 2 — Content Engine
-- [ ] Anthropic-Integration (`lib/anthropic/generator.ts`)
-- [ ] Admin-UI: Produkt anlegen + Config
-- [ ] Content-Generierung via Claude
-- [ ] Content-Preview + manuelle Bearbeitung
+Re-Generation: Im Admin gibt es „Bild neu erzeugen"-Button pro Slot.
 
-### Phase 3 — Public Pages (SEO/AEO)
-- [ ] `[produkt]/page.tsx` mit SSG
-- [ ] FAQ-Seite mit FAQ-Schema
-- [ ] Vergleichsseite
-- [ ] Tarifrechner (Pseudo)
-- [ ] Ratgeber-Seiten
-- [ ] `sitemap.xml` + `robots.txt` + `llms.txt`
+---
 
-### Phase 4 — Lead-Flow
-- [ ] Lead-Formular-Komponente
-- [ ] `/api/leads` Route
-- [ ] Confluence-Integration
-- [ ] Resend-E-Mails (Lead-Bestätigung + Vertrieb-Notification)
+## Pilot + Produkt-Roll-out
 
-### Phase 5 — Pilot-Produkt live
-- [ ] sterbegeld24plus vollständig befüllt
-- [ ] Content reviewed + publiziert
-- [ ] Lead-Flow getestet (Ende-zu-Ende)
+1. **sterbegeld24plus** (Pilot, fertig): Content + Bilder + Convexa-Lead-Flow live
+2. **pflegezusatz** — DNA + Wissensbasis (siehe `wissensfundus-seeds/pflege/`)
+3. **risikoleben** — DNA + Wissensbasis (siehe `wissensfundus-seeds/leben/`)
+4. **berufsunfaehigkeit** (BU) — neuer Produkttyp, größte Schnittmenge mit altem finanzteam26-Blog
+5. **unfall** — DNA + Wissensbasis
+
+---
+
+## Entwicklungs-Phasen (aktualisiert 2026-04-29)
+
+### Phase 1 — Fundament ✅
+- [x] Next.js, Supabase-Schema, Auth, Design-Tokens
+
+### Phase 2 — Content Engine (Texte ✅, Bilder/Auto-Link 🚧)
+- [x] Claude-Generator für hauptseite/faq/vergleich/tarif/ratgeber
+- [ ] **Auto-Cross-Linking** (`lib/linker/auto-link.ts`)
+- [ ] **Bild-Pipeline** (OpenAI gpt-image-1)
+
+### Phase 3 — Public Pages
+- [x] Produktseiten + Sitemap + robots.txt + llms.txt
+- [ ] **Blog-Routen** (`/blog`, `/blog/[slug]`)
+- [ ] **Wissens-Routen** (`/wissen`, `/wissen/[slug]`)
+
+### Phase 4 — Lead-Flow (Migration zu Convexa)
+- [x] Lead-Form + Resend
+- [ ] **Convexa-Adapter** (`lib/convexa/client.ts`)
+- [ ] Confluence-Code entfernen, sobald Convexa stabil
+
+### Phase 5 — Wissensfundus
+- [ ] **Markdown-Seeds** für 5 Produkttypen
+- [ ] **Blog-Import** alte finanzteam26-Inhalte
+- [ ] Admin-MD-Editor
+
+### Phase 6 — Tarife in DB
+- [ ] **Tarif-Migration** statisches `lib/tarif-data.ts` → DB
+- [ ] Admin-UI zur Pflege
+
+### Phase 7 — Roll-out 4 weitere Produkte
+- [ ] Pflege, Leben, BU, Unfall mit jeweils vollem Content + Bildern
 
 ---
 
 ## Coding-Regeln
 
-- **Sprache:** Deutsch in allen User-facing Texten, Englisch im Code
-- **Komponenten:** Server Components wo möglich (SEO), Client Components nur für Interaktivität
-- **Tailwind:** Design Tokens aus `tokens.json` als Tailwind-Config-Extension einbinden
-- **Types:** TypeScript strict mode, Supabase-Types aus Schema generieren
-- **API-Routes:** Immer Input validieren (zod), nie rohe Requests weiterleiten
-- **Secrets:** Niemals in Code oder CLAUDE.md — immer via `process.env`
-- **Commits:** Deutsch, präzise (z.B. "Admin: Produkt-Anlegen-Flow implementiert")
+- **Sprache:** Deutsch in User-Texten + Commits, Englisch im Code
+- **Server Components Default**, Client Components nur für Interaktivität
+- **Tailwind**: Tokens aus `tokens.json`
+- **TypeScript strict**; Supabase-Types aus Schema generieren
+- **API-Routes**: Zod-Validation Pflicht
+- **Secrets**: niemals in Code; `.env.local` + `einstellungen`-Tabelle (DB-Override)
+- **Tests**: Vitest; jede neue API-Route + jedes neue Schema-Feld bekommt Test
+- **Commits**: Deutsch, präzise (z. B. „Convexa-Adapter: Skeleton + DB-Felder")
 
 ---
 
 ## Wichtige Hinweise
 
-1. `design-tokens/tokens.json` — bestehend, als Quelle der Wahrheit für alle Design-Entscheidungen
-2. `assets/logo.png` — bestehend, überall verwenden
-3. `sterbegeld24plus-recreation/` — Referenz-Content, darf verändert und in Next.js überführt werden
-4. Aktuelle `src/` (Vite-Boilerplate) + `index.html` + `eslint.config.js` + `vite.config.js` — können gelöscht werden wenn Next.js aufgesetzt ist
-5. SEO und AEO haben immer Priorität vor Feature-Vollständigkeit
+1. `design-tokens/tokens.json` — Quelle der Wahrheit für Design
+2. `assets/logo.png` + `components/MonsterLogo.tsx` — überall verwenden
+3. `sterbegeld24plus-recreation/` — Referenz-Pilot
+4. **Originalseite `https://finanzteam26.de/`** ist Brand-Referenz für Look & Feel
+5. SEO/AEO/GEO immer Priorität vor Feature-Vollständigkeit
+6. **Covomo iframe-Widget ist entfernt** — wir bauen Tarife selbst, behalten 100 % Lead- und Tracking-Hoheit
+7. **Confluence-Code ist deprecated** — bleibt nur, bis Convexa stabil läuft

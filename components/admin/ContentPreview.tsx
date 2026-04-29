@@ -128,6 +128,19 @@ export function ContentPreview({ row, produktId }: ContentPreviewProps) {
     router.refresh()
   }
 
+  // DELETE this content row.
+  async function handleDelete() {
+    if (!window.confirm('Diesen Content-Eintrag wirklich löschen?')) return
+    startTransition(async () => {
+      const res = await fetch(`/api/admin/content/${row.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        setSaveError('Fehler beim Löschen')
+        return
+      }
+      router.refresh()
+    })
+  }
+
   // POST /api/generate for this page type only.
   async function handleRegenerate() {
     if (isDirty) {
@@ -204,6 +217,15 @@ export function ContentPreview({ row, produktId }: ContentPreviewProps) {
           className="ml-auto text-sm border border-gray-300 px-3 py-1 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#abd5f4] rounded-none disabled:opacity-50"
         >
           {isRegenerating ? 'Regeneriert...' : 'Regenerieren'}
+        </button>
+
+        {/* Delete this content row */}
+        <button
+          onClick={handleDelete}
+          disabled={isPending}
+          className="text-sm text-red-400 hover:text-red-600 hover:underline disabled:opacity-50"
+        >
+          Löschen
         </button>
       </div>
 

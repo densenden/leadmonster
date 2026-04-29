@@ -63,7 +63,7 @@ describe('sitemap', () => {
 
   async function getSitemap(data: MockData): Promise<MetadataRoute.Sitemap> {
     const { createAdminClient } = await import('@/lib/supabase/server')
-    vi.mocked(createAdminClient).mockReturnValue(buildSupabaseMock(data) as ReturnType<typeof createAdminClient>)
+    vi.mocked(createAdminClient).mockReturnValue(buildSupabaseMock(data) as unknown as ReturnType<typeof createAdminClient>)
     // Re-import sitemap fresh after mocks are configured.
     const { default: sitemapFn } = await import('@/app/sitemap')
     return sitemapFn()
@@ -147,7 +147,7 @@ describe('sitemap', () => {
     delete process.env.NEXT_PUBLIC_BASE_URL
     const { createAdminClient } = await import('@/lib/supabase/server')
     vi.mocked(createAdminClient).mockReturnValue(
-      buildSupabaseMock({ produkte: [], ratgeber: [] }) as ReturnType<typeof createAdminClient>,
+      buildSupabaseMock({ produkte: [], ratgeber: [] }) as unknown as ReturnType<typeof createAdminClient>,
     )
     const { default: sitemapFn } = await import('@/app/sitemap')
     const result = await sitemapFn()

@@ -138,21 +138,26 @@ export default async function VergleichPage({ params }: PageProps) {
   const { produkt, config, content } = result
 
   // Extract the vergleich section from the JSONB content field
+  type AnbieterOffer = {
+    name: string
+    wartezeit: string
+    gesundheitsfragen: string
+    garantierte_aufnahme: boolean
+    beitrag_beispiel: string
+    besonderheit: string
+  }
   type VergleichSection = {
     type: string
     intro?: string
-    criteria?: Array<{ label: string; values: Record<string, string | boolean> }>
+    anbieter?: AnbieterOffer[]
   }
   const sections = (
     content.content as { sections?: VergleichSection[] } | null
   )?.sections ?? []
   const vergleichSection = sections.find(s => s.type === 'vergleich')
 
-  // Insurer list from produkt_config — used as column headers
-  const anbieter = (config?.anbieter as string[] | null) ?? []
-
-  // Criteria rows from the vergleich content section — fall back to empty
-  const criteria = vergleichSection?.criteria ?? []
+  // Insurer offers from the vergleich content section
+  const anbieter = (vergleichSection?.anbieter ?? []) as AnbieterOffer[]
 
   // Derive zielgruppe tag from config (first entry) for the lead form context.
   const zielgruppeTag = (config?.zielgruppe as string[] | null)?.[0] ?? 'allgemein'
@@ -215,7 +220,6 @@ export default async function VergleichPage({ params }: PageProps) {
         {/* Comparison table — horizontal scroll on mobile */}
         <Vergleich
           anbieter={anbieter}
-          criteria={criteria}
           produktName={produkt.name}
           generatedAt={generatedAt}
         />
