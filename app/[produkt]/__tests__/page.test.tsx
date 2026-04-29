@@ -130,7 +130,8 @@ describe('generateMetadata', () => {
     const { generateMetadata } = await import('../page')
     const metadata = await generateMetadata({ params: { produkt: 'sterbegeld24plus' } })
 
-    expect(metadata.title).toBe('Sterbegeld — Jetzt absichern')
+    // title is now { absolute: ... } so root "%s | LeadMonster" template doesn't apply
+    expect(metadata.title).toEqual({ absolute: 'Sterbegeld — Jetzt absichern' })
     expect(metadata.description).toBe('Günstige Sterbegeldversicherung')
   })
 

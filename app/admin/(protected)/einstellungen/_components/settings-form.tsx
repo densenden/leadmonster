@@ -1,12 +1,11 @@
 'use client'
 
 // SettingsForm — Client Component for the Einstellungen admin page.
-// Manages controlled state for all six settings fields, the API-token
-// show/hide toggle, save feedback, and the Confluence connection test.
+// Manages controlled state for Convexa CRM + sales notification settings
+// plus the API-token show/hide toggle and save feedback.
 import { useState, useTransition } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import { saveSettings } from '@/app/admin/einstellungen/actions'
 
 // ---------------------------------------------------------------------------
@@ -14,16 +13,14 @@ import { saveSettings } from '@/app/admin/einstellungen/actions'
 // ---------------------------------------------------------------------------
 
 export interface SettingsFormProps {
-  confluenceBaseUrl: string
-  confluenceEmail: string
-  confluenceApiToken: string
-  confluenceSpaceKey: string
-  confluenceParentPageId: string
+  convexaBaseUrl: string
+  convexaApiToken: string
+  convexaWorkspaceId: string
   salesNotificationEmail: string
 }
 
 // ---------------------------------------------------------------------------
-// Eye / EyeOff SVG icons (inline — no lucide-react dependency required)
+// Eye / EyeOff SVG icons (inline)
 // ---------------------------------------------------------------------------
 
 function EyeIcon() {
@@ -76,9 +73,13 @@ interface FieldProps {
   type?: string
   autoComplete?: string
   rightElement?: React.ReactNode
+  placeholder?: string
 }
 
-function Field({ id, label, helperText, value, onChange, type = 'text', autoComplete, rightElement }: FieldProps) {
+function Field({
+  id, label, helperText, value, onChange,
+  type = 'text', autoComplete, rightElement, placeholder,
+}: FieldProps) {
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-[#333333]">
@@ -90,9 +91,10 @@ function Field({ id, label, helperText, value, onChange, type = 'text', autoComp
           name={id}
           type={type}
           value={value}
+          placeholder={placeholder}
           autoComplete={autoComplete}
           onChange={(e) => onChange(e.target.value)}
-          className="block w-full rounded-lg border border-[#e5e5e5] px-3 py-2.5 text-sm text-[#333333] placeholder-[#999999] focus:border-[#abd5f4] focus:outline-none focus:ring-2 focus:ring-[#abd5f4]/50"
+          className="block w-full rounded-lg border border-[#e5e5e5] px-3 py-2.5 text-sm text-[#333333] placeholder-[#999999] focus:border-[#02a9e6] focus:outline-none focus:ring-2 focus:ring-[#02a9e6]/40"
         />
         {rightElement && (
           <div className="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -110,35 +112,23 @@ function Field({ id, label, helperText, value, onChange, type = 'text', autoComp
 // ---------------------------------------------------------------------------
 
 export function SettingsForm(props: SettingsFormProps) {
-  // Controlled field state — each field initialised from props
-  const [confluenceBaseUrl, setConfluenceBaseUrl] = useState(props.confluenceBaseUrl)
-  const [confluenceEmail, setConfluenceEmail] = useState(props.confluenceEmail)
-  const [confluenceApiToken, setConfluenceApiToken] = useState(props.confluenceApiToken)
-  const [confluenceSpaceKey, setConfluenceSpaceKey] = useState(props.confluenceSpaceKey)
-  const [confluenceParentPageId, setConfluenceParentPageId] = useState(props.confluenceParentPageId)
+  const [convexaBaseUrl, setConvexaBaseUrl] = useState(props.convexaBaseUrl)
+  const [convexaApiToken, setConvexaApiToken] = useState(props.convexaApiToken)
+  const [convexaWorkspaceId, setConvexaWorkspaceId] = useState(props.convexaWorkspaceId)
   const [salesNotificationEmail, setSalesNotificationEmail] = useState(props.salesNotificationEmail)
 
-  // UI state
   const [showToken, setShowToken] = useState(false)
-  const [isTesting, setIsTesting] = useState(false)
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
   const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null)
 
   const [isPending, startTransition] = useTransition()
-
-  // -------------------------------------------------------------------------
-  // Handlers
-  // -------------------------------------------------------------------------
 
   function handleSave() {
     setSaveResult(null)
     startTransition(async () => {
       const fd = new FormData()
-      fd.set('confluence_base_url', confluenceBaseUrl)
-      fd.set('confluence_email', confluenceEmail)
-      fd.set('confluence_api_token', confluenceApiToken)
-      fd.set('confluence_space_key', confluenceSpaceKey)
-      fd.set('confluence_parent_page_id', confluenceParentPageId)
+      fd.set('convexa_base_url', convexaBaseUrl)
+      fd.set('convexa_api_token', convexaApiToken)
+      fd.set('convexa_workspace_id', convexaWorkspaceId)
       fd.set('sales_notification_email', salesNotificationEmail)
 
       const result = await saveSettings(fd)
@@ -151,66 +141,46 @@ export function SettingsForm(props: SettingsFormProps) {
     })
   }
 
-  async function handleTestConnection() {
-    setTestResult(null)
-    setIsTesting(true)
-    try {
-      const res = await fetch('/api/confluence?action=test')
-      const json = await res.json()
-      setTestResult({ success: json.success, message: json.message })
-    } catch {
-      setTestResult({ success: false, message: 'Verbindungstest fehlgeschlagen.' })
-    } finally {
-      setIsTesting(false)
-    }
-  }
-
-  // -------------------------------------------------------------------------
-  // Render
-  // -------------------------------------------------------------------------
-
   return (
     <div className="space-y-6">
-      {/* Card 1: Confluence Integration */}
+      {/* Card 1: Convexa CRM */}
       <Card>
-        <h2 className="mb-4 font-heading text-xl font-bold text-[#333333]">
-          Confluence Integration
-        </h2>
+        <div className="mb-4">
+          <h2 className="font-heading text-xl font-bold text-[#1a3252]">
+            Convexa CRM
+          </h2>
+          <p className="mt-1 text-xs text-[#718096]">
+            Lead-Sync nach Form-Submit. Fallback: Leads landen mit
+            <code className="mx-1 px-1 py-0.5 bg-[#e1f0fb] rounded text-[#1a3252]">convexa_synced=false</code>
+            in der DB, falls Token leer ist — kein Datenverlust, Re-Sync später möglich.
+          </p>
+        </div>
 
         <div className="space-y-4">
           <Field
-            id="confluence_base_url"
-            label="Confluence URL"
-            helperText="Basis-URL der Confluence-Instanz (z.B. https://company.atlassian.net)"
-            value={confluenceBaseUrl}
-            onChange={setConfluenceBaseUrl}
+            id="convexa_base_url"
+            label="Convexa API Base-URL"
+            helperText="Default: https://app.convexa.app"
+            placeholder="https://app.convexa.app"
+            value={convexaBaseUrl}
+            onChange={setConvexaBaseUrl}
             autoComplete="url"
           />
 
           <Field
-            id="confluence_email"
-            label="E-Mail-Adresse"
-            helperText="E-Mail-Adresse des Confluence-Benutzers"
-            value={confluenceEmail}
-            onChange={setConfluenceEmail}
-            type="email"
-            autoComplete="email"
-          />
-
-          <Field
-            id="confluence_api_token"
+            id="convexa_api_token"
             label="API-Token"
-            helperText="API-Token für Confluence (wird sicher gespeichert)"
-            value={confluenceApiToken}
-            onChange={setConfluenceApiToken}
+            helperText="Bearer-Token von Convexa (wird sicher gespeichert)"
+            value={convexaApiToken}
+            onChange={setConvexaApiToken}
             type={showToken ? 'text' : 'password'}
             autoComplete="current-password"
             rightElement={
               <button
                 type="button"
                 onClick={() => setShowToken((prev) => !prev)}
-                aria-label={showToken ? 'Passwort verbergen' : 'Passwort anzeigen'}
-                className="rounded p-1 text-[#999999] hover:text-[#333333] focus:outline-none focus:ring-2 focus:ring-[#abd5f4]/50"
+                aria-label={showToken ? 'Token verbergen' : 'Token anzeigen'}
+                className="rounded p-1 text-[#999999] hover:text-[#1a3252] focus:outline-none focus:ring-2 focus:ring-[#02a9e6]/40"
               >
                 {showToken ? <EyeOffIcon /> : <EyeIcon />}
               </button>
@@ -218,45 +188,19 @@ export function SettingsForm(props: SettingsFormProps) {
           />
 
           <Field
-            id="confluence_space_key"
-            label="Space-Key"
-            helperText="Schlüssel des Confluence-Spaces für Leads"
-            value={confluenceSpaceKey}
-            onChange={setConfluenceSpaceKey}
+            id="convexa_workspace_id"
+            label="Workspace-ID"
+            helperText="Convexa Workspace-/Mandanten-ID"
+            value={convexaWorkspaceId}
+            onChange={setConvexaWorkspaceId}
           />
-
-          <Field
-            id="confluence_parent_page_id"
-            label="Parent Page ID"
-            helperText="ID der übergeordneten Confluence-Seite für Leads"
-            value={confluenceParentPageId}
-            onChange={setConfluenceParentPageId}
-          />
-        </div>
-
-        {/* Test connection */}
-        <div className="mt-6 flex flex-col gap-2">
-          <Button
-            variant="secondary"
-            onClick={handleTestConnection}
-            disabled={isTesting}
-            aria-label="Confluence-Verbindung testen"
-          >
-            {isTesting ? 'Teste Verbindung…' : 'Verbindung testen'}
-          </Button>
-
-          {testResult && (
-            <Badge variant={testResult.success ? 'success' : 'danger'}>
-              {testResult.message}
-            </Badge>
-          )}
         </div>
       </Card>
 
       {/* Card 2: E-Mail Benachrichtigungen */}
       <Card>
-        <h2 className="mb-4 font-heading text-xl font-bold text-[#333333]">
-          E-Mail Benachrichtigungen
+        <h2 className="mb-4 font-heading text-xl font-bold text-[#1a3252]">
+          E-Mail-Benachrichtigungen
         </h2>
 
         <Field

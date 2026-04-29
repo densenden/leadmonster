@@ -109,7 +109,8 @@ describe('buildFAQMetadata', () => {
       itemCount: 10,
     })
 
-    expect(result.title).toBe('FAQ Sterbegeld24Plus')
+    // title is now { absolute: ... } to bypass root layout template
+    expect(result.title).toEqual({ absolute: 'FAQ Sterbegeld24Plus' })
     expect(result.description).toBe('Alle Fragen beantwortet.')
   })
 
@@ -120,10 +121,11 @@ describe('buildFAQMetadata', () => {
       itemCount: 12,
     })
 
-    expect(result.title).toContain('Sterbegeld24Plus')
-    expect(result.title).toContain('12')
+    const absolute = (result.title as { absolute: string }).absolute
+    expect(absolute).toContain('Sterbegeld24Plus')
+    expect(absolute).toContain('12')
     // Title must not exceed 60 characters
-    expect((result.title as string).length).toBeLessThanOrEqual(60)
+    expect(absolute.length).toBeLessThanOrEqual(60)
   })
 
   it('applies fallback description when meta_desc is absent', () => {

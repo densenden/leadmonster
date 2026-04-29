@@ -10,20 +10,22 @@ export default async function ProduktLayout({
   children: React.ReactNode
   params: { produkt: string }
 }) {
-  // Fetch accent color for this product — fallback gracefully if DB unavailable.
+  // Fetch produkt name + accent — fallback gracefully if DB unavailable.
+  let produktName = params.produkt
   let accentColor = '#02a9e6'
   try {
     const supabase = createAdminClient()
     const { data } = await supabase
       .from('produkte')
-      .select('typ, accent_color')
+      .select('name, typ, accent_color')
       .eq('slug', params.produkt)
       .maybeSingle()
     if (data) {
+      produktName = data.name
       accentColor = resolveAccentColor(data.typ, data.accent_color)
     }
   } catch {
-    // Keep default
+    // Keep defaults
   }
 
   return (
@@ -31,8 +33,8 @@ export default async function ProduktLayout({
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-[#e2e8f0]">
         <div className="max-w-[1200px] mx-auto px-6 py-3 flex items-center justify-between">
-          <Link href="/">
-            <MonsterLogo color={accentColor} showText size={38} />
+          <Link href={`/${params.produkt}`}>
+            <MonsterLogo color={accentColor} showText text={produktName} size={38} />
           </Link>
 
           <nav className="hidden md:flex items-center gap-5 text-sm font-semibold text-[#4a5568]">
@@ -70,9 +72,9 @@ export default async function ProduktLayout({
       {/* ── Footer ──────────────────────────────────────────────────────── */}
       <footer className="bg-[#1a3252] text-white/70 py-12 mt-16">
         <div className="max-w-[1200px] mx-auto px-6">
-          {/* Logo row */}
+          {/* Logo row — uses produkt name as wordmark */}
           <div className="flex justify-center mb-6">
-            <MonsterLogo color="#fff" showText textColor="white" size={34} />
+            <MonsterLogo color="#fff" showText text={produktName} textColor="white" size={34} />
           </div>
           {/* Legal links */}
           <div className="flex flex-wrap justify-center gap-6 text-sm mb-6">
@@ -92,7 +94,7 @@ export default async function ProduktLayout({
             ))}
           </div>
           <p className="text-center text-xs text-white/40">
-            © {new Date().getFullYear()} LeadMonster — Alle Rechte vorbehalten
+            © {new Date().getFullYear()} {produktName} — Alle Rechte vorbehalten
           </p>
         </div>
       </footer>

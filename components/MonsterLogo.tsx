@@ -1,12 +1,15 @@
 // MonsterLogo — SVG monster mascot as a React component.
 // The `color` prop controls all body-surface fills (body, horns, feet).
 // Eyes are always white with dark pupils. Smile is always white.
-// `showText` renders a "LeadMonster" wordmark beside the monster as a <span>.
+// `showText` renders a wordmark beside the monster as a <span>.
+// Default wordmark is "LeadMonster" (platform brand). Pass `text` to override
+// with a per-product name (e.g. on product subsites).
 
 interface MonsterLogoProps {
   color?: string       // body/horns/feet fill (default: '#abd5f4')
   size?: number        // height in px — SVG scales proportionally (default: 40)
-  showText?: boolean   // show "LeadMonster" wordmark (default: false)
+  showText?: boolean   // show wordmark (default: false)
+  text?: string        // wordmark string — overrides default "LeadMonster"
   textColor?: string   // wordmark text color (default: '#1a365d')
   className?: string
 }
@@ -15,6 +18,7 @@ export function MonsterLogo({
   color = '#02a9e6',
   size = 40,
   showText = false,
+  text,
   textColor = '#1a365d',
   className,
 }: MonsterLogoProps) {
@@ -99,7 +103,7 @@ export function MonsterLogo({
         <span
           style={{ color: textColor, fontWeight: 700, fontSize: '1.1em', letterSpacing: '-0.01em' }}
         >
-          LeadMonster
+          {text ?? 'LeadMonster'}
         </span>
       )}
     </span>

@@ -17,7 +17,8 @@ describe('buildProduktMetadata', () => {
       meta_desc: 'Sterbegeldversicherung für Senioren ab 50',
     })
 
-    expect(result.title).toBe('Sterbegeld24Plus — Jetzt absichern')
+    // title is now { absolute: ... } so root layout's "%s | LeadMonster" template doesn't apply
+    expect(result.title).toEqual({ absolute: 'Sterbegeld24Plus — Jetzt absichern' })
     expect(result.description).toBe('Sterbegeldversicherung für Senioren ab 50')
   })
 

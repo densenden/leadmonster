@@ -1,11 +1,17 @@
 // Pure metadata builder for public product pages.
 // Returns a fully typed Next.js Metadata object from known inputs — no Supabase calls.
+//
+// IMPORTANT: Uses `title.absolute` to bypass the root layout's
+// `'%s | LeadMonster'` template — product subsites must NOT show LeadMonster
+// branding. Same applies to openGraph.siteName (set to product name).
 import type { Metadata } from 'next'
 
 export interface ProduktMetadataInput {
   slug: string
   meta_title: string
   meta_desc: string
+  /** Product name — used for openGraph.siteName so it does NOT show LeadMonster. */
+  produktName?: string
   /** Optional custom domain — falls back to NEXT_PUBLIC_BASE_URL env var, then 'leadmonster.de'. */
   domain?: string
 }
@@ -16,13 +22,14 @@ export function buildProduktMetadata({
   slug,
   meta_title,
   meta_desc,
+  produktName,
   domain,
 }: ProduktMetadataInput): Metadata {
   const baseUrl = `https://${domain ?? process.env.NEXT_PUBLIC_BASE_URL ?? 'leadmonster.de'}`
   const canonical = `${baseUrl}/${slug}`
 
   return {
-    title: meta_title,
+    title: { absolute: meta_title },
     description: meta_desc,
     robots: { index: true, follow: true },
     alternates: { canonical },
@@ -31,6 +38,7 @@ export function buildProduktMetadata({
       description: meta_desc,
       type: 'website',
       url: canonical,
+      siteName: produktName,
     },
   }
 }
@@ -42,6 +50,9 @@ interface FAQMetadataParams {
   faqRecord: { meta_title?: string | null; meta_desc?: string | null; status: string }
   itemCount: number
 }
+
+// Note on `title.absolute` + `openGraph.siteName`: same rationale as
+// buildProduktMetadata — product subsites must NOT inherit "| LeadMonster".
 
 // Build a Next.js Metadata object for the public FAQ page.
 // Applies fallback title/description when DB fields are absent.
@@ -61,11 +72,11 @@ export function buildFAQMetadata({ produkt, faqRecord, itemCount }: FAQMetadataP
   const isPublished = faqRecord.status === 'publiziert'
 
   return {
-    title,
+    title: { absolute: title },
     description,
     robots: isPublished ? { index: true, follow: true } : { index: false, follow: false },
     alternates: { canonical },
-    openGraph: { title, description, type: 'website', url: canonical },
+    openGraph: { title, description, type: 'website', url: canonical, siteName: produkt.name },
   }
 }
 

@@ -163,7 +163,7 @@ export default async function ProduktPage({ params }: { params: { produkt: strin
 
   const combinedSchema = combineSchemas(
     buildInsuranceAgencySchema({ name: produktName, url: canonical }),
-    buildProductSchema({ name: produktName, description: row.title ?? '', brand: 'LeadMonster' }),
+    buildProductSchema({ name: produktName, description: row.title ?? '', brand: produktName }),
     buildBreadcrumbSchema([
       { name: 'Startseite', url: baseUrl },
       { name: produktName, url: canonical },
