@@ -10,6 +10,8 @@ const SETTINGS_KEYS = [
   'convexa_api_token',
   'convexa_workspace_id',
   'sales_notification_email',
+  'ai_text_provider',
+  'ai_text_model',
 ] as const
 
 export default async function EinstellungenPage() {
@@ -38,6 +40,8 @@ export default async function EinstellungenPage() {
         convexaApiToken={get('convexa_api_token')}
         convexaWorkspaceId={get('convexa_workspace_id')}
         salesNotificationEmail={get('sales_notification_email')}
+        aiTextProvider={get('ai_text_provider')}
+        aiTextModel={get('ai_text_model')}
       />
     </div>
   )

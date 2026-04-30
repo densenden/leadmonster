@@ -161,7 +161,10 @@ describe('ProduktPage — section renderer', () => {
     })
   })
 
-  it('calls notFound() when row has status entwurf (unpublished)', async () => {
+  // LEGACY: Page now renders a "Diese Seite wird gerade erstellt" placeholder
+  // for products without published content (April 2026); only calls notFound()
+  // when the produkte row itself doesn't exist.
+  it.skip('calls notFound() when row has status entwurf (unpublished) (legacy)', async () => {
     const chain = {
       from: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),

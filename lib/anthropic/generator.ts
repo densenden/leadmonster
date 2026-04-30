@@ -1,10 +1,13 @@
-// Anthropic content generation helpers.
-// This module provides utility functions that prepare context payloads
-// from the wissensfundus knowledge base before calling the Claude API,
-// and the primary generateContent function that orchestrates all page-type calls.
-import Anthropic from '@anthropic-ai/sdk'
+// Content generation helpers — provider-agnostic.
+//
+// This module prepares context payloads from the wissensfundus knowledge
+// base and orchestrates per-page-type LLM calls via the unified
+// `callTextLLM()` abstraction (lib/llm/text-llm.ts), which routes to
+// Anthropic or OpenAI based on the `ai_text_provider` setting.
 import { createAdminClient } from '@/lib/supabase/server'
 import type { Json } from '@/lib/supabase/types'
+import { callTextLLM } from '@/lib/llm/text-llm'
+import type { ClaudeError } from '@/lib/llm/text-llm'
 import {
   composePrompt,
   buildWissensfundusBlock,
@@ -50,11 +53,6 @@ export async function fetchWissensfundusKontext(produktTyp: string): Promise<str
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-interface ClaudeError {
-  status?: number
-  attempt_count?: number
-}
-
 // Safely casts a Supabase Json field to a Record<string, string> for use in prompts.
 // Returns null when the value is not a plain object (e.g. string, number, array).
 function castArgumenteToRecord(value: Json | null | undefined): Record<string, string> | null {
@@ -66,11 +64,11 @@ function castArgumenteToRecord(value: Json | null | undefined): Record<string, s
   )
 }
 
-// Calls the Claude API with exponential backoff on HTTP 429 rate-limit errors.
+// Calls the configured LLM with exponential backoff on rate-limit errors.
+// Provider/model selection is resolved internally by `callTextLLM()`.
 // Throws on non-retryable errors immediately. After maxAttempts exhausted,
 // attaches `attempt_count` to the thrown error for the caller to record.
-async function callClaudeWithRetry(
-  client: Anthropic,
+async function callLLMWithRetry(
   system: string,
   user: string,
   pageType: PageType,
@@ -80,39 +78,22 @@ async function callClaudeWithRetry(
   let attempt = 0
 
   while (attempt < MAX_ATTEMPTS) {
-    const start = Date.now()
     try {
-      const response = await client.messages.create({
-        model: 'claude-opus-4-6',
-        max_tokens: 4096,
-        temperature: 0,
+      return await callTextLLM({
         system,
-        messages: [{ role: 'user', content: user }],
+        user,
+        maxTokens: 4096,
+        temperature: 0,
+        logContext: { produktId, page_type: pageType, attempt },
       })
-
-      console.log(
-        JSON.stringify({
-          event: 'claude_call',
-          produktId,
-          page_type: pageType,
-          attempt,
-          duration_ms: Date.now() - start,
-        }),
-      )
-
-      const content = response.content[0]
-      if (content.type !== 'text') throw new Error('Unexpected response type from Claude')
-      // Strip markdown code fences Claude occasionally wraps around JSON output
-      return content.text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
     } catch (err: unknown) {
-      const isRateLimit = (err as ClaudeError).status === 429
+      const status = (err as ClaudeError).status
+      const isRateLimit = status === 429
       if (isRateLimit && attempt < MAX_ATTEMPTS - 1) {
-        // Exponential backoff: 1s, 2s before each retry
         await new Promise<void>(r => setTimeout(r, Math.pow(2, attempt) * 1000))
         attempt++
         continue
       }
-      // Attach attempt count to the error so callers can record it in PageTypeError.
       throw Object.assign(err as object, { attempt_count: attempt + 1 })
     }
   }
@@ -180,8 +161,8 @@ export async function generateContent(
     const wissensfundusRows: WissensfundusRow[] = wissensRows ?? []
     const produktConfigTags: string[] = config?.zielgruppe ?? []
 
-    // Instantiate Anthropic client per-call (consistent with Supabase server pattern)
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    // LLM provider+model is resolved per-call inside callLLMWithRetry()
+    // — no client instantiation needed at this layer.
 
     // Assemble the shared context layers once — reused across all page-type calls.
     // argumente is a jsonb column typed as Json; cast it to Record<string, string> for the prompt.
@@ -205,7 +186,7 @@ export async function generateContent(
       const ratgeberSlug = topic.trim()
       try {
         const { system, user } = composePrompt('ratgeber', layers)
-        const raw = await callClaudeWithRetry(client, system, user, 'ratgeber', produktId)
+        const raw = await callLLMWithRetry(system, user, 'ratgeber', produktId)
         const parsed = JSON.parse(raw) as Json
         const validated = PageResponseSchemas.ratgeber.parse(parsed)
 
@@ -254,7 +235,7 @@ export async function generateContent(
     for (const pageType of pageTypes) {
       try {
         const { system, user } = composePrompt(pageType, layers)
-        const raw = await callClaudeWithRetry(client, system, user, pageType, produktId)
+        const raw = await callLLMWithRetry(system, user, pageType, produktId)
         const parsed = JSON.parse(raw) as Json
         const schema = PageResponseSchemas[pageType]
         const validated = schema.parse(parsed)
@@ -305,7 +286,7 @@ export async function generateContent(
     for (const ratgeberSlug of RATGEBER_SLUGS) {
       try {
         const { system, user } = composePrompt('ratgeber', layers)
-        const raw = await callClaudeWithRetry(client, system, user, 'ratgeber', produktId)
+        const raw = await callLLMWithRetry(system, user, 'ratgeber', produktId)
         const parsed = JSON.parse(raw) as Json
         const validated = PageResponseSchemas.ratgeber.parse(parsed)
 

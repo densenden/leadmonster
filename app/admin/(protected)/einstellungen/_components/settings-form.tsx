@@ -1,12 +1,13 @@
 'use client'
 
 // SettingsForm — Client Component for the Einstellungen admin page.
-// Manages controlled state for Convexa CRM + sales notification settings
-// plus the API-token show/hide toggle and save feedback.
+// Manages controlled state for Convexa CRM, sales notification, and the
+// AI text-generation provider/model selection.
 import { useState, useTransition } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { saveSettings } from '@/app/admin/einstellungen/actions'
+import { LLM_OPTIONS } from '@/lib/llm/options'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -17,6 +18,8 @@ export interface SettingsFormProps {
   convexaApiToken: string
   convexaWorkspaceId: string
   salesNotificationEmail: string
+  aiTextProvider: string
+  aiTextModel: string
 }
 
 // ---------------------------------------------------------------------------
@@ -117,6 +120,14 @@ export function SettingsForm(props: SettingsFormProps) {
   const [convexaWorkspaceId, setConvexaWorkspaceId] = useState(props.convexaWorkspaceId)
   const [salesNotificationEmail, setSalesNotificationEmail] = useState(props.salesNotificationEmail)
 
+  // AI provider+model — combined into a single dropdown using "<provider>:<model>"
+  // as the encoded value, mapped back to the LLM_OPTIONS catalog on save.
+  const initialLLMValue = props.aiTextProvider && props.aiTextModel
+    ? `${props.aiTextProvider}:${props.aiTextModel}`
+    : `${LLM_OPTIONS[0].provider}:${LLM_OPTIONS[0].model}`
+  const [llmValue, setLlmValue] = useState(initialLLMValue)
+  const [aiProvider, aiModel] = llmValue.split(':')
+
   const [showToken, setShowToken] = useState(false)
   const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null)
 
@@ -130,6 +141,8 @@ export function SettingsForm(props: SettingsFormProps) {
       fd.set('convexa_api_token', convexaApiToken)
       fd.set('convexa_workspace_id', convexaWorkspaceId)
       fd.set('sales_notification_email', salesNotificationEmail)
+      fd.set('ai_text_provider', aiProvider)
+      fd.set('ai_text_model', aiModel)
 
       const result = await saveSettings(fd)
 
@@ -197,7 +210,43 @@ export function SettingsForm(props: SettingsFormProps) {
         </div>
       </Card>
 
-      {/* Card 2: E-Mail Benachrichtigungen */}
+      {/* Card 2: KI-Modell für Content-Generierung */}
+      <Card>
+        <div className="mb-4">
+          <h2 className="font-heading text-xl font-bold text-[#1a3252]">
+            KI-Modell für Content-Generierung
+          </h2>
+          <p className="mt-1 text-xs text-[#718096]">
+            Das gewählte Modell wird bei jedem Klick auf
+            <code className="mx-1 px-1 py-0.5 bg-[#e1f0fb] rounded text-[#1a3252]">Generieren</code>
+            verwendet (hauptseite, faq, vergleich, tarif, ratgeber).
+            Tipp: günstige Modelle für Tests, teure für Produktion.
+          </p>
+        </div>
+
+        <div>
+          <label htmlFor="ai_model_select" className="block text-sm font-medium text-[#333333]">
+            Aktives Modell
+          </label>
+          <select
+            id="ai_model_select"
+            value={llmValue}
+            onChange={(e) => setLlmValue(e.target.value)}
+            className="mt-1 block w-full rounded-lg border border-[#e5e5e5] px-3 py-2.5 text-sm text-[#333333] focus:border-[#02a9e6] focus:outline-none focus:ring-2 focus:ring-[#02a9e6]/40 bg-white"
+          >
+            {LLM_OPTIONS.map((opt) => (
+              <option key={`${opt.provider}:${opt.model}`} value={`${opt.provider}:${opt.model}`}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-[#999999]">
+            Provider: <code className="font-mono">{aiProvider}</code> · Modell: <code className="font-mono">{aiModel}</code>
+          </p>
+        </div>
+      </Card>
+
+      {/* Card 3: E-Mail Benachrichtigungen */}
       <Card>
         <h2 className="mb-4 font-heading text-xl font-bold text-[#1a3252]">
           E-Mail-Benachrichtigungen

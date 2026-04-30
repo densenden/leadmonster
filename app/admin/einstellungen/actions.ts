@@ -20,6 +20,9 @@ const settingsSchema = z.object({
   convexa_api_token: z.string().optional().default(''),
   convexa_workspace_id: z.string().optional().default(''),
   sales_notification_email: z.string().email('Bitte eine gültige E-Mail-Adresse eingeben.'),
+  // AI text-LLM provider + model (validated against the catalog at call time).
+  ai_text_provider: z.enum(['anthropic', 'openai']),
+  ai_text_model: z.string().min(1, 'Modell darf nicht leer sein.'),
 })
 
 const BESCHREIBUNG: Record<string, string> = {
@@ -27,6 +30,8 @@ const BESCHREIBUNG: Record<string, string> = {
   convexa_api_token: 'Convexa API-Token (Bearer) — wird sicher gespeichert',
   convexa_workspace_id: 'Convexa Workspace-/Mandanten-ID',
   sales_notification_email: 'E-Mail-Adresse für Vertrieb-Benachrichtigungen bei neuen Leads',
+  ai_text_provider: 'KI-Provider für Text-Generierung: anthropic | openai',
+  ai_text_model: 'Konkretes Modell beim gewählten Provider',
 }
 
 // ---------------------------------------------------------------------------
@@ -54,6 +59,8 @@ export async function saveSettings(
     convexa_api_token: (formData.get('convexa_api_token') as string) ?? '',
     convexa_workspace_id: (formData.get('convexa_workspace_id') as string) ?? '',
     sales_notification_email: (formData.get('sales_notification_email') as string) ?? '',
+    ai_text_provider: (formData.get('ai_text_provider') as string) ?? 'openai',
+    ai_text_model: (formData.get('ai_text_model') as string) ?? 'gpt-4o-mini',
   }
 
   const parsed = settingsSchema.safeParse(raw)
@@ -88,6 +95,8 @@ export async function saveSettings(
     await upsertKey('convexa_api_token', values.convexa_api_token)
     await upsertKey('convexa_workspace_id', values.convexa_workspace_id)
     await upsertKey('sales_notification_email', values.sales_notification_email)
+    await upsertKey('ai_text_provider', values.ai_text_provider)
+    await upsertKey('ai_text_model', values.ai_text_model)
   } catch {
     return { success: false, error: 'Fehler beim Speichern. Bitte erneut versuchen.' }
   }
