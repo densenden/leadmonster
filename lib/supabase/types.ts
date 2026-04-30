@@ -153,6 +153,7 @@ export type Database = {
           convexa_synced: boolean
           created_at: string
           email: string
+          gewuenschter_anbieter: string | null
           id: string
           intent_tag: string | null
           interesse: string | null
@@ -175,6 +176,7 @@ export type Database = {
           convexa_synced?: boolean
           created_at?: string
           email: string
+          gewuenschter_anbieter?: string | null
           id?: string
           intent_tag?: string | null
           interesse?: string | null
@@ -197,6 +199,7 @@ export type Database = {
           convexa_synced?: boolean
           created_at?: string
           email?: string
+          gewuenschter_anbieter?: string | null
           id?: string
           intent_tag?: string | null
           interesse?: string | null
@@ -353,37 +356,46 @@ export type Database = {
         Row: {
           alter_bis: number
           alter_von: number
+          anbieter_name: string | null
           beitrag_high: number
           beitrag_low: number
+          besonderheiten: Json | null
           created_at: string
           einheit: string
           id: string
           produkt_id: string
           summe: number
+          tarif_name: string | null
           updated_at: string
         }
         Insert: {
           alter_bis: number
           alter_von: number
+          anbieter_name?: string | null
           beitrag_high: number
           beitrag_low: number
+          besonderheiten?: Json | null
           created_at?: string
           einheit?: string
           id?: string
           produkt_id: string
           summe: number
+          tarif_name?: string | null
           updated_at?: string
         }
         Update: {
           alter_bis?: number
           alter_von?: number
+          anbieter_name?: string | null
           beitrag_high?: number
           beitrag_low?: number
+          besonderheiten?: Json | null
           created_at?: string
           einheit?: string
           id?: string
           produkt_id?: string
           summe?: number
+          tarif_name?: string | null
           updated_at?: string
         }
         Relationships: [

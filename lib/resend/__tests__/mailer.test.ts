@@ -53,6 +53,7 @@ const SAMPLE_LEAD: Lead = {
   utm_source: null,
   utm_medium: null,
   utm_campaign: null,
+  gewuenschter_anbieter: null,
 }
 
 // Builds a thenable Supabase chain for email_sequenzen queries.

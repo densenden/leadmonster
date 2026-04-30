@@ -20,6 +20,9 @@ const leadSchema = z.object({
   produktId: z.string().min(1),
   zielgruppeTag: z.string().min(1),
   intentTag: z.string().min(1).optional(),
+  // Anbieter-Wunsch aus VergleichsRechner-CTA — leer/undefined wenn der User
+  // keinen spezifischen Anbieter ausgewählt hat.
+  gewuenschterAnbieter: z.string().max(100).optional(),
   vorname: z.string().max(100).optional(),
   nachname: z.string().max(100).optional(),
   email: z.string().email(),
@@ -103,6 +106,7 @@ export async function POST(request: NextRequest) {
       interesse: parsed.data.interesse,
       zielgruppe_tag: parsed.data.zielgruppeTag,
       intent_tag: parsed.data.intentTag,
+      gewuenschter_anbieter: parsed.data.gewuenschterAnbieter,
     })
     .select('id')
     .single()

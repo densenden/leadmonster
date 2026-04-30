@@ -104,7 +104,9 @@ const OUTPUT_SCHEMAS: Record<PageType, string> = {
   ]
 }
 
-WICHTIG: features.items braucht 4-6 Einträge, trust.stat_items braucht 3-6, faq.items braucht 8-15. Weniger = Validierungsfehler.`,
+WICHTIG: features.items braucht 4-6 Einträge, trust.stat_items braucht 3-6, faq.items braucht 8-15. Weniger = Validierungsfehler.
+
+HINWEIS: Die Section "vergleichsrechner" wird automatisch nach "features" eingefügt, sobald Anbietertarife in der DB liegen. Erzeuge sie NICHT selbst — sie ist nicht Teil deines Outputs.`,
   faq: `## Output-Schema (JSON) — STRENGE Mengen!
 {
   "meta_title": "string, max 60",

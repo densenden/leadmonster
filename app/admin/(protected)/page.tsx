@@ -81,7 +81,7 @@ export default async function AdminDashboardPage() {
             <Link href="/admin/einstellungen" className="text-[#abd5f4] hover:underline">
               Einstellungen
             </Link>
-            {' '}— Confluence & E-Mail konfigurieren
+            {' '}— Convexa CRM, KI-Modell & E-Mail konfigurieren
           </li>
         </ol>
       </div>

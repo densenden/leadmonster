@@ -15,10 +15,14 @@ export interface LeadFormProps {
   /** Intent tag pre-set from page context (e.g. "sicherheit", "preis", "sofortschutz").
    *  Optional — when omitted the field is sent as undefined and the API applies its own default. */
   intentTag?: string
+  /** Optional Anbieter-Wunsch aus VergleichsRechner — wenn gesetzt, wird ein
+   *  sichtbarer Hinweis "Anfrage zu: {Anbieter}" angezeigt und das Feld als
+   *  gewuenschterAnbieter mit dem Submit gesendet. */
+  gewuenschterAnbieter?: string
 }
 
 /** Named export — no default export per project convention. */
-export function LeadForm({ produktId, zielgruppeTag, intentTag }: LeadFormProps) {
+export function LeadForm({ produktId, zielgruppeTag, intentTag, gewuenschterAnbieter }: LeadFormProps) {
   // Four-state status machine: all conditional rendering derives from this single variable.
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
 
@@ -64,6 +68,7 @@ export function LeadForm({ produktId, zielgruppeTag, intentTag }: LeadFormProps)
           produktId,
           zielgruppeTag,
           intentTag,
+          gewuenschterAnbieter,
           vorname,
           nachname,
           email,
@@ -140,6 +145,22 @@ export function LeadForm({ produktId, zielgruppeTag, intentTag }: LeadFormProps)
           onChange={e => setHoneypot(e.target.value)}
         />
       </div>
+
+      {/* Anbieter-Wunsch aus VergleichsRechner — sichtbarer Hinweis + Hidden-Field */}
+      {gewuenschterAnbieter && (
+        <div
+          data-testid="leadform-anbieter-hint"
+          className="mb-6 px-4 py-3 bg-brand-blue-light text-sm font-body text-[#333333]"
+        >
+          Ihre Anfrage bezieht sich auf: <strong>{gewuenschterAnbieter}</strong>
+          <input
+            type="hidden"
+            name="gewuenschter_anbieter"
+            value={gewuenschterAnbieter}
+            readOnly
+          />
+        </div>
+      )}
 
       <div className="flex flex-col gap-[30px]">
         {/* Vorname */}
