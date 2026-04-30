@@ -48,10 +48,12 @@ export interface GenerateImageOutput {
 // Slot → Größe Mapping
 // ---------------------------------------------------------------------------
 
+// gpt-image-1 (April 2026) accepts only: 1024x1024 | 1024x1536 | 1536x1024 | auto
+// (DALL-E 3's 1792x1024 is not supported). 1536x1024 is the closest landscape.
 const SLOT_SIZES: Record<ImageSlot, { size: string; w: number; h: number }> = {
-  hero:       { size: '1792x1024', w: 1792, h: 1024 }, // breit, oben auf Produktseite
-  blog_cover: { size: '1792x1024', w: 1792, h: 1024 },
-  og:         { size: '1792x1024', w: 1200, h: 630 },  // gpt-image-1 unterstützt nur bestimmte sizes; nachträglich zuschneiden
+  hero:       { size: '1536x1024', w: 1536, h: 1024 },
+  blog_cover: { size: '1536x1024', w: 1536, h: 1024 },
+  og:         { size: '1536x1024', w: 1200, h: 630 },  // OG-Crop-Target bleibt 1200x630
   feature:    { size: '1024x1024', w: 1024, h: 1024 },
   inline:     { size: '1024x1024', w: 1024, h: 1024 },
 }
