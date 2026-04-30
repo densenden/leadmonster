@@ -5,6 +5,7 @@
 import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/server'
 import { ProduktForm } from '@/components/admin/ProduktForm'
+import { HeroImagePanel } from './_components/HeroImagePanel'
 import type { ProduktWithConfig, Produkt, ProduktConfig } from '@/lib/supabase/types'
 
 interface PageProps {
@@ -69,6 +70,16 @@ export default async function ProduktBearbeitenPage({ params }: PageProps) {
       {/* key forces remount when product changes so useState-captured initialData
           doesn't leak across products (avoids "old names reappearing" bug) */}
       <ProduktForm key={initialData.id} mode="edit" initialData={initialData} />
+
+      <div className="mt-10">
+        <HeroImagePanel
+          produktId={initialData.id}
+          produktName={initialData.name}
+          produktTyp={initialData.typ}
+          initialUrl={initialData.hero_image_url ?? null}
+          initialAlt={initialData.hero_image_alt ?? null}
+        />
+      </div>
     </div>
   )
 }

@@ -10,7 +10,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mockFrom = vi.fn()
 const mockSendLeadConfirmation = vi.fn()
 const mockSendSalesNotification = vi.fn()
-const mockCreateLeadPage = vi.fn()
+const mockPushLeadToConvexa = vi.fn()
 
 vi.mock('@/lib/supabase/server', () => ({
   createAdminClient: vi.fn(() => ({ from: mockFrom })),
@@ -19,8 +19,8 @@ vi.mock('@/lib/supabase/server', () => ({
   })),
 }))
 
-vi.mock('@/lib/confluence/client', () => ({
-  createLeadPage: mockCreateLeadPage,
+vi.mock('@/lib/convexa/client', () => ({
+  pushLeadToConvexa: mockPushLeadToConvexa,
 }))
 
 vi.mock('@/lib/resend/mailer', () => ({
@@ -48,8 +48,9 @@ const INSERTED_LEAD = {
   interesse: 'Sofortschutz',
   zielgruppe_tag: 'senioren_50plus',
   intent_tag: 'sofortschutz',
-  confluence_page_id: null,
-  confluence_synced: false,
+  convexa_lead_id: null,
+  convexa_synced: false,
+  convexa_error: null,
   resend_sent: false,
   created_at: '2026-04-07T10:30:00.000Z',
 }
@@ -82,7 +83,7 @@ function makeRequest(body: unknown): Request {
 // 1) leads.insert(..).select('id').single() → returns { id }
 // 2) produkte.select → returns produkt name/slug
 // 3) leads.select('*').eq().single() → returns full lead row (for IIFE post-save)
-// 4) leads.update (confluence) → resolves
+// 4) leads.update (convexa flags) → resolves
 // 5) leads.update (resend_sent) → resolves
 function setupStandardFromMock(updateSpy?: ReturnType<typeof vi.fn>) {
   const update = updateSpy ?? vi.fn().mockReturnThis()
@@ -127,8 +128,8 @@ describe('POST /api/leads — email dispatch integration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
-    // Confluence succeeds by default — isolate email behaviour
-    mockCreateLeadPage.mockResolvedValue({ pageId: 'conf-page-id' })
+    // Convexa succeeds by default — isolate email behaviour
+    mockPushLeadToConvexa.mockResolvedValue({ id: 'convexa-lead-id', status: 'created' })
   })
 
   it('returns 201 even when sendLeadConfirmation rejects internally', async () => {
@@ -157,10 +158,7 @@ describe('POST /api/leads — email dispatch integration', () => {
     const { POST } = await import('../route')
     await POST(makeRequest(VALID_PAYLOAD) as never)
 
-    // The post-save IIFE is non-blocking — flush all pending microtasks before asserting.
-    // A single `await Promise.resolve()` round isn't enough for a chain of async operations;
-    // yielding with setTimeout(0) ensures all queued microtasks and macrotasks complete.
-    await new Promise(resolve => setTimeout(resolve, 0))
+    // Post-save work is now awaited inside the route — no microtask flush needed.
 
     // The update call setting resend_sent=true must have been made
     expect(updateSpy).toHaveBeenCalledWith(

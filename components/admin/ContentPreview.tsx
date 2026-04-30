@@ -7,6 +7,7 @@
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/Badge'
+import { SectionImagePanel } from '@/components/admin/SectionImagePanel'
 import type { GenerierterContent } from '@/lib/supabase/types'
 import type { BadgeVariant } from '@/components/ui/Badge'
 
@@ -182,6 +183,22 @@ export function ContentPreview({ row, produktId }: ContentPreviewProps) {
     setContent({ ...content, sections: newSections })
   }
 
+  // Sets image_url + image_alt on a section (used by SectionImagePanel).
+  // Empty url removes the image fields entirely.
+  function updateSectionImage(sectionIndex: number, url: string, alt: string) {
+    const newSections = [...sections]
+    const current = { ...newSections[sectionIndex] }
+    if (url) {
+      current.image_url = url
+      current.image_alt = alt
+    } else {
+      delete current.image_url
+      delete current.image_alt
+    }
+    newSections[sectionIndex] = current
+    setContent({ ...content, sections: newSections })
+  }
+
   return (
     <div className="border border-gray-200 bg-white p-4">
       {/* Status row — status badge, dropdown, forward button, regenerate */}
@@ -307,28 +324,48 @@ export function ContentPreview({ row, produktId }: ContentPreviewProps) {
           </div>
 
           {/* Per-section editors — collapsed by default */}
-          {sections.map((section, i) => (
-            <details key={i} className="border border-gray-200">
-              <summary className="cursor-pointer bg-gray-50 px-3 py-2 text-sm font-medium text-[#666666]">
-                {String(section.type ?? `Sektion ${i + 1}`)}
-              </summary>
-              <div className="space-y-2 px-3 py-2">
-                {Object.entries(section)
-                  .filter(([key]) => key !== 'type' && typeof section[key] === 'string')
-                  .map(([key, value]) => (
-                    <div key={key}>
-                      <label className="block text-xs text-gray-500 mb-0.5">{key}</label>
-                      <input
-                        type="text"
-                        value={String(value)}
-                        onChange={(e) => updateSectionField(i, key, e.target.value)}
-                        className="w-full border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#abd5f4] rounded-none"
-                      />
-                    </div>
-                  ))}
-              </div>
-            </details>
-          ))}
+          {sections.map((section, i) => {
+            const sectionType = String(section.type ?? '')
+            const headline =
+              typeof section.headline === 'string' ? section.headline :
+              typeof section.title === 'string' ? section.title :
+              ''
+            const defaultAlt = headline
+              ? `${headline} — ${row.title ?? ''}`.trim().slice(0, 180)
+              : `${sectionType} Bild — ${row.title ?? ''}`.trim().slice(0, 180)
+            return (
+              <details key={i} className="border border-gray-200">
+                <summary className="cursor-pointer bg-gray-50 px-3 py-2 text-sm font-medium text-[#666666]">
+                  {sectionType || `Sektion ${i + 1}`}
+                </summary>
+                <div className="space-y-2 px-3 py-2">
+                  {Object.entries(section)
+                    .filter(([key]) => key !== 'type' && typeof section[key] === 'string')
+                    .map(([key, value]) => (
+                      <div key={key}>
+                        <label className="block text-xs text-gray-500 mb-0.5">{key}</label>
+                        <input
+                          type="text"
+                          value={String(value)}
+                          onChange={(e) => updateSectionField(i, key, e.target.value)}
+                          className="w-full border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#abd5f4] rounded-none"
+                        />
+                      </div>
+                    ))}
+
+                  <SectionImagePanel
+                    produktId={produktId}
+                    pageType={row.page_type}
+                    sectionType={sectionType}
+                    defaultAltText={defaultAlt || `Bild ${row.title ?? ''}`}
+                    currentUrl={typeof section.image_url === 'string' ? section.image_url : undefined}
+                    currentAlt={typeof section.image_alt === 'string' ? section.image_alt : undefined}
+                    onSet={(url, alt) => updateSectionImage(i, url, alt)}
+                  />
+                </div>
+              </details>
+            )
+          })}
 
           {/* Save button with unsaved changes indicator */}
           <div>

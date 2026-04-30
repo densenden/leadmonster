@@ -77,19 +77,20 @@ describe('sitemap', () => {
     expect(homepage?.changeFrequency).toBe('weekly')
   })
 
-  it('a published product generates exactly 4 sub-routes', async () => {
+  it('a published product generates exactly 5 sub-routes', async () => {
     const result = await getSitemap({
       produkte: [{ id: 'abc', slug: 'sterbegeld24plus', updated_at: '2026-04-01T00:00:00Z' }],
       ratgeber: [],
     })
     const produktRoutes = result.filter((e) => e.url.includes('/sterbegeld24plus'))
-    // /sterbegeld24plus, /sterbegeld24plus/faq, /sterbegeld24plus/vergleich, /sterbegeld24plus/tarife
-    expect(produktRoutes).toHaveLength(4)
+    // /sterbegeld24plus, /faq, /vergleich, /tarife, /vergleichsrechner
+    expect(produktRoutes).toHaveLength(5)
     const paths = produktRoutes.map((e) => new URL(e.url).pathname)
     expect(paths).toContain('/sterbegeld24plus')
     expect(paths).toContain('/sterbegeld24plus/faq')
     expect(paths).toContain('/sterbegeld24plus/vergleich')
     expect(paths).toContain('/sterbegeld24plus/tarife')
+    expect(paths).toContain('/sterbegeld24plus/vergleichsrechner')
   })
 
   it('assigns correct priority and changeFrequency per route type', async () => {
@@ -112,6 +113,9 @@ describe('sitemap', () => {
 
     expect(get('/testprodukt/tarife')?.priority).toBe(0.7)
     expect(get('/testprodukt/tarife')?.changeFrequency).toBe('monthly')
+
+    expect(get('/testprodukt/vergleichsrechner')?.priority).toBe(0.85)
+    expect(get('/testprodukt/vergleichsrechner')?.changeFrequency).toBe('monthly')
   })
 
   it('excludes products that are not published', async () => {

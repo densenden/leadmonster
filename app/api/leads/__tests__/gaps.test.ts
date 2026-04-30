@@ -19,8 +19,8 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({ auth: { getUser: vi.fn() } })),
 }))
 
-vi.mock('@/lib/confluence/client', () => ({
-  createLeadPage: vi.fn().mockResolvedValue({ pageId: 'gap-page-001' }),
+vi.mock('@/lib/convexa/client', () => ({
+  pushLeadToConvexa: vi.fn().mockResolvedValue({ id: 'convexa-gap-001', status: 'created' }),
 }))
 
 vi.mock('@/lib/resend/mailer', () => ({

@@ -63,6 +63,16 @@ function makeEmailSeqChain(rows: unknown[]) {
   }
 }
 
+// einstellungen single-row chain — supports the maybeSingle() shape used by
+// sendSalesNotification when looking up sales_notification_email.
+function makeEinstellungenSingle(row: { schluessel: string; wert: string | null } | null) {
+  return {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockResolvedValue({ data: row, error: null }),
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Gap tests
 // ---------------------------------------------------------------------------
@@ -74,18 +84,11 @@ describe('sendSalesNotification — einstellungen DB lookup with env fallback', 
   })
 
   it('uses process.env.SALES_NOTIFICATION_EMAIL when no einstellungen DB row found', async () => {
-    // Stub env
     vi.stubEnv('SALES_NOTIFICATION_EMAIL', 'fallback@sales.de')
 
     mockFrom.mockImplementation((table: string) => {
       if (table === 'email_sequenzen') return makeEmailSeqChain([])
-      if (table === 'einstellungen') {
-        return {
-          select: vi.fn().mockReturnThis(),
-          // Return empty — no DB value for sales_notification_email
-          in: vi.fn().mockResolvedValue({ data: [], error: null }),
-        }
-      }
+      if (table === 'einstellungen') return makeEinstellungenSingle(null)
       return {
         update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockResolvedValue({ error: null }),
@@ -105,19 +108,13 @@ describe('sendSalesNotification — einstellungen DB lookup with env fallback', 
   })
 
   it('returns false and logs error when neither DB nor env has sales_notification_email', async () => {
-    // Ensure env key is absent
     vi.stubEnv('SALES_NOTIFICATION_EMAIL', '')
 
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     mockFrom.mockImplementation((table: string) => {
       if (table === 'email_sequenzen') return makeEmailSeqChain([])
-      if (table === 'einstellungen') {
-        return {
-          select: vi.fn().mockReturnThis(),
-          in: vi.fn().mockResolvedValue({ data: [], error: null }),
-        }
-      }
+      if (table === 'einstellungen') return makeEinstellungenSingle(null)
       return {
         update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockResolvedValue({ error: null }),
@@ -138,29 +135,18 @@ describe('sendSalesNotification — einstellungen DB lookup with env fallback', 
   })
 })
 
-describe('sendSalesNotification — Confluence URL in fallback HTML', () => {
+describe('sendSalesNotification — Convexa link in fallback HTML', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
   })
 
-  it('includes Confluence link when confluence_page_id is set and base URL is available', async () => {
-    const leadWithPage: Lead = { ...BASE_LEAD, confluence_page_id: 'page-abc-123' }
+  it('includes Convexa link when convexa_lead_id is set', async () => {
+    const leadWithConvexa: Lead = { ...BASE_LEAD, convexa_lead_id: 'cvx-123' }
 
     mockFrom.mockImplementation((table: string) => {
       if (table === 'email_sequenzen') return makeEmailSeqChain([])
-      if (table === 'einstellungen') {
-        return {
-          select: vi.fn().mockReturnThis(),
-          in: vi.fn().mockResolvedValue({
-            data: [
-              { schluessel: 'sales_notification_email', wert: 'sales@team.de' },
-              { schluessel: 'confluence_base_url', wert: 'https://mycompany.atlassian.net' },
-            ],
-            error: null,
-          }),
-        }
-      }
+      if (table === 'einstellungen') return makeEinstellungenSingle({ schluessel: 'sales_notification_email', wert: 'sales@team.de' })
       return {
         update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockResolvedValue({ error: null }),
@@ -169,29 +155,16 @@ describe('sendSalesNotification — Confluence URL in fallback HTML', () => {
     mockEmailsSend.mockResolvedValue({ data: { id: 'sent' }, error: null })
 
     const { sendSalesNotification } = await import('@/lib/resend/mailer')
-    await sendSalesNotification(leadWithPage, 'TestProdukt')
+    await sendSalesNotification(leadWithConvexa, 'TestProdukt')
 
     const html = mockEmailsSend.mock.calls[0][0].html as string
-    expect(html).toContain('https://mycompany.atlassian.net/pages/page-abc-123')
+    expect(html).toContain('https://app.convexa.app/leads/cvx-123')
   })
 
-  it('omits Confluence link when confluence_page_id is null', async () => {
-    const leadWithoutPage: Lead = { ...BASE_LEAD, confluence_page_id: null }
-
+  it('omits Convexa link when convexa_lead_id is null', async () => {
     mockFrom.mockImplementation((table: string) => {
       if (table === 'email_sequenzen') return makeEmailSeqChain([])
-      if (table === 'einstellungen') {
-        return {
-          select: vi.fn().mockReturnThis(),
-          in: vi.fn().mockResolvedValue({
-            data: [
-              { schluessel: 'sales_notification_email', wert: 'sales@team.de' },
-              { schluessel: 'confluence_base_url', wert: 'https://mycompany.atlassian.net' },
-            ],
-            error: null,
-          }),
-        }
-      }
+      if (table === 'einstellungen') return makeEinstellungenSingle({ schluessel: 'sales_notification_email', wert: 'sales@team.de' })
       return {
         update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockResolvedValue({ error: null }),
@@ -200,11 +173,10 @@ describe('sendSalesNotification — Confluence URL in fallback HTML', () => {
     mockEmailsSend.mockResolvedValue({ data: { id: 'sent' }, error: null })
 
     const { sendSalesNotification } = await import('@/lib/resend/mailer')
-    await sendSalesNotification(leadWithoutPage, 'TestProdukt')
+    await sendSalesNotification(BASE_LEAD, 'TestProdukt')
 
     const html = mockEmailsSend.mock.calls[0][0].html as string
-    // The link element must be absent — no href attribute pointing to Confluence
-    expect(html).not.toContain('atlassian.net/pages/')
+    expect(html).not.toContain('app.convexa.app/leads/')
   })
 })
 
@@ -223,9 +195,8 @@ describe('fetchEmailTemplate — delay_hours > 0 rows are skipped with console.w
 
     mockFrom.mockImplementation((table: string) => {
       if (table === 'email_sequenzen') return makeEmailSeqChain([dripRow])
+      if (table === 'einstellungen') return makeEinstellungenSingle({ schluessel: 'sales_notification_email', wert: 'sales@team.de' })
       return {
-        select: vi.fn().mockReturnThis(),
-        in: vi.fn().mockResolvedValue({ data: [], error: null }),
         update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockResolvedValue({ error: null }),
       }
@@ -236,16 +207,13 @@ describe('fetchEmailTemplate — delay_hours > 0 rows are skipped with console.w
 
     const { sendLeadConfirmation } = await import('@/lib/resend/mailer')
 
-    // A drip-only result means no immediate template — falls back to hardcoded
     const result = await sendLeadConfirmation(BASE_LEAD)
 
     expect(result).toBe(true)
-    // The warn must have been logged for the skipped drip row
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('[mailer] Skipping email_sequenzen row with delay_hours=48'),
     )
 
-    // The email is still sent (using the fallback) — verify it went to the lead
     expect(mockEmailsSend).toHaveBeenCalledWith(
       expect.objectContaining({ to: BASE_LEAD.email }),
     )

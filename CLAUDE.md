@@ -2,7 +2,7 @@
 
 Vollständige Systembeschreibung für die KI-gestützte Weiterentwicklung von LeadMonster für **finanzteam26**.
 
-> **Stand: 2026-04-29** — Diese Version ersetzt das frühere Confluence/HubSpot-Setup. Lead-CRM ist jetzt **Convexa** (https://app.convexa.app), Bilder werden mit **OpenAI gpt-image-1** erzeugt, Tarife kommen aus der eigenen DB-Tabelle, das Covomo-iframe ist abgeschaltet.
+> **Stand: 2026-04-30** — Confluence-Reste sind vollständig entfernt (Code, Routes, Spalten via Migration `20260430000003_remove_confluence.sql`). Lead-CRM ist **Convexa** (https://app.convexa.app), Bilder werden mit **OpenAI gpt-image-1** erzeugt, Tarife kommen aus der eigenen DB-Tabelle, das Covomo-iframe ist abgeschaltet.
 
 ---
 
@@ -35,11 +35,11 @@ Vollständige Systembeschreibung für die KI-gestützte Weiterentwicklung von Le
 | KI-Texte | **Anthropic Claude API** (`claude-opus-4-6`) | Content-Qualität für SEO/AEO |
 | KI-Bilder | **OpenAI Images API** (`gpt-image-1`) | Hero- + Inline-Bilder pro Seite |
 | E-Mail | **Resend** | Lead-Bestätigungen + Vertriebs-Notifications |
-| **Lead-CRM** | **Convexa** (https://app.convexa.app) | Ersetzt Confluence/HubSpot |
+| **Lead-CRM** | **Convexa** (https://app.convexa.app) | Einziges CRM (Confluence/HubSpot entfernt 2026-04-30) |
 | Stock-Bilder (Fallback) | **Unsplash API** | nur wenn KI-Bild nicht greift |
 | Deployment | **Vercel** | Next.js-nativ |
 
-> ⚠️ **Confluence/HubSpot sind abgeschaltet.** Code-Reste (`lib/confluence/*`) bleiben im Repo, bis Convexa-Anbindung live ist; danach werden sie entfernt.
+> ✅ **Confluence/HubSpot vollständig entfernt** (2026-04-30): `lib/confluence/`, `app/api/confluence/`, alle UI-Spalten, alle DB-Spalten und Settings-Schlüssel. Lead-Flow läuft jetzt ausschließlich über Convexa + Resend.
 
 ---
 
@@ -182,7 +182,7 @@ Stand nach Migration `20260429000000_convexa_blog_tarife_bu.sql`.
 - **`convexa_synced`** boolean
 - `convexa_error` text
 - `source_url`, `utm_source`, `utm_medium`, `utm_campaign`
-- (Confluence-Felder bleiben bis zur finalen Convexa-Migration)
+- (Confluence-Felder entfernt via Migration `20260430000003_remove_confluence.sql`)
 
 ### `einstellungen`
 Verschlüsselte Schlüssel werden hier gespeichert. Reihen für Convexa, OpenAI, Image-Provider sind via Migration registriert.
@@ -246,10 +246,10 @@ unverändert.
 │   │   └── schemas.ts
 │   ├── openai/                           # NEU
 │   │   └── image-generator.ts            # gpt-image-1
-│   ├── convexa/                          # NEU — ersetzt lib/confluence
+│   ├── convexa/                          # NEU — einziges Lead-CRM
 │   │   ├── client.ts                     # Lead-Push, Auth, Mapping
 │   │   └── types.ts
-│   ├── confluence/                       # DEPRECATED — wird entfernt
+│   │                                     # (lib/confluence entfernt 2026-04-30)
 │   ├── linker/                           # NEU — Auto-Cross-Linking
 │   │   └── auto-link.ts
 │   ├── markdown/                         # NEU
@@ -435,7 +435,7 @@ Re-Generation: Im Admin gibt es „Bild neu erzeugen"-Button pro Slot.
 ### Phase 4 — Lead-Flow (Migration zu Convexa)
 - [x] Lead-Form + Resend
 - [ ] **Convexa-Adapter** (`lib/convexa/client.ts`)
-- [ ] Confluence-Code entfernen, sobald Convexa stabil
+- [x] Confluence-Code vollständig entfernt (2026-04-30)
 
 ### Phase 5 — Wissensfundus
 - [ ] **Markdown-Seeds** für 5 Produkttypen
@@ -477,4 +477,4 @@ Re-Generation: Im Admin gibt es „Bild neu erzeugen"-Button pro Slot.
 4. **Originalseite `https://finanzteam26.de/`** ist Brand-Referenz für Look & Feel
 5. SEO/AEO/GEO immer Priorität vor Feature-Vollständigkeit
 6. **Covomo iframe-Widget ist entfernt** — wir bauen Tarife selbst, behalten 100 % Lead- und Tracking-Hoheit
-7. **Confluence-Code ist deprecated** — bleibt nur, bis Convexa stabil läuft
+7. **Confluence ist vollständig entfernt** — keine neuen Confluence-Referenzen einführen

@@ -143,8 +143,9 @@ describe('sendSalesNotification', () => {
       if (table === 'einstellungen') {
         return {
           select: vi.fn().mockReturnThis(),
-          in: vi.fn().mockResolvedValue({
-            data: [{ schluessel: 'sales_notification_email', wert: 'sales@team.de' }],
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { schluessel: 'sales_notification_email', wert: 'sales@team.de' },
             error: null,
           }),
         }
@@ -175,8 +176,9 @@ describe('sendSalesNotification', () => {
       if (table === 'einstellungen') {
         return {
           select: vi.fn().mockReturnThis(),
-          in: vi.fn().mockResolvedValue({
-            data: [{ schluessel: 'sales_notification_email', wert: 'sales@team.de' }],
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { schluessel: 'sales_notification_email', wert: 'sales@team.de' },
             error: null,
           }),
         }

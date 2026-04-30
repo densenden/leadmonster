@@ -6,11 +6,33 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // Mocks
 // ---------------------------------------------------------------------------
 
-const mockInsertChain = {
-  insert: vi.fn().mockReturnThis(),
-  select: vi.fn().mockReturnThis(),
-  single: vi.fn().mockResolvedValue({ data: { id: 'new-lead-uuid' }, error: null }),
+// Chain-agnostischer Supabase-Mock — deckt sowohl den primären Insert-Pfad
+// (`from('leads').insert().select().single()`) als auch den Post-Save-Pfad
+// (`from('produkte').select().eq().single()`, `from('leads').update().eq()`)
+// ab, der seit der Umstellung auf awaited Convexa+Email-Sync genutzt wird.
+const mockInsertChain: {
+  insert: ReturnType<typeof vi.fn>
+  select: ReturnType<typeof vi.fn>
+  eq: ReturnType<typeof vi.fn>
+  update: ReturnType<typeof vi.fn>
+  single: ReturnType<typeof vi.fn>
+  then: (resolve: (v: unknown) => unknown) => Promise<unknown>
+} = {
+  insert: vi.fn(),
+  select: vi.fn(),
+  eq: vi.fn(),
+  update: vi.fn(),
+  single: vi.fn(),
+  // Damit `await from('leads').update({...}).eq('id', …)` als thenable funktioniert.
+  then(resolve) {
+    return Promise.resolve({ data: null, error: null }).then(resolve)
+  },
 }
+mockInsertChain.insert.mockReturnValue(mockInsertChain)
+mockInsertChain.select.mockReturnValue(mockInsertChain)
+mockInsertChain.eq.mockReturnValue(mockInsertChain)
+mockInsertChain.update.mockReturnValue(mockInsertChain)
+mockInsertChain.single.mockResolvedValue({ data: { id: 'new-lead-uuid' }, error: null })
 
 const mockFrom = vi.fn(() => mockInsertChain)
 
@@ -19,8 +41,8 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({ auth: { getUser: vi.fn() } })),
 }))
 
-vi.mock('@/lib/confluence/client', () => ({
-  createLeadPage: vi.fn().mockResolvedValue({ pageId: 'page-001' }),
+vi.mock('@/lib/convexa/client', () => ({
+  pushLeadToConvexa: vi.fn().mockResolvedValue({ id: 'convexa-001', status: 'created' }),
 }))
 
 vi.mock('@/lib/resend/mailer', () => ({
@@ -82,8 +104,10 @@ describe('POST /api/leads', () => {
     // Reset rate limit store between tests by reimporting the module.
     // The store is module-level; resetModules() ensures a fresh Map each test.
     mockFrom.mockReturnValue(mockInsertChain)
-    mockInsertChain.insert.mockReturnThis()
-    mockInsertChain.select.mockReturnThis()
+    mockInsertChain.insert.mockReturnValue(mockInsertChain)
+    mockInsertChain.select.mockReturnValue(mockInsertChain)
+    mockInsertChain.eq.mockReturnValue(mockInsertChain)
+    mockInsertChain.update.mockReturnValue(mockInsertChain)
     mockInsertChain.single.mockResolvedValue({ data: { id: 'new-lead-uuid' }, error: null })
   })
 

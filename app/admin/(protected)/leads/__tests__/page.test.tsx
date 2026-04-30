@@ -20,7 +20,6 @@ vi.mock('@/lib/supabase/server', () => ({
   })),
 }))
 
-// LeadTable is mocked to focus tests on the page's data-fetching logic.
 vi.mock('@/components/admin/LeadTable', () => ({
   LeadTable: (props: { leads: unknown[]; totalCount: number; currentPage: number }) =>
     React.createElement('div', { 'data-testid': 'lead-table' }, [
@@ -45,32 +44,57 @@ function makeLead(id: string) {
     nachname: 'Mustermann',
     email: 'max@example.de',
     intent_tag: 'sicherheit',
-    confluence_synced: false,
-    confluence_page_id: null,
+    convexa_synced: false,
+    convexa_lead_id: null,
+    convexa_error: null,
     resend_sent: false,
     created_at: '2026-04-01T10:00:00.000Z',
     produkte: { name: 'Sterbegeld24Plus' },
   }
 }
 
-// Builds a chainable Supabase query mock for the leads query.
-// The chain ends with a resolved value after calling .range().
-function makeLeadsChain(leads: unknown[], count: number) {
+// produkte chain: select().order() resolves to the produkte list.
+function makeProdukteChain(rows: unknown[]) {
   const chain: Record<string, unknown> = {}
   chain.select = vi.fn().mockReturnValue(chain)
-  chain.order = vi.fn().mockReturnValue(chain)
-  chain.eq = vi.fn().mockReturnValue(chain)
-  chain.range = vi.fn().mockResolvedValue({ data: leads, count, error: null })
+  chain.order = vi.fn().mockResolvedValue({ data: rows, error: null })
   return chain
 }
 
-// Builds a chainable mock for simple single-result queries (produkte, einstellungen).
-function makeSingleChain(data: unknown) {
-  return {
-    select: vi.fn().mockReturnThis(),
-    order: vi.fn().mockReturnThis(),
-    in: vi.fn().mockResolvedValue({ data, error: null }),
-  }
+// leads chain: select().order().eq()*.range() — final resolution at .range().
+function makeLeadsChain(opts: {
+  leads?: unknown[]
+  count?: number
+  onSelect?: (cols: string) => void
+  onEq?: (col: string, val: unknown) => void
+  onRange?: (start: number, end: number) => void
+}) {
+  const { leads = [], count = 0, onSelect, onEq, onRange } = opts
+  const chain: Record<string, unknown> = {}
+  chain.select = vi.fn((cols: string) => {
+    onSelect?.(cols)
+    return chain
+  })
+  chain.order = vi.fn().mockReturnValue(chain)
+  chain.eq = vi.fn((col: string, val: unknown) => {
+    onEq?.(col, val)
+    return chain
+  })
+  chain.range = vi.fn((start: number, end: number) => {
+    onRange?.(start, end)
+    return Promise.resolve({ data: leads, count, error: null })
+  })
+  return chain
+}
+
+function setupFromMock(opts: {
+  produkte?: unknown[]
+  leadsChain: ReturnType<typeof makeLeadsChain>
+}) {
+  mockFrom.mockImplementation((table: string) => {
+    if (table === 'produkte') return makeProdukteChain(opts.produkte ?? [])
+    return opts.leadsChain
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -82,42 +106,28 @@ describe('LeadsPage — query selects required columns', () => {
     vi.resetModules()
   })
 
-  it('fetches leads with all required columns including the produkte join', async () => {
+  it('fetches leads with all required Convexa columns and the produkte join', async () => {
     let leadsSelectArg = ''
-    let fromCallCount = 0
-
-    mockFrom.mockImplementation((table: string) => {
-      fromCallCount++
-      if (table === 'produkte' && fromCallCount === 1) {
-        return makeSingleChain([{ id: 'prod-1', name: 'Testprodukt' }])
-      }
-      if (table === 'einstellungen') {
-        return makeSingleChain([])
-      }
-      // leads table
-      const chain: Record<string, unknown> = {}
-      chain.select = vi.fn((cols: string) => {
-        leadsSelectArg = cols
-        return chain
-      })
-      chain.order = vi.fn().mockReturnValue(chain)
-      chain.eq = vi.fn().mockReturnValue(chain)
-      chain.range = vi.fn().mockResolvedValue({ data: [makeLead('l1')], count: 1, error: null })
-      return chain
+    setupFromMock({
+      produkte: [{ id: 'prod-1', name: 'Testprodukt' }],
+      leadsChain: makeLeadsChain({
+        leads: [makeLead('l1')],
+        count: 1,
+        onSelect: (cols) => { leadsSelectArg = cols },
+      }),
     })
 
     const { default: LeadsPage } = await import('../page')
     const element = await LeadsPage({ searchParams: {} })
     render(element as React.ReactElement)
 
-    // Verify the select string contains all required columns and the join
     expect(leadsSelectArg).toContain('id')
     expect(leadsSelectArg).toContain('vorname')
     expect(leadsSelectArg).toContain('nachname')
     expect(leadsSelectArg).toContain('email')
     expect(leadsSelectArg).toContain('intent_tag')
-    expect(leadsSelectArg).toContain('confluence_synced')
-    expect(leadsSelectArg).toContain('confluence_page_id')
+    expect(leadsSelectArg).toContain('convexa_synced')
+    expect(leadsSelectArg).toContain('convexa_lead_id')
     expect(leadsSelectArg).toContain('resend_sent')
     expect(leadsSelectArg).toContain('created_at')
     expect(leadsSelectArg).toContain('produkte')
@@ -132,26 +142,10 @@ describe('LeadsPage — pagination offset calculation', () => {
   it('defaults to page 1 and uses range 0–24 when searchParams.page is absent', async () => {
     let rangeStart = -1
     let rangeEnd = -1
-    let fromCallCount = 0
-
-    mockFrom.mockImplementation((table: string) => {
-      fromCallCount++
-      if (table === 'produkte' && fromCallCount === 1) {
-        return makeSingleChain([])
-      }
-      if (table === 'einstellungen') {
-        return makeSingleChain([])
-      }
-      const chain: Record<string, unknown> = {}
-      chain.select = vi.fn().mockReturnValue(chain)
-      chain.order = vi.fn().mockReturnValue(chain)
-      chain.eq = vi.fn().mockReturnValue(chain)
-      chain.range = vi.fn((start: number, end: number) => {
-        rangeStart = start
-        rangeEnd = end
-        return Promise.resolve({ data: [], count: 0, error: null })
-      })
-      return chain
+    setupFromMock({
+      leadsChain: makeLeadsChain({
+        onRange: (start, end) => { rangeStart = start; rangeEnd = end },
+      }),
     })
 
     const { default: LeadsPage } = await import('../page')
@@ -164,26 +158,11 @@ describe('LeadsPage — pagination offset calculation', () => {
   it('calculates range 25–49 for page 2', async () => {
     let rangeStart = -1
     let rangeEnd = -1
-    let fromCallCount = 0
-
-    mockFrom.mockImplementation((table: string) => {
-      fromCallCount++
-      if (table === 'produkte' && fromCallCount === 1) {
-        return makeSingleChain([])
-      }
-      if (table === 'einstellungen') {
-        return makeSingleChain([])
-      }
-      const chain: Record<string, unknown> = {}
-      chain.select = vi.fn().mockReturnValue(chain)
-      chain.order = vi.fn().mockReturnValue(chain)
-      chain.eq = vi.fn().mockReturnValue(chain)
-      chain.range = vi.fn((start: number, end: number) => {
-        rangeStart = start
-        rangeEnd = end
-        return Promise.resolve({ data: [], count: 50, error: null })
-      })
-      return chain
+    setupFromMock({
+      leadsChain: makeLeadsChain({
+        count: 50,
+        onRange: (start, end) => { rangeStart = start; rangeEnd = end },
+      }),
     })
 
     const { default: LeadsPage } = await import('../page')
@@ -200,26 +179,12 @@ describe('LeadsPage — filter application', () => {
   })
 
   it('applies .eq("produkt_id", value) when searchParams.produkt is present', async () => {
-    const eqCalls: Array<[string, string]> = []
-    let fromCallCount = 0
-
-    mockFrom.mockImplementation((table: string) => {
-      fromCallCount++
-      if (table === 'produkte' && fromCallCount === 1) {
-        return makeSingleChain([{ id: 'prod-1', name: 'Test' }])
-      }
-      if (table === 'einstellungen') {
-        return makeSingleChain([])
-      }
-      const chain: Record<string, unknown> = {}
-      chain.select = vi.fn().mockReturnValue(chain)
-      chain.order = vi.fn().mockReturnValue(chain)
-      chain.eq = vi.fn((col: string, val: string) => {
-        eqCalls.push([col, val])
-        return chain
-      })
-      chain.range = vi.fn().mockResolvedValue({ data: [], count: 0, error: null })
-      return chain
+    const eqCalls: Array<[string, unknown]> = []
+    setupFromMock({
+      produkte: [{ id: 'prod-1', name: 'Test' }],
+      leadsChain: makeLeadsChain({
+        onEq: (col, val) => eqCalls.push([col, val]),
+      }),
     })
 
     const { default: LeadsPage } = await import('../page')
@@ -228,62 +193,32 @@ describe('LeadsPage — filter application', () => {
     expect(eqCalls.some(([col, val]) => col === 'produkt_id' && val === 'prod-1')).toBe(true)
   })
 
-  it('applies .eq("confluence_synced", true) when searchParams.confluence_synced is "true"', async () => {
-    const eqCalls: Array<[string, boolean]> = []
-    let fromCallCount = 0
-
-    mockFrom.mockImplementation((table: string) => {
-      fromCallCount++
-      if (table === 'produkte' && fromCallCount === 1) {
-        return makeSingleChain([])
-      }
-      if (table === 'einstellungen') {
-        return makeSingleChain([])
-      }
-      const chain: Record<string, unknown> = {}
-      chain.select = vi.fn().mockReturnValue(chain)
-      chain.order = vi.fn().mockReturnValue(chain)
-      chain.eq = vi.fn((col: string, val: boolean) => {
-        eqCalls.push([col, val])
-        return chain
-      })
-      chain.range = vi.fn().mockResolvedValue({ data: [], count: 0, error: null })
-      return chain
+  it('applies .eq("convexa_synced", true) when searchParams.convexa_synced is "true"', async () => {
+    const eqCalls: Array<[string, unknown]> = []
+    setupFromMock({
+      leadsChain: makeLeadsChain({
+        onEq: (col, val) => eqCalls.push([col, val]),
+      }),
     })
 
     const { default: LeadsPage } = await import('../page')
-    await LeadsPage({ searchParams: { confluence_synced: 'true' } })
+    await LeadsPage({ searchParams: { convexa_synced: 'true' } })
 
-    expect(eqCalls.some(([col, val]) => col === 'confluence_synced' && val === true)).toBe(true)
+    expect(eqCalls.some(([col, val]) => col === 'convexa_synced' && val === true)).toBe(true)
   })
 
-  it('applies .eq("confluence_synced", false) when searchParams.confluence_synced is "false"', async () => {
-    const eqCalls: Array<[string, boolean]> = []
-    let fromCallCount = 0
-
-    mockFrom.mockImplementation((table: string) => {
-      fromCallCount++
-      if (table === 'produkte' && fromCallCount === 1) {
-        return makeSingleChain([])
-      }
-      if (table === 'einstellungen') {
-        return makeSingleChain([])
-      }
-      const chain: Record<string, unknown> = {}
-      chain.select = vi.fn().mockReturnValue(chain)
-      chain.order = vi.fn().mockReturnValue(chain)
-      chain.eq = vi.fn((col: string, val: boolean) => {
-        eqCalls.push([col, val])
-        return chain
-      })
-      chain.range = vi.fn().mockResolvedValue({ data: [], count: 0, error: null })
-      return chain
+  it('applies .eq("convexa_synced", false) when searchParams.convexa_synced is "false"', async () => {
+    const eqCalls: Array<[string, unknown]> = []
+    setupFromMock({
+      leadsChain: makeLeadsChain({
+        onEq: (col, val) => eqCalls.push([col, val]),
+      }),
     })
 
     const { default: LeadsPage } = await import('../page')
-    await LeadsPage({ searchParams: { confluence_synced: 'false' } })
+    await LeadsPage({ searchParams: { convexa_synced: 'false' } })
 
-    expect(eqCalls.some(([col, val]) => col === 'confluence_synced' && val === false)).toBe(true)
+    expect(eqCalls.some(([col, val]) => col === 'convexa_synced' && val === false)).toBe(true)
   })
 })
 
@@ -293,17 +228,11 @@ describe('LeadsPage — total count passed to LeadTable', () => {
   })
 
   it('passes the exact count from Supabase to LeadTable as totalCount', async () => {
-    let fromCallCount = 0
-
-    mockFrom.mockImplementation((table: string) => {
-      fromCallCount++
-      if (table === 'produkte' && fromCallCount === 1) {
-        return makeSingleChain([])
-      }
-      if (table === 'einstellungen') {
-        return makeSingleChain([])
-      }
-      return makeLeadsChain([makeLead('l1'), makeLead('l2')], 42)
+    setupFromMock({
+      leadsChain: makeLeadsChain({
+        leads: [makeLead('l1'), makeLead('l2')],
+        count: 42,
+      }),
     })
 
     const { default: LeadsPage } = await import('../page')
@@ -311,7 +240,6 @@ describe('LeadsPage — total count passed to LeadTable', () => {
     render(element as React.ReactElement)
 
     expect(screen.getByTestId('total-count').textContent).toBe('42')
-    // Total count string is also rendered above the table
     expect(screen.getByText('42 Leads gesamt')).toBeDefined()
   })
 })

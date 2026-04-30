@@ -13,6 +13,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/server'
+import type { TablesInsert } from '@/lib/supabase/types'
 import { pushLeadToConvexa } from '@/lib/convexa/client'
 import { sendLeadConfirmation, sendSalesNotification } from '@/lib/resend/mailer'
 
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
 
   // 5. DB insert using service role client (never the anon client).
   const supabase = createAdminClient()
-  const insertPayload: Record<string, unknown> = {
+  const insertPayload: TablesInsert<'leads'> = {
     produkt_id: parsed.data.produktId,
     vorname: parsed.data.vorname,
     nachname: parsed.data.nachname,
@@ -111,8 +112,7 @@ export async function POST(request: NextRequest) {
     zielgruppe_tag: parsed.data.zielgruppeTag,
     intent_tag: parsed.data.intentTag,
   }
-  // Only include gewuenschter_anbieter when set — keeps the payload narrow and
-  // tolerant to schemas that haven't applied the column yet.
+  // Only include gewuenschter_anbieter when set — keeps the payload narrow.
   if (parsed.data.gewuenschterAnbieter) {
     insertPayload.gewuenschter_anbieter = parsed.data.gewuenschterAnbieter
   }

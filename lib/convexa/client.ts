@@ -11,7 +11,7 @@
  *   - Wenn Token gesetzt aber API-Fehler: Lead bleibt in DB, Fehler in
  *     `convexa_error` gespeichert, Re-Sync via Admin-Button möglich
  *
- * Konfigurations-Auflösung wie bei lib/confluence/client.ts:
+ * Konfigurations-Auflösung:
  *   1. einstellungen-Tabelle (DB-Override pro Account)
  *   2. process.env (Fallback)
  */
