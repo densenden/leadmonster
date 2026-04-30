@@ -1,5 +1,7 @@
 // Full-width hero section for public product landing pages.
 // Server Component — no client-side JS required. CTA is a plain anchor scroll.
+import { InlineMarkdown } from '@/components/util/InlineMarkdown'
+
 interface HeroProps {
   headline: string
   subline: string
@@ -8,9 +10,11 @@ interface HeroProps {
 }
 
 export function Hero({ headline, subline, cta_text, cta_anchor }: HeroProps) {
+  // aria-label needs a clean string — strip markdown link syntax.
+  const ariaLabel = headline.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
   return (
     <section
-      aria-label={headline}
+      aria-label={ariaLabel}
       className="relative w-full py-[70px] md:py-[140px] bg-cover bg-center"
       style={{ backgroundImage: "url('/images/hero-bg.jpg')" }}
     >
@@ -18,9 +22,15 @@ export function Hero({ headline, subline, cta_text, cta_anchor }: HeroProps) {
       <div className="absolute inset-0 bg-[#1a365d]/70" />
       <div className="relative max-w-4xl mx-auto px-6 text-center">
         <h1 className="text-[2.5rem] md:text-4xl font-bold text-white font-heading mb-4">
-          {headline}
+          <InlineMarkdown linkClassName="underline decoration-white/40 underline-offset-4 hover:decoration-white">
+            {headline}
+          </InlineMarkdown>
         </h1>
-        <p className="text-white/90 text-lg mb-8 font-body">{subline}</p>
+        <p className="text-white/90 text-lg mb-8 font-body">
+          <InlineMarkdown linkClassName="underline decoration-white/40 underline-offset-2 hover:decoration-white">
+            {subline}
+          </InlineMarkdown>
+        </p>
         <a
           href={cta_anchor}
           className="inline-block bg-[#d4af37] hover:bg-[#b8860b] hover:-translate-y-0.5 text-white font-body font-semibold px-8 py-3 transition-all duration-150"

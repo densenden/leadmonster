@@ -1,5 +1,7 @@
 // Trust signal bar — full-width Navy background with Gold value + white label pairs.
 // Server Component. Collapses to a two-column grid on mobile.
+import { InlineMarkdown } from '@/components/util/InlineMarkdown'
+
 interface TrustItem {
   value: string
   label: string
@@ -19,7 +21,11 @@ export function TrustBar({ items }: TrustBarProps) {
         {items.map((item, i) => (
           <li key={i} role="listitem" className="text-center">
             <div className="text-[#d4af37] text-3xl font-bold font-heading">{item.value}</div>
-            <div className="text-white text-sm font-body mt-1">{item.label}</div>
+            <div className="text-white text-sm font-body mt-1">
+              <InlineMarkdown linkClassName="underline decoration-white/40 hover:decoration-white">
+                {item.label}
+              </InlineMarkdown>
+            </div>
           </li>
         ))}
       </ul>

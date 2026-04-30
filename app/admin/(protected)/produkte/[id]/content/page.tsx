@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/Badge'
 import { ContentPreview } from '@/components/admin/ContentPreview'
 import { GenerateButton } from './_components/GenerateButton'
 import { GenerateRatgeberButton } from './_components/generate-ratgeber-button'
+import { GenerationLockProvider } from './_components/generation-lock'
 import { ResetContentButton } from './_components/ResetContentButton'
 import { formatGermanDateTime } from '@/lib/utils/date'
 import type { GenerierterContent } from '@/lib/supabase/types'
@@ -99,6 +100,7 @@ export default async function ContentManagementPage({ params }: PageProps) {
   const ratgeberRows = grouped.get('ratgeber') ?? []
 
   return (
+    <GenerationLockProvider>
     <div className="mx-auto max-w-6xl px-6 py-10">
       {/* Page header */}
       <div className="mb-8 flex items-center justify-between">
@@ -260,5 +262,6 @@ export default async function ContentManagementPage({ params }: PageProps) {
         <GenerateRatgeberButton produktId={params.id} />
       </section>
     </div>
+    </GenerationLockProvider>
   )
 }

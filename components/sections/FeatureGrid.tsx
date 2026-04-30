@@ -1,5 +1,6 @@
 // Feature grid section showing product advantages as cards.
 // Server Component — no interactive behaviour required.
+import { InlineMarkdown } from '@/components/util/InlineMarkdown'
 
 // Map of known icon keys to Unicode symbols.
 // Unknown icon values render nothing (no error thrown).
@@ -36,8 +37,16 @@ export function FeatureGrid({ items }: FeatureGridProps) {
                 {ICONS[item.icon]}
               </span>
             )}
-            <h3 className="font-bold text-[#1a365d] mb-2 font-heading">{item.title}</h3>
-            <p className="text-[#4a5568] font-body text-sm">{item.text}</p>
+            <h3 className="font-bold text-[#1a365d] mb-2 font-heading">
+              <InlineMarkdown linkClassName="text-[#02a9e6] hover:underline">
+                {item.title}
+              </InlineMarkdown>
+            </h3>
+            <p className="text-[#4a5568] font-body text-sm">
+              <InlineMarkdown linkClassName="text-[#02a9e6] hover:underline">
+                {item.text}
+              </InlineMarkdown>
+            </p>
           </div>
         ))}
       </div>

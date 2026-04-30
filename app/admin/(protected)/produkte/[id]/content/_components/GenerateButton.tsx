@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { MonsterLogo } from '@/components/MonsterLogo'
+import { useGenerationLock } from './generation-lock'
 
 interface GenerateButtonProps {
   produktId: string
@@ -28,7 +29,9 @@ const STEPS = [
 
 export function GenerateButton({ produktId }: GenerateButtonProps) {
   const router = useRouter()
-  const [isGenerating, setIsGenerating] = useState(false)
+  const lock = useGenerationLock()
+  const isGenerating = lock.lockedBy === 'main'
+  const blockedByOther = lock.lockedBy !== null && lock.lockedBy !== 'main'
   const [error, setError] = useState('')
   const [stepIndex, setStepIndex] = useState(0)
   const [elapsed, setElapsed] = useState(0)
@@ -60,8 +63,11 @@ export function GenerateButton({ produktId }: GenerateButtonProps) {
   }, [isGenerating])
 
   async function handleGenerate() {
-    setIsGenerating(true)
     setError('')
+    if (!lock.acquire('main')) {
+      setError('Anderer Generator läuft gerade — bitte warten.')
+      return
+    }
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
@@ -83,7 +89,7 @@ export function GenerateButton({ produktId }: GenerateButtonProps) {
     } catch (err) {
       setError(`Netzwerkfehler: ${err instanceof Error ? err.message : 'unbekannt'}`)
     } finally {
-      setIsGenerating(false)
+      lock.release('main')
     }
   }
 
@@ -93,10 +99,11 @@ export function GenerateButton({ produktId }: GenerateButtonProps) {
     <div className="space-y-3">
       <button
         onClick={handleGenerate}
-        disabled={isGenerating}
+        disabled={isGenerating || blockedByOther}
+        title={blockedByOther ? 'Anderer Generator läuft — bitte warten' : undefined}
         className="inline-flex items-center gap-2 bg-[#1a3252] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#02a9e6] focus:outline-none focus:ring-2 focus:ring-[#02a9e6]/50 rounded-md disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
       >
-        {isGenerating ? 'Generiere…' : 'Content generieren'}
+        {isGenerating ? 'Generiere…' : blockedByOther ? 'Generator blockiert…' : 'Content generieren'}
       </button>
 
       {/* Animated loading panel */}
