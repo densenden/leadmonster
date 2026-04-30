@@ -6,6 +6,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/server'
+
+// Always re-fetch — content list must reflect live DB after generation/edit/delete.
+export const dynamic = 'force-dynamic'
 import { Badge } from '@/components/ui/Badge'
 import { ContentPreview } from '@/components/admin/ContentPreview'
 import { GenerateButton } from './_components/GenerateButton'

@@ -8,6 +8,9 @@ import { ProduktForm } from '@/components/admin/ProduktForm'
 import { HeroImagePanel } from './_components/HeroImagePanel'
 import type { ProduktWithConfig, Produkt, ProduktConfig } from '@/lib/supabase/types'
 
+// Always re-fetch — admin product edit page must show fresh DB state.
+export const dynamic = 'force-dynamic'
+
 interface PageProps {
   params: { id: string }
 }

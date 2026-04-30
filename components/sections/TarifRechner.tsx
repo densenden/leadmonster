@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import type { ProduktTyp } from '@/lib/tarif-data'
 import { getAgeBracket } from '@/lib/tarif-data'
 import { LeadForm } from '@/components/sections/LeadForm'
@@ -24,38 +24,27 @@ const SUM_OPTIONS = [5000, 7500, 10000, 12500, 15000] as const
 // ---------------------------------------------------------------------------
 
 /**
- * TarifRechner — two-step pseudo tariff calculator.
- * Step 1: User selects age + desired sum → result card with premium range is revealed.
- * Step 2: User clicks CTA → LeadForm appears with intentTag="preis" pre-set.
- * All data is static (TARIF_DATA); no API calls are made from this component.
+ * TarifRechner — Beitragsrechner mit direkt darunter eingebettetem LeadForm.
+ *
+ * User wählt Alter + Wunschsumme → Result-Card mit Beitragsspanne erscheint
+ * und das LeadForm direkt darunter ist mit den gewählten Werten vorbefüllt.
+ * Die "Beitrag jetzt anfragen"-CTA scrollt zum bereits sichtbaren Form.
  *
  * Design note: tokens.json specifies border-radius: 0px, but the spec requires 12px
  * card radius (rounded-xl) for the calculator card surface — intentional override.
  */
 export function TarifRechner({ produktTyp, produktName, anbieter, produktId }: TarifRechnerProps) {
-  // Step 1 state
   const [age, setAge] = useState(55)
   const [sum, setSum] = useState(10000)
-  const [showResult, setShowResult] = useState(false)
+  // Result + LeadForm sind direkt beim Page-Load sichtbar — der User soll
+  // den Konversionspfad sofort sehen, ohne erst Slider oder Select zu bedienen.
+  const [showResult, setShowResult] = useState(true)
 
-  // Step 2 state
-  const [showLeadForm, setShowLeadForm] = useState(false)
-
-  // Ref to the LeadForm wrapper for smooth scroll-into-view after reveal
+  // Ref to the LeadForm wrapper for smooth scroll-into-view when CTA is clicked.
   const leadFormRef = useRef<HTMLDivElement>(null)
 
   // Derived: calculate the premium range on every render (no extra state)
   const result = getAgeBracket(produktTyp, age, sum)
-
-  // Scroll to LeadForm after it becomes visible.
-  // Guard against environments where scrollIntoView is not implemented (e.g. jsdom in tests).
-  useEffect(() => {
-    if (showLeadForm && leadFormRef.current) {
-      if (typeof leadFormRef.current.scrollIntoView === 'function') {
-        leadFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }
-    }
-  }, [showLeadForm])
 
   // ---------------------------------------------------------------------------
   // Handlers
@@ -74,9 +63,27 @@ export function TarifRechner({ produktTyp, produktName, anbieter, produktId }: T
   }
 
   function handleCTAClick() {
-    setShowLeadForm(true)
-    // Scroll is handled by the useEffect above after state update
+    if (leadFormRef.current && typeof leadFormRef.current.scrollIntoView === 'function') {
+      leadFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
   }
+
+  // Vorbefüllter Interesse-Text, sobald ein Result existiert.
+  // Live-Update: ändert sich, wenn der User Alter oder Wunschsumme anpasst.
+  // Über die `key`-Prop am LeadForm wird die Komponente bei Änderung neu gemountet,
+  // damit der useState-Initialwert aktualisiert wird (sonst würde er beim ersten
+  // Render eingefroren).
+  const prefillInteresse = result
+    ? `Anfrage zu ${produktName}\n` +
+      `Alter: ${age} Jahre\n` +
+      `Wunschsumme: ${sum.toLocaleString('de-DE')} €\n` +
+      `Berechnete Beitragsspanne: ${result.low} – ${result.high} € pro Monat\n\n` +
+      `Bitte erstellen Sie mir ein persönliches, verbindliches Angebot.`
+    : undefined
+
+  // Stabiler key, damit useState beim Reset (showResult=false) zurückgesetzt wird,
+  // aber während eines aktiven Result-Streams nicht jedes Tippen den Form neu mountet.
+  const formKey = result ? `tarif-${age}-${sum}` : 'tarif-empty'
 
   // ---------------------------------------------------------------------------
   // Render
@@ -210,22 +217,32 @@ export function TarifRechner({ produktTyp, produktName, anbieter, produktId }: T
         </div>
       </div>
 
-      {/* LeadForm wrapper — fade-in transition matches result card animation */}
+      {/* LeadForm wrapper — immer sichtbar, sobald ein Beitrags-Ergebnis vorliegt.
+          Daten aus dem Rechner sind vorbefüllt; der User kann den Text bearbeiten. */}
       <div
         ref={leadFormRef}
         className={[
           'max-w-2xl mx-auto mt-8',
           'motion-safe:transition-all motion-safe:duration-[250ms]',
-          showLeadForm ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2.5 pointer-events-none',
+          showResult && result
+            ? 'opacity-100 translate-y-0'
+            : 'opacity-0 translate-y-2.5 pointer-events-none h-0 overflow-hidden mt-0',
         ].join(' ')}
         aria-live="polite"
       >
-        {showLeadForm && (
-          <LeadForm
-            intentTag="preis"
-            produktId={produktId}
-            zielgruppeTag=""
-          />
+        {showResult && result && (
+          <>
+            <h3 className="font-heading font-bold text-[#333333] text-h3 mb-4 text-center">
+              Persönliches Angebot anfordern
+            </h3>
+            <LeadForm
+              key={formKey}
+              intentTag="preis"
+              produktId={produktId}
+              zielgruppeTag=""
+              defaultInteresse={prefillInteresse}
+            />
+          </>
         )}
       </div>
     </section>

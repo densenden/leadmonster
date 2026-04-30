@@ -19,10 +19,15 @@ export interface LeadFormProps {
    *  sichtbarer Hinweis "Anfrage zu: {Anbieter}" angezeigt und das Feld als
    *  gewuenschterAnbieter mit dem Submit gesendet. */
   gewuenschterAnbieter?: string
+  /** Vorbefüllter Text fürs Interesse-Feld — wird vom TarifRechner / VergleichsRechner
+   *  genutzt, um die ausgewählten Werte (Alter, Wunschsumme, Beitragsspanne)
+   *  als Konversationsstart in die Anfrage zu schreiben. Der User kann den Text
+   *  überschreiben. */
+  defaultInteresse?: string
 }
 
 /** Named export — no default export per project convention. */
-export function LeadForm({ produktId, zielgruppeTag, intentTag, gewuenschterAnbieter }: LeadFormProps) {
+export function LeadForm({ produktId, zielgruppeTag, intentTag, gewuenschterAnbieter, defaultInteresse }: LeadFormProps) {
   // Four-state status machine: all conditional rendering derives from this single variable.
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
 
@@ -31,7 +36,7 @@ export function LeadForm({ produktId, zielgruppeTag, intentTag, gewuenschterAnbi
   const [nachname, setNachname] = useState('')
   const [email, setEmail] = useState('')
   const [telefon, setTelefon] = useState('')
-  const [interesse, setInteresse] = useState('')
+  const [interesse, setInteresse] = useState(defaultInteresse ?? '')
 
   // Client-side email validation error — separate from network status
   const [emailError, setEmailError] = useState('')

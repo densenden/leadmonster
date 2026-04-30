@@ -15,10 +15,11 @@ const DEFAULT_PROPS = {
 }
 
 describe('TarifRechner — initial render (Step 1)', () => {
-  it('does not show a result card on initial render', () => {
+  it('shows the result card with default age 55 / sum 10000 on initial render', () => {
     render(<TarifRechner {...DEFAULT_PROPS} />)
-    // The premium headline uses data-testid; it must not be present before interaction
-    expect(screen.queryByTestId('premium-headline')).not.toBeInTheDocument()
+    // Behavior change (April 2026): result + LeadForm sind ab Page-Load sichtbar,
+    // damit der User den Konversionspfad direkt sieht.
+    expect(screen.getByTestId('premium-headline')).toBeInTheDocument()
   })
 
   it('renders the age slider with aria-label "Ihr Alter" and default value 55', () => {
@@ -35,11 +36,17 @@ describe('TarifRechner — initial render (Step 1)', () => {
     expect((select as HTMLSelectElement).value).toBe('10000')
   })
 
-  it('does not show the LeadForm submit button on initial render', () => {
+  it('shows the LeadForm submit button on initial render with prefilled interest text', () => {
     render(<TarifRechner {...DEFAULT_PROPS} />)
+    // LeadForm is now embedded directly under the result card with calculator
+    // values pre-filled into the Interesse textarea.
     expect(
-      screen.queryByRole('button', { name: /Jetzt Angebot anfordern/i })
-    ).not.toBeInTheDocument()
+      screen.getByRole('button', { name: /Jetzt Angebot anfordern/i })
+    ).toBeInTheDocument()
+    const interesseField = screen.getByLabelText(/Interesse/i) as HTMLTextAreaElement
+    expect(interesseField.value).toContain('Sterbegeld24Plus')
+    expect(interesseField.value).toContain('Alter: 55')
+    expect(interesseField.value).toContain('10.000')
   })
 })
 

@@ -8,6 +8,9 @@ import type { Wissensfundus } from '@/lib/supabase/types'
 import { Badge } from '@/components/ui/Badge'
 import { DeleteConfirm } from './_components/DeleteConfirm'
 
+// Always re-fetch — wissensfundus list must reflect live DB after CRUD/seed.
+export const dynamic = 'force-dynamic'
+
 // All valid category values for the filter tab bar.
 const CATEGORIES = [
   { value: '', label: 'Alle' },

@@ -4,6 +4,9 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { LeadTable } from '@/components/admin/LeadTable'
 
+// Always re-fetch — admin views must show fresh data regardless of Vercel cache.
+export const dynamic = 'force-dynamic'
+
 const PAGE_SIZE = 25
 
 interface SearchParams {

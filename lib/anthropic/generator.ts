@@ -193,7 +193,7 @@ export async function generateContent(
         const canonicalUrl = `${baseUrl}/${produkt.slug}/ratgeber/${ratgeberSlug}`
         const schemaMarkup = buildSchemaMarkup('ratgeber', { canonicalUrl })
 
-        const { data: row } = await supabase
+        const { data: row, error: upsertError } = await supabase
           .from('generierter_content')
           .upsert(
             {
@@ -214,6 +214,10 @@ export async function generateContent(
 
         if (row) {
           success.push({ page_type: 'ratgeber', slug: ratgeberSlug, rowId: row.id })
+        } else {
+          throw new Error(
+            upsertError?.message ?? `generierter_content upsert returned no row for ratgeber/${ratgeberSlug}`,
+          )
         }
       } catch (err: unknown) {
         failed.push({
@@ -284,7 +288,7 @@ export async function generateContent(
           produktName: produkt.name,
         })
 
-        const { data: row } = await supabase
+        const { data: row, error: upsertError } = await supabase
           .from('generierter_content')
           .upsert(
             {
@@ -308,6 +312,10 @@ export async function generateContent(
 
         if (row) {
           success.push({ page_type: pageType, slug: pageType, rowId: row.id })
+        } else {
+          throw new Error(
+            upsertError?.message ?? `generierter_content upsert returned no row for ${pageType}`,
+          )
         }
       } catch (err: unknown) {
         failed.push({
@@ -331,7 +339,7 @@ export async function generateContent(
         const canonicalUrl = `${baseUrl}/${produkt.slug}/ratgeber/${ratgeberSlug}`
         const schemaMarkup = buildSchemaMarkup('ratgeber', { canonicalUrl })
 
-        const { data: row } = await supabase
+        const { data: row, error: upsertError } = await supabase
           .from('generierter_content')
           .upsert(
             {
@@ -352,6 +360,10 @@ export async function generateContent(
 
         if (row) {
           success.push({ page_type: 'ratgeber', slug: ratgeberSlug, rowId: row.id })
+        } else {
+          throw new Error(
+            upsertError?.message ?? `generierter_content upsert returned no row for ratgeber/${ratgeberSlug}`,
+          )
         }
       } catch (err: unknown) {
         failed.push({

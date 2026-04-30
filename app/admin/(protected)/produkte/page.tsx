@@ -3,6 +3,9 @@
 // Auth guard is inherited from app/admin/(protected)/layout.tsx.
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/server'
+
+// Always re-fetch — admin product list must reflect live DB after CRUD ops.
+export const dynamic = 'force-dynamic'
 import { Badge } from '@/components/ui/Badge'
 import { DeleteProduktButton } from './_components/DeleteProduktButton'
 import type { Produkt, ProduktStatus } from '@/lib/supabase/types'

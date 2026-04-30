@@ -2,6 +2,9 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server'
 
+// Always re-fetch — admin dashboard counts must reflect live DB state.
+export const dynamic = 'force-dynamic'
+
 export default async function AdminDashboardPage() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
