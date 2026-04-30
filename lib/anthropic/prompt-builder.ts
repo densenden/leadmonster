@@ -21,7 +21,11 @@ AEO-Regeln:
 - Keine Marketing-Floskeln in Headings — direkte, informative H-Tags
 - Premium-Ton, konsistent mit Nunito Sans / Roboto Design-System
 
-Antworte ausschließlich mit gültigem JSON. Keine Markdown-Fences.`
+ZWINGENDE Output-Regeln (Validierungsfehler sonst):
+- Antworte ausschließlich mit gültigem JSON. Keine Markdown-Fences.
+- Top-Level-Keys sind IMMER: meta_title, meta_desc, schema_markup, sections
+- Erlaubte section.type-Werte (NUR diese!): "hero" | "features" | "trust" | "faq" | "vergleich" | "ratgeber" | "tarif"
+- Erfinde keine neuen type-Werte (nicht "intro", nicht "paragraph", nicht "feature" singular, nicht "trust_bar", etc.)`
 
 // Layer 2: Build the Wissensfundus context block.
 // Filters rows to those whose tags intersect with the product config tags,
@@ -135,30 +139,52 @@ WICHTIG: faq.items MUSS 8-15 Einträge enthalten. Weniger als 8 = Fehler.`,
 }
 
 WICHTIG: anbieter MUSS 3-10 Einträge enthalten. Weniger als 3 = Fehler.`,
-  tarif: `## Output-Schema (JSON)
+  tarif: `## Output-Schema (JSON) — STRENGE Mengen!
 {
   "meta_title": "string, max 60",
   "meta_desc":  "string, max 160",
   "schema_markup": { "@context": "https://schema.org", "@type": "Product", ... },
   "sections": [
-    { "type": "hero", "headline": "string", "subline": "string", "cta_text": "string", "cta_anchor": "#rechner" },
-    { "type": "tarif_rechner", "alter_min": 18, "alter_max": 85, "summe_min": 5000, "summe_max": 25000, "disclaimer": "string" }
+    {
+      "type": "tarif",
+      "alters_stufen": [
+        { "von": 40, "bis": 49, "beitrag_ab": 12.5, "beitrag_bis": 18.9 },
+        { "von": 50, "bis": 59, "beitrag_ab": 18.9, "beitrag_bis": 26.5 },
+        { "von": 60, "bis": 69, "beitrag_ab": 26.5, "beitrag_bis": 38.0 },
+        { "von": 70, "bis": 79, "beitrag_ab": 38.0, "beitrag_bis": 52.0 }
+      ],
+      "disclaimer": "string (Hinweis dass es sich um Beispielbeiträge handelt)"
+    }
   ]
-}`,
+}
+
+WICHTIG: type MUSS exakt "tarif" sein. alters_stufen sind Objekte mit den 4 numerischen Feldern.`,
   ratgeber: `## Output-Schema (JSON) — STRENGE Mengen!
 {
   "meta_title": "string, max 60",
   "meta_desc":  "string, max 160",
   "schema_markup": { "@context": "https://schema.org", "@type": "Article", ... },
   "sections": [
-    { "type": "intro",     "headline": "string", "intro": "string (2-3 Sätze Definition)" },
-    { "type": "paragraph", "heading": "string", "body_paragraphs": ["Absatz 1", "Absatz 2", "Absatz 3", "Absatz 4"] }
+    {
+      "type": "ratgeber",
+      "slug": "string (z.B. 'was-ist-sterbegeld')",
+      "titel": "string (Hauptüberschrift des Artikels)",
+      "intro": "string (2-3 Sätze Definition / Antwort auf 'Was ist X?')",
+      "body_paragraphs": [
+        "Absatz 1 — Hintergrund / Kontext",
+        "Absatz 2 — Hauptinhalt / Detail 1",
+        "Absatz 3 — Hauptinhalt / Detail 2",
+        "Absatz 4 — Empfehlung / Fazit"
+      ],
+      "cta_text": "string (Call-to-Action zum Lead-Formular)"
+    }
   ]
 }
 
 WICHTIG:
-- Mindestens 1 intro-Section + mindestens 3 paragraph-Sections (insgesamt min. 4 Sections).
-- paragraph.body_paragraphs MUSS 4-6 Strings enthalten.`,
+- type MUSS exakt "ratgeber" sein (nicht "article", nicht "intro", nicht "paragraph").
+- Genau EINE ratgeber-Section pro Response.
+- body_paragraphs MUSS 4-6 Strings (volle Absätze, nicht einzelne Sätze) enthalten.`,
 }
 
 // Compose the full system + user message pair for a given page type.

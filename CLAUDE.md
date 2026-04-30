@@ -97,6 +97,7 @@ UNSPLASH_ACCESS_KEY=
 4. CONTENT ENGINE (Claude + OpenAI Image)
    Pro Seite: Texte (JSON-Sektionen) + Hero-Bild + Inline-Bilder
    Auto-Cross-Linking auf Wissensfundus-Slugs
+   Auto-Vorschlag VergleichsRechner-Section (wenn ≥2 Anbietertarife in DB)
         ↓
 5. LEAD-FLOW (Supabase + Convexa + Resend)
    Formular → Supabase → Convexa-Push → Bestätigungs-Mail
@@ -152,6 +153,9 @@ Stand nach Migration `20260429000000_convexa_blog_tarife_bu.sql`.
 - `summe` int — Versicherungssumme oder BU-Monatsrente
 - `beitrag_low`, `beitrag_high` numeric — monatlich
 - `einheit` text — `eur_summe | eur_monat`
+- **`anbieter_name` text NULL** — wenn NULL: Marktkorridor (für `TarifRechner`); wenn gesetzt: Einzeltarif eines Anbieters (für `VergleichsRechner`). `low = high = exakter Beitrag` ist erlaubt.
+- **`tarif_name` text NULL** — z. B. `Bestattungsschutzbrief`, `sorgenfrei Leben`, `Comfort plus`
+- **`besonderheiten` jsonb NULL** — strukturiert: `{ wartezeit, gesundheitspruefung, doppelte_summe_unfall, rueckholung_ausland, kindermitversicherung, zahlung_bis }` — wird im VergleichsRechner als Footer-Tabelle gerendert
 
 ### `blog_posts` (NEU)
 - `id` uuid PK
@@ -228,8 +232,9 @@ unverändert.
 │
 ├── components/
 │   ├── ui/                               # Atoms
-│   ├── sections/                         # Hero, FeatureGrid, FAQ, Vergleich, TarifRechner, LeadForm
-│   │                                     # (CovomoRechner wurde entfernt)
+│   ├── sections/                         # Hero, FeatureGrid, FAQ, Vergleich, TarifRechner,
+│   │                                     # VergleichsRechner (NEU — Daten-Eingabe → Anbieter-Tabelle → Lead),
+│   │                                     # LeadForm (CovomoRechner wurde entfernt)
 │   ├── blog/                             # NEU — BlogCard, MarkdownRenderer
 │   └── admin/
 │
@@ -256,7 +261,8 @@ unverändert.
 │
 ├── scripts/
 │   ├── seed-wissensfundus.ts             # NEU — seedt MD-Dateien aus /wissensfundus-seeds/
-│   ├── seed-tarife.ts                    # NEU — seedt Tarife pro Produkt
+│   ├── seed-tarife.ts                    # NEU — seedt Marktkorridore (anbieter_name = NULL)
+│   ├── seed-vergleich-tarife.ts          # NEU — seedt Anbieter-Einzeltarife aus /vergleich-tarife-seeds/*.csv
 │   └── import-finanzteam26-blog.ts       # NEU — alte HTML → blog_posts (sobald Egress freigeschaltet)
 │
 ├── wissensfundus-seeds/                  # NEU — editierbare MD-Files je Thema
@@ -266,6 +272,13 @@ unverändert.
 │   ├── leben/
 │   ├── bu/
 │   └── unfall/
+│
+├── vergleich-tarife-seeds/               # NEU — CSV pro Produkt mit Anbieter × Alter × Summe → Beitrag
+│   ├── sterbegeld.csv                    # bereits vorhanden: Allianz, DELA, Ideal, LV1871, November
+│   ├── pflege.csv
+│   ├── leben.csv
+│   ├── bu.csv
+│   └── unfall.csv
 │
 ├── docs/
 │   └── convexa-api-anfrage.md            # E-Mail-Vorlage an Convexa-Support
@@ -303,6 +316,19 @@ Pipeline und Prompt-Schichten siehe `lib/anthropic/prompt-builder.ts`. Der Gener
 - Aufruf der Bild-Pipeline pro Sektion mit Slot-Bedarf
 - Aufruf des Auto-Linkers vor dem DB-Write (injiziert `<a href="/wissen/...">` Anker in Body-Texte)
 - Erzeugung von **Blog-Beiträgen** (separater Generator, schreibt in `blog_posts`)
+- **Pflicht-Vorschlag `vergleichsrechner`-Section** in jedem `hauptseite`-Output, sobald für das Produkt mindestens 2 Anbietertarife in `tarife` (`anbieter_name IS NOT NULL`) existieren. Section-Schema:
+  ```json
+  {
+    "type": "vergleichsrechner",
+    "headline": "<Produkt> — Tarife im Direktvergleich",
+    "intro": "<2–3 Sätze, AEO-Wording, nennt Produktnamen + Zielgruppe>",
+    "input_hint": "Geben Sie Geburtsjahr und Wunschsumme ein.",
+    "cta_label": "Persönliches Angebot anfordern",
+    "anbieter_count_hint": <n>
+  }
+  ```
+  Das Frontend rendert daraus automatisch `<VergleichsRechner produktId={…} />` — die eigentliche Tabelle kommt aus DB, der Generator liefert nur Wording + SEO-Kontext drumherum.
+- Wenn keine Anbietertarife vorhanden: Generator schlägt **TODO-Eintrag** ins Admin-Dashboard (`Tarife für <produkt> fehlen — VergleichsRechner kann nicht aktiviert werden`).
 
 ### Bilder (OpenAI gpt-image-1)
 - `lib/openai/image-generator.ts` → `generateImage({ prompt, size, slot })`
@@ -318,15 +344,32 @@ Im Wissensfundus pflegt der Admin pro Eintrag `link_phrases` (z. B. `["Sterbegel
 
 ---
 
-## Tarif-Kalkulator (eigener)
+## Rechner-Konzept (zweistufig, Pflicht in jedem Produkt)
 
-Covomo-iframe ist entfernt. Statt dessen:
-- **`tarife`-Tabelle** je Produkt mit Alters-Brackets + Summen
-- `components/sections/TarifRechner.tsx` liest pro Produkt aus DB, rendert Step-1 (Auswahl) + Step-2 (Lead-Form)
-- `intent_tag = 'preis'` wird automatisch gesetzt
-- Pflichtdisclaimer: „Beispielwerte aus Marktbeobachtung — verbindliches Angebot nach Anfrage"
+Covomo-iframe ist entfernt. Stattdessen gibt es **zwei klar getrennte Rechner**, beide auf derselben `tarife`-Tabelle:
 
-Für BU ist die Logik leicht abweichend (`einheit = 'eur_monat'` statt `'eur_summe'`).
+### A) `TarifRechner` (grober Marktkorridor — bestehend)
+- Liest `tarife`-Rows mit `anbieter_name IS NULL` → Marktkorridor `low/high`
+- User-Eingabe: Alter + Wunschsumme → ein Korridor („ca. 18 € – 26 € / Monat")
+- Komponente: `components/sections/TarifRechner.tsx`
+- CTA → `LeadForm` mit `intent_tag='preis'`
+- Position: Section auf der Hauptseite, oberhalb FAQ
+
+### B) `VergleichsRechner` (Anbieter-Vergleich — NEU, Pflicht in jedem Produkt)
+**Genau das, was finanzteam26 in der internen Excel-Tabelle nutzt** (Allianz / DELA / Ideal / LV1871 / November etc.).
+
+- Liest `tarife`-Rows mit `anbieter_name IS NOT NULL` → konkrete Beiträge je Anbieter
+- User-Eingabe: Geburtsdatum (oder Alter) + Wunschsumme
+- Output: **sortierte Anbieter-Tabelle** (Anbieter, Tarifname, Beitrag/Monat, Besonderheiten aus `besonderheiten` jsonb), günstigster zuerst
+- Einordnung: Badge „Günstigster", „Bester Schutz" (= meiste true-Flags in `besonderheiten`), „Schnellster Schutz" (= kürzeste Wartezeit)
+- CTA pro Tabellen-Zeile **und** unten gesamt → `LeadForm` mit `intent_tag='preis'`, optional `gewuenschter_anbieter` als versteckter Hidden-Field
+- Komponente: `components/sections/VergleichsRechner.tsx` (Client Component)
+- Eigene URL: `app/[produkt]/vergleichsrechner/page.tsx` **plus** prominent eingebettet auf Hauptseite
+- Pflichtdisclaimer: „Werte aus interner Marktbeobachtung, Stand `<datum>`. Verbindliches Angebot nach Anfrage. Tatsächlicher Beitrag kann je nach Gesundheitsprüfung abweichen."
+
+**Daten-Pflege:** CSV pro Produkt unter `vergleich-tarife-seeds/<produkttyp>.csv`, eingespielt via `scripts/seed-vergleich-tarife.ts`. Admin-UI unter `app/admin/tarife/` muss beide Modi (Marktkorridor + Anbietertarif) editieren können.
+
+Für BU ist die Logik leicht abweichend (`einheit = 'eur_monat'` statt `'eur_summe'`, Eingabefeld „gewünschte Monatsrente").
 
 ---
 
@@ -399,9 +442,14 @@ Re-Generation: Im Admin gibt es „Bild neu erzeugen"-Button pro Slot.
 - [ ] **Blog-Import** alte finanzteam26-Inhalte
 - [ ] Admin-MD-Editor
 
-### Phase 6 — Tarife in DB
-- [ ] **Tarif-Migration** statisches `lib/tarif-data.ts` → DB
-- [ ] Admin-UI zur Pflege
+### Phase 6 — Tarife in DB + VergleichsRechner
+- [ ] **Tarif-Migration** statisches `lib/tarif-data.ts` → DB (anbieter_name = NULL)
+- [ ] **Schema-Erweiterung** `tarife`: `anbieter_name`, `tarif_name`, `besonderheiten` jsonb
+- [ ] **CSV-Seed** `vergleich-tarife-seeds/sterbegeld.csv` (Allianz/DELA/Ideal/LV1871/November) → `scripts/seed-vergleich-tarife.ts`
+- [ ] **`VergleichsRechner.tsx`** (Daten-Eingabe → Anbietertabelle mit Sortierung + Badges → Lead-Form)
+- [ ] **Eigene Route** `app/[produkt]/vergleichsrechner/page.tsx` + Einbettung auf Hauptseite
+- [ ] **Generator-Integration**: Auto-Vorschlag `vergleichsrechner`-Section
+- [ ] Admin-UI zur Pflege beider Modi (Marktkorridor + Anbietertarif)
 
 ### Phase 7 — Roll-out 4 weitere Produkte
 - [ ] Pflege, Leben, BU, Unfall mit jeweils vollem Content + Bildern

@@ -70,6 +70,19 @@ export const TarifSectionSchema = z.object({
   disclaimer: z.string().min(1),
 })
 
+// VergleichsRechner — wird programmatisch in den Generator injiziert (siehe
+// lib/anthropic/generator.ts). Der LLM soll diese Section NICHT selbst erzeugen,
+// das Schema steht hier nur, damit der Discriminated-Union-Parse nicht bricht,
+// falls der LLM sich doch nicht an die Anweisung hält.
+export const VergleichsrechnerSectionSchema = z.object({
+  type: z.literal('vergleichsrechner'),
+  headline: z.string(),
+  intro: z.string(),
+  input_hint: z.string().default('Geburtsjahr und Wunschsumme wählen'),
+  cta_label: z.string().default('Anbieter anfragen'),
+  anbieter_count_hint: z.number().int().optional(),
+})
+
 // Discriminated union of all section types — used to validate individual sections
 // within any page response.
 export const SectionUnionSchema = z.discriminatedUnion('type', [
@@ -80,6 +93,7 @@ export const SectionUnionSchema = z.discriminatedUnion('type', [
   VergleichSectionSchema,
   RatgeberSectionSchema,
   TarifSectionSchema,
+  VergleichsrechnerSectionSchema,
 ])
 
 // TypeScript type derived from the union schema — use this in application code

@@ -35,6 +35,15 @@ export interface LegalTextSection {
   blocks: Array<{ heading: string; body: string }>
 }
 
+export interface VergleichsrechnerSection {
+  type: 'vergleichsrechner'
+  headline: string
+  intro: string
+  input_hint?: string
+  cta_label?: string
+  anbieter_count_hint?: number
+}
+
 export type ContentSection =
   | HeroSection
   | FeaturesSection
@@ -42,3 +51,4 @@ export type ContentSection =
   | FaqSection
   | LeadFormSection
   | LegalTextSection
+  | VergleichsrechnerSection
