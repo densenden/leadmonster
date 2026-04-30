@@ -4,6 +4,7 @@
 // Manages controlled state for Convexa CRM, sales notification, and the
 // AI text-generation provider/model selection.
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { saveSettings } from '@/app/admin/einstellungen/actions'
@@ -132,6 +133,7 @@ export function SettingsForm(props: SettingsFormProps) {
   const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null)
 
   const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
   function handleSave() {
     setSaveResult(null)
@@ -148,6 +150,9 @@ export function SettingsForm(props: SettingsFormProps) {
 
       if (result.success) {
         setSaveResult({ success: true, message: 'Einstellungen gespeichert.' })
+        // Refresh Server Component so freshly-saved values come back as props
+        // on next mount, keeping client state and DB in sync.
+        router.refresh()
       } else {
         setSaveResult({ success: false, message: result.error })
       }
