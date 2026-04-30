@@ -42,13 +42,22 @@ export function InlineMarkdown({ children, linkClassName }: InlineMarkdownProps)
       nodes.push(children.slice(lastIndex, match.index))
     }
     const [, label, url] = match
-    // Internal link → next/link; external → plain anchor
+    // Internal link → next/link; external → plain anchor with target=_blank.
+    // Special case: /wissen/* links (auto-cross-linker fallback) open in a
+    // new tab so the user stays on the product page they were reading.
     const isExternal = /^https?:\/\//i.test(url)
+    const isWissenJump = url.startsWith('/wissen/')
     if (isExternal) {
       nodes.push(
         <a key={key++} href={url} target="_blank" rel="noopener noreferrer" className={linkClassName}>
           {label}
         </a>,
+      )
+    } else if (isWissenJump) {
+      nodes.push(
+        <Link key={key++} href={url} target="_blank" rel="noopener" className={linkClassName}>
+          {label}
+        </Link>,
       )
     } else {
       nodes.push(

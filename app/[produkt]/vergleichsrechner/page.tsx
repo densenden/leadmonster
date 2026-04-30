@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/server'
 import { VergleichsRechner } from '@/components/sections/VergleichsRechner'
 import { lookupVergleichTarife } from '@/lib/tarife/lookup'
+import { getProduktConfig } from '@/lib/tarife/produkt-config'
 import { generateVergleichSchema } from '@/lib/seo/schema'
 
 export const revalidate = 3600
@@ -16,9 +17,6 @@ export const revalidate = 3600
 interface PageProps {
   params: { produkt: string }
 }
-
-const DEFAULT_AGE = 65
-const DEFAULT_SUMME = 8000
 
 interface ProduktRow {
   id: string
@@ -87,7 +85,12 @@ export default async function VergleichsRechnerPage({ params }: PageProps) {
     notFound()
   }
 
-  const initialData = await lookupVergleichTarife(produkt.id, DEFAULT_AGE, DEFAULT_SUMME)
+  const config = getProduktConfig(produkt.typ)
+  const initialData = await lookupVergleichTarife(
+    produkt.id,
+    config.default_age,
+    config.default_summe,
+  )
   const distinctAnbieter = Array.from(new Set(initialData.map(t => t.anbieter_name)))
 
   const schema = generateVergleichSchema({
@@ -135,6 +138,8 @@ export default async function VergleichsRechnerPage({ params }: PageProps) {
 
         <VergleichsRechner
           produktId={produkt.id}
+          produktTyp={produkt.typ}
+          produktName={produkt.name}
           zielgruppeTag="senioren_50plus"
           intentTag="preis"
           headline={`${produkt.name} im Anbieter-Vergleich`}

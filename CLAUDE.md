@@ -257,12 +257,14 @@ unverändert.
 │   ├── seo/
 │   ├── resend/
 │   └── tarife/                           # NEU — DB-basierte Tarif-Lookups (löst lib/tarif-data.ts ab)
-│       └── lookup.ts
+│       ├── lookup.ts                     # lookupTarif (Marktkorridor) + lookupVergleichTarife (Anbietertarife mit Badge-Vergabe)
+│       └── produkt-config.ts             # Pro Produkttyp: Summen-Optionen, Default-Alter, Labels für VergleichsRechner
 │
 ├── scripts/
 │   ├── seed-wissensfundus.ts             # NEU — seedt MD-Dateien aus /wissensfundus-seeds/
 │   ├── seed-tarife.ts                    # NEU — seedt Marktkorridore (anbieter_name = NULL)
-│   ├── seed-vergleich-tarife.ts          # NEU — seedt Anbieter-Einzeltarife aus /vergleich-tarife-seeds/*.csv
+│   ├── seed-vergleich-tarife.ts          # NEU — seedt Anbieter-Einzeltarife aus einer CSV in /vergleich-tarife-seeds/
+│   ├── seed-all-vergleich-tarife.ts      # NEU — Wrapper: seedt alle CSV-Files für alle Produkte in der DB
 │   └── import-finanzteam26-blog.ts       # NEU — alte HTML → blog_posts (sobald Egress freigeschaltet)
 │
 ├── wissensfundus-seeds/                  # NEU — editierbare MD-Files je Thema
@@ -273,12 +275,13 @@ unverändert.
 │   ├── bu/
 │   └── unfall/
 │
-├── vergleich-tarife-seeds/               # NEU — CSV pro Produkt mit Anbieter × Alter × Summe → Beitrag
-│   ├── sterbegeld.csv                    # bereits vorhanden: Allianz, DELA, Ideal, LV1871, November
-│   ├── pflege.csv
-│   ├── leben.csv
-│   ├── bu.csv
-│   └── unfall.csv
+├── vergleich-tarife-seeds/               # NEU — CSV pro Produkttyp mit Anbieter × Alter × Summe → Beitrag
+│   ├── README.md                         # Format-Doku, besonderheiten_json-Schema je Produkttyp
+│   ├── sterbegeld.csv                    # 348 Zeilen: Allianz, DELA, Ideal, LV1871, November (Jg 1945–1970, 5/8/10k €)
+│   ├── pflege.csv                        # Vorlage: Allianz, AXA, DKV, Continentale, Gothaer (eur_monat)
+│   ├── leben.csv                         # Vorlage: Allianz, ERGO, HDI, Hannoversche, CosmosDirekt
+│   ├── bu.csv                            # Vorlage: Alte Leipziger, Allianz, AXA, ERGO, Swiss Life (eur_monat)
+│   └── unfall.csv                        # Vorlage: Allianz, AXA, ERGO, Generali, HDI
 │
 ├── docs/
 │   └── convexa-api-anfrage.md            # E-Mail-Vorlage an Convexa-Support
@@ -367,9 +370,13 @@ Covomo-iframe ist entfernt. Stattdessen gibt es **zwei klar getrennte Rechner**,
 - Eigene URL: `app/[produkt]/vergleichsrechner/page.tsx` **plus** prominent eingebettet auf Hauptseite
 - Pflichtdisclaimer: „Werte aus interner Marktbeobachtung, Stand `<datum>`. Verbindliches Angebot nach Anfrage. Tatsächlicher Beitrag kann je nach Gesundheitsprüfung abweichen."
 
-**Daten-Pflege:** CSV pro Produkt unter `vergleich-tarife-seeds/<produkttyp>.csv`, eingespielt via `scripts/seed-vergleich-tarife.ts`. Admin-UI unter `app/admin/tarife/` muss beide Modi (Marktkorridor + Anbietertarif) editieren können.
+**Daten-Pflege:** CSV pro Produkttyp unter `vergleich-tarife-seeds/<produkttyp>.csv` (Format-Doku in [vergleich-tarife-seeds/README.md](vergleich-tarife-seeds/README.md)).
+- Einzelnes Produkt: `npx tsx scripts/seed-vergleich-tarife.ts <slug>`
+- Alle auf einmal: `npx tsx scripts/seed-all-vergleich-tarife.ts` (mappt CSV-Stamm `pflege.csv` → DB-Slug `pflegezusatz` etc.)
 
-Für BU ist die Logik leicht abweichend (`einheit = 'eur_monat'` statt `'eur_summe'`, Eingabefeld „gewünschte Monatsrente").
+Idempotent über UNIQUE-Constraint `(produkt_id, anbieter_name, alter_von, summe)`. Admin-UI unter `app/admin/tarife/` (Folge-Iteration) bearbeitet beide Modi (Marktkorridor + Anbietertarif).
+
+**Pro Produkttyp** liegt die UI-Konfiguration in [lib/tarife/produkt-config.ts](lib/tarife/produkt-config.ts) — Summen-Optionen, Default-Alter, Labels. Pflege/BU nutzen `einheit='eur_monat'` (Monatsrente), die anderen `eur_summe` (Versicherungssumme). Pflichtdisclaimer wird in jedem Rechner angezeigt: „Werte aus interner Marktbeobachtung, Stand `<datum>`. Verbindliches Angebot nach Anfrage."
 
 ---
 
@@ -442,17 +449,19 @@ Re-Generation: Im Admin gibt es „Bild neu erzeugen"-Button pro Slot.
 - [ ] **Blog-Import** alte finanzteam26-Inhalte
 - [ ] Admin-MD-Editor
 
-### Phase 6 — Tarife in DB + VergleichsRechner
-- [ ] **Tarif-Migration** statisches `lib/tarif-data.ts` → DB (anbieter_name = NULL)
-- [ ] **Schema-Erweiterung** `tarife`: `anbieter_name`, `tarif_name`, `besonderheiten` jsonb
-- [ ] **CSV-Seed** `vergleich-tarife-seeds/sterbegeld.csv` (Allianz/DELA/Ideal/LV1871/November) → `scripts/seed-vergleich-tarife.ts`
-- [ ] **`VergleichsRechner.tsx`** (Daten-Eingabe → Anbietertabelle mit Sortierung + Badges → Lead-Form)
-- [ ] **Eigene Route** `app/[produkt]/vergleichsrechner/page.tsx` + Einbettung auf Hauptseite
-- [ ] **Generator-Integration**: Auto-Vorschlag `vergleichsrechner`-Section
-- [ ] Admin-UI zur Pflege beider Modi (Marktkorridor + Anbietertarif)
+### Phase 6 — Tarife in DB + VergleichsRechner ✅
+- [ ] **Tarif-Migration** statisches `lib/tarif-data.ts` → DB (anbieter_name = NULL)  *— ausstehend, Marktkorridore noch statisch*
+- [x] **Schema-Erweiterung** `tarife`: `anbieter_name`, `tarif_name`, `besonderheiten` jsonb (Migration `20260430000002_vergleichsrechner_anbieter.sql`)
+- [x] **CSV-Seeds**: `sterbegeld.csv` (echte Daten, 348 Zeilen), `pflege.csv` / `leben.csv` / `bu.csv` / `unfall.csv` (Markt-Templates)
+- [x] **Seed-Scripts**: `scripts/seed-vergleich-tarife.ts` (einzeln) + `scripts/seed-all-vergleich-tarife.ts` (alle)
+- [x] **`VergleichsRechner.tsx`** (Daten-Eingabe → Anbietertabelle mit Sortierung + Badges → Lead-Form mit Prefill)
+- [x] **Produkt-Typ-Konfig** in `lib/tarife/produkt-config.ts` — pro Typ Summen, Labels, Default-Alter
+- [x] **Eigene Route** `app/[produkt]/vergleichsrechner/page.tsx` + Einbettung auf Hauptseite + Sitemap-Eintrag
+- [x] **Generator-Integration**: programmatische `vergleichsrechner`-Section nach `features`, sobald ≥2 Anbieter in DB
+- [ ] Admin-UI zur Pflege beider Modi (Marktkorridor + Anbietertarif) *— Folge-Iteration*
 
 ### Phase 7 — Roll-out 4 weitere Produkte
-- [ ] Pflege, Leben, BU, Unfall mit jeweils vollem Content + Bildern
+- [ ] Pflege, Leben, BU, Unfall mit jeweils vollem Content + Bildern + echten Anbieterdaten in den CSVs
 
 ---
 

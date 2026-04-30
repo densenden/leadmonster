@@ -82,7 +82,13 @@ export async function generateMetadata({
 function renderSection(
   section: ContentSection,
   index: number,
-  ctx: { produktId: string; zielgruppeTag: string; intentTag: string }
+  ctx: {
+    produktId: string
+    produktTyp: string
+    produktName: string
+    zielgruppeTag: string
+    intentTag: string
+  },
 ) {
   switch (section.type) {
     case 'hero':
@@ -124,6 +130,8 @@ function renderSection(
         <VergleichsRechner
           key={index}
           produktId={ctx.produktId}
+          produktTyp={ctx.produktTyp}
+          produktName={ctx.produktName}
           zielgruppeTag={ctx.zielgruppeTag}
           intentTag="preis"
           headline={s.headline}
@@ -145,13 +153,13 @@ export default async function ProduktPage({ params }: { params: { produkt: strin
   const [{ data: row }, { data: produkt }] = await Promise.all([
     supabase
       .from('generierter_content')
-      .select('content, title, slug, status, produkt_id, produkte!inner(id, slug, name)')
+      .select('content, title, slug, status, produkt_id, produkte!inner(id, slug, name, typ)')
       .eq('page_type', 'hauptseite')
       .eq('produkte.slug', params.produkt)
       .single(),
     supabase
       .from('produkte')
-      .select('id, produkt_config(zielgruppe, fokus)')
+      .select('id, name, typ, hero_image_url, hero_image_alt, short_pitch, produkt_config(zielgruppe, fokus)')
       .eq('slug', params.produkt)
       .single(),
   ])
@@ -161,20 +169,38 @@ export default async function ProduktPage({ params }: { params: { produkt: strin
     notFound()
   }
 
-  // Product exists but no published hauptseite content yet → render placeholder
-  // (admin can generate + publish content via /admin/produkte/[id]/content).
+  // Product exists but no published hauptseite content yet → render Hero from
+  // the produkte row (Name + short_pitch + hero_image_url) plus a placeholder
+  // for the body. Admins can finish content under /admin/produkte/[id]/content.
   if (!row || row.status !== 'publiziert') {
+    const p = produkt as {
+      name?: string | null
+      hero_image_url?: string | null
+      hero_image_alt?: string | null
+      short_pitch?: string | null
+    }
     return (
-      <main className="max-w-[800px] mx-auto px-6 py-24 text-center">
-        <h1 className="text-3xl font-bold text-[#1a3252] mb-4">
-          {params.produkt}
-        </h1>
-        <p className="text-lg text-[#4a5568] mb-2">
-          Diese Seite wird gerade erstellt.
-        </p>
-        <p className="text-sm text-[#718096]">
-          Inhalte folgen in Kürze.
-        </p>
+      <main>
+        <Hero
+          headline={p.name ?? params.produkt}
+          subline={
+            p.short_pitch ??
+            'Diese Produktseite wird gerade erstellt — Inhalte folgen in Kürze.'
+          }
+          cta_text="Mehr erfahren"
+          cta_anchor="#platzhalter"
+          image_url={p.hero_image_url ?? null}
+          image_alt={p.hero_image_alt ?? null}
+        />
+        <section
+          id="platzhalter"
+          className="max-w-[800px] mx-auto px-6 py-16 text-center"
+        >
+          <p className="text-lg text-[#4a5568] mb-2">
+            Diese Seite wird gerade erstellt.
+          </p>
+          <p className="text-sm text-[#718096]">Inhalte folgen in Kürze.</p>
+        </section>
       </main>
     )
   }
@@ -187,8 +213,10 @@ export default async function ProduktPage({ params }: { params: { produkt: strin
     notFound()
   }
 
-  const produktId = (row.produkte as { id: string } | null)?.id ?? row.produkt_id ?? ''
-  const produktName = (row.produkte as { name: string } | null)?.name ?? params.produkt
+  const produktRel = row.produkte as { id: string; name: string; typ?: string } | null
+  const produktId = produktRel?.id ?? row.produkt_id ?? ''
+  const produktName = produktRel?.name ?? params.produkt
+  const produktTyp = produktRel?.typ ?? (produkt as { typ?: string } | null)?.typ ?? 'sterbegeld'
   // produkt_config is returned as an array (one-to-many from produkte), take first entry.
   const configs = produkt?.produkt_config
   const config = (Array.isArray(configs) ? configs[0] : configs) as { zielgruppe?: string[]; fokus?: string } | null
@@ -207,7 +235,7 @@ export default async function ProduktPage({ params }: { params: { produkt: strin
     ]),
   )
 
-  const ctx = { produktId, zielgruppeTag, intentTag }
+  const ctx = { produktId, produktTyp, produktName, zielgruppeTag, intentTag }
 
   return (
     <>

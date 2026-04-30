@@ -7,6 +7,8 @@ export interface HeroSection {
   subline: string
   cta_text: string
   cta_anchor: string
+  image_url?: string | null
+  image_alt?: string | null
 }
 
 export interface FeaturesSection {

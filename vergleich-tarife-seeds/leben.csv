@@ -1,0 +1,226 @@
+anbieter_name,tarif_name,besonderheiten_json,geburtsjahr,summe_eur,beitrag_eur,einheit
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1965,50000,30.37,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1965,100000,60.74,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1965,200000,121.48,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1965,350000,212.59,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1965,500000,303.70,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1965,50000,28.20,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1965,100000,56.40,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1965,200000,112.80,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1965,350000,197.40,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1965,500000,282.00,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1965,50000,28.92,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1965,100000,57.85,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1965,200000,115.69,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1965,350000,202.46,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1965,500000,289.24,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1965,50000,27.48,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1965,100000,54.95,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1965,200000,109.91,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1965,350000,192.34,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1965,500000,274.77,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1965,50000,25.31,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1965,100000,50.62,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1965,200000,101.23,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1965,350000,177.16,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1965,500000,253.08,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1970,50000,19.74,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1970,100000,39.48,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1970,200000,78.95,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1970,350000,138.17,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1970,500000,197.38,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1970,50000,18.33,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1970,100000,36.66,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1970,200000,73.31,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1970,350000,128.30,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1970,500000,183.28,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1970,50000,18.80,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1970,100000,37.60,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1970,200000,75.19,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1970,350000,131.59,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1970,500000,187.98,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1970,50000,17.86,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1970,100000,35.72,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1970,200000,71.43,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1970,350000,125.01,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1970,500000,178.58,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1970,50000,16.45,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1970,100000,32.90,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1970,200000,65.79,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1970,350000,115.14,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1970,500000,164.49,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1975,50000,12.83,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1975,100000,25.66,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1975,200000,51.31,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1975,350000,89.80,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1975,500000,128.28,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1975,50000,11.91,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1975,100000,23.82,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1975,200000,47.65,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1975,350000,83.39,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1975,500000,119.12,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1975,50000,12.22,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1975,100000,24.44,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1975,200000,48.87,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1975,350000,85.52,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1975,500000,122.18,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1975,50000,11.61,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1975,100000,23.21,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1975,200000,46.43,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1975,350000,81.25,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1975,500000,116.07,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1975,50000,10.69,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1975,100000,21.38,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1975,200000,42.76,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1975,350000,74.83,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1975,500000,106.90,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1980,50000,8.34,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1980,100000,16.68,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1980,200000,33.35,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1980,350000,58.36,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1980,500000,83.38,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1980,50000,7.74,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1980,100000,15.48,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1980,200000,30.97,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1980,350000,54.19,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1980,500000,77.42,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1980,50000,7.94,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1980,100000,15.88,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1980,200000,31.76,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1980,350000,55.58,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1980,500000,79.41,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1980,50000,7.54,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1980,100000,15.09,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1980,200000,30.17,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1980,350000,52.81,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1980,500000,75.44,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1980,50000,6.95,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1980,100000,13.90,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1980,200000,27.79,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1980,350000,48.64,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1980,500000,69.48,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1985,50000,5.42,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1985,100000,10.84,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1985,200000,21.68,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1985,350000,37.93,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1985,500000,54.19,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1985,50000,5.03,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1985,100000,10.06,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1985,200000,20.13,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1985,350000,35.22,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1985,500000,50.32,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1985,50000,5.16,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1985,100000,10.32,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1985,200000,20.64,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1985,350000,36.13,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1985,500000,51.61,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1985,50000,4.90,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1985,100000,9.81,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1985,200000,19.61,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1985,350000,34.32,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1985,500000,49.03,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1985,50000,4.52,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1985,100000,9.03,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1985,200000,18.06,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1985,350000,31.61,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1985,500000,45.16,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1990,50000,3.52,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1990,100000,7.04,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1990,200000,14.09,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1990,350000,24.65,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1990,500000,35.22,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1990,50000,3.27,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1990,100000,6.54,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1990,200000,13.08,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1990,350000,22.89,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1990,500000,32.70,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1990,50000,3.35,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1990,100000,6.71,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1990,200000,13.42,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1990,350000,23.48,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1990,500000,33.54,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1990,50000,3.19,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1990,100000,6.37,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1990,200000,12.75,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1990,350000,22.31,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1990,500000,31.86,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1990,50000,2.93,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1990,100000,5.87,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1990,200000,11.74,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1990,350000,20.54,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1990,500000,29.35,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1995,50000,2.29,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1995,100000,4.58,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1995,200000,9.16,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1995,350000,16.02,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1995,500000,22.89,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1995,50000,2.13,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1995,100000,4.25,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1995,200000,8.50,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1995,350000,14.88,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",1995,500000,21.26,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1995,50000,2.18,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1995,100000,4.36,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1995,200000,8.72,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1995,350000,15.26,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1995,500000,21.80,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1995,50000,2.07,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1995,100000,4.14,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1995,200000,8.28,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1995,350000,14.50,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",1995,500000,20.71,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1995,50000,1.91,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1995,100000,3.82,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1995,200000,7.63,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1995,350000,13.35,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",1995,500000,19.08,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2000,50000,2.10,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2000,100000,4.20,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2000,200000,8.40,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2000,350000,14.70,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2000,500000,21.00,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",2000,50000,1.95,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",2000,100000,3.90,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",2000,200000,7.80,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",2000,350000,13.65,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",2000,500000,19.50,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2000,50000,2.00,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2000,100000,4.00,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2000,200000,8.00,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2000,350000,14.00,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2000,500000,20.00,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2000,50000,1.90,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2000,100000,3.80,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2000,200000,7.60,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2000,350000,13.30,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2000,500000,19.00,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",2000,50000,1.75,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",2000,100000,3.50,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",2000,200000,7.00,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",2000,350000,12.25,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",2000,500000,17.50,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2005,50000,2.10,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2005,100000,4.20,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2005,200000,8.40,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2005,350000,14.70,eur_summe
+Allianz,RiskUltra,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2005,500000,21.00,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",2005,50000,1.95,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",2005,100000,3.90,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",2005,200000,7.80,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",2005,350000,13.65,eur_summe
+ERGO,Risiko Direkt,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":false}",2005,500000,19.50,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2005,50000,2.00,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2005,100000,4.00,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2005,200000,8.00,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2005,350000,14.00,eur_summe
+HDI,EGO Risk,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2005,500000,20.00,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2005,50000,1.90,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2005,100000,3.80,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2005,200000,7.60,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2005,350000,13.30,eur_summe
+Hannoversche,Risikoleben Premium,"{""laufzeit_jahre"":30,""gesundheitspruefung"":true,""raucher_unterschied"":true,""nachversicherung"":true}",2005,500000,19.00,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",2005,50000,1.75,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",2005,100000,3.50,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",2005,200000,7.00,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",2005,350000,12.25,eur_summe
+CosmosDirekt,Basis,"{""laufzeit_jahre"":25,""gesundheitspruefung"":true,""raucher_unterschied"":false,""nachversicherung"":false}",2005,500000,17.50,eur_summe

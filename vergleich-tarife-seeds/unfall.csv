@@ -1,0 +1,276 @@
+anbieter_name,tarif_name,besonderheiten_json,geburtsjahr,summe_eur,beitrag_eur,einheit
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1955,50000,3.67,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1955,100000,7.34,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1955,200000,14.68,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1955,300000,22.02,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1955,500000,36.69,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1955,50000,3.10,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1955,100000,6.20,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1955,200000,12.39,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1955,300000,18.59,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1955,500000,30.99,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1955,50000,4.24,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1955,100000,8.48,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1955,200000,16.96,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1955,300000,25.44,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1955,500000,42.40,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1955,50000,3.34,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1955,100000,6.69,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1955,200000,13.37,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1955,300000,20.06,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1955,500000,33.43,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1955,50000,3.91,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1955,100000,7.83,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1955,200000,15.66,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1955,300000,23.48,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1955,500000,39.14,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1960,50000,3.46,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1960,100000,6.91,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1960,200000,13.83,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1960,300000,20.74,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1960,500000,34.57,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1960,50000,2.92,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1960,100000,5.84,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1960,200000,11.68,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1960,300000,17.51,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1960,500000,29.19,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1960,50000,3.99,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1960,100000,7.99,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1960,200000,15.98,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1960,300000,23.97,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1960,500000,39.95,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1960,50000,3.15,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1960,100000,6.30,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1960,200000,12.60,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1960,300000,18.90,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1960,500000,31.50,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1960,50000,3.69,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1960,100000,7.37,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1960,200000,14.75,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1960,300000,22.12,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1960,500000,36.87,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1965,50000,3.26,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1965,100000,6.51,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1965,200000,13.03,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1965,300000,19.54,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1965,500000,32.57,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1965,50000,2.75,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1965,100000,5.50,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1965,200000,11.00,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1965,300000,16.50,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1965,500000,27.50,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1965,50000,3.76,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1965,100000,7.53,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1965,200000,15.05,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1965,300000,22.58,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1965,500000,37.63,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1965,50000,2.97,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1965,100000,5.93,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1965,200000,11.87,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1965,300000,17.80,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1965,500000,29.67,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1965,50000,3.47,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1965,100000,6.95,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1965,200000,13.90,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1965,300000,20.84,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1965,500000,34.74,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1970,50000,3.07,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1970,100000,6.14,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1970,200000,12.27,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1970,300000,18.41,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1970,500000,30.68,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1970,50000,2.59,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1970,100000,5.18,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1970,200000,10.36,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1970,300000,15.55,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1970,500000,25.91,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1970,50000,3.55,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1970,100000,7.09,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1970,200000,14.18,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1970,300000,21.27,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1970,500000,35.45,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1970,50000,2.80,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1970,100000,5.59,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1970,200000,11.18,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1970,300000,16.77,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1970,500000,27.95,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1970,50000,3.27,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1970,100000,6.55,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1970,200000,13.09,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1970,300000,19.64,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1970,500000,32.73,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1975,50000,2.89,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1975,100000,5.78,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1975,200000,11.56,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1975,300000,17.34,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1975,500000,28.91,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1975,50000,2.44,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1975,100000,4.88,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1975,200000,9.76,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1975,300000,14.65,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1975,500000,24.41,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1975,50000,3.34,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1975,100000,6.68,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1975,200000,13.36,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1975,300000,20.04,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1975,500000,33.40,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1975,50000,2.63,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1975,100000,5.27,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1975,200000,10.53,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1975,300000,15.80,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1975,500000,26.34,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1975,50000,3.08,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1975,100000,6.17,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1975,200000,12.33,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1975,300000,18.50,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1975,500000,30.83,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1980,50000,2.72,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1980,100000,5.45,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1980,200000,10.89,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1980,300000,16.34,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1980,500000,27.23,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1980,50000,2.30,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1980,100000,4.60,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1980,200000,9.20,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1980,300000,13.80,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1980,500000,23.00,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1980,50000,3.15,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1980,100000,6.29,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1980,200000,12.59,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1980,300000,18.88,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1980,500000,31.47,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1980,50000,2.48,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1980,100000,4.96,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1980,200000,9.92,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1980,300000,14.89,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1980,500000,24.81,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1980,50000,2.90,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1980,100000,5.81,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1980,200000,11.62,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1980,300000,17.43,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1980,500000,29.05,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1985,50000,2.57,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1985,100000,5.13,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1985,200000,10.26,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1985,300000,15.39,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1985,500000,25.65,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1985,50000,2.17,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1985,100000,4.33,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1985,200000,8.67,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1985,300000,13.00,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1985,500000,21.66,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1985,50000,2.96,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1985,100000,5.93,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1985,200000,11.86,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1985,300000,17.79,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1985,500000,29.65,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1985,50000,2.34,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1985,100000,4.67,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1985,200000,9.35,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1985,300000,14.02,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1985,500000,23.37,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1985,50000,2.74,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1985,100000,5.47,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1985,200000,10.95,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1985,300000,16.42,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1985,500000,27.37,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1990,50000,2.42,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1990,100000,4.83,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1990,200000,9.67,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1990,300000,14.50,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1990,500000,24.17,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1990,50000,2.04,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1990,100000,4.08,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1990,200000,8.16,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1990,300000,12.25,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1990,500000,20.41,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1990,50000,2.79,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1990,100000,5.59,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1990,200000,11.17,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1990,300000,16.76,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1990,500000,27.93,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1990,50000,2.20,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1990,100000,4.40,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1990,200000,8.81,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1990,300000,13.21,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1990,500000,22.02,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1990,50000,2.58,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1990,100000,5.16,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1990,200000,10.31,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1990,300000,15.47,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1990,500000,25.78,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1995,50000,2.28,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1995,100000,4.55,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1995,200000,9.11,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1995,300000,13.66,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1995,500000,22.77,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1995,50000,1.92,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1995,100000,3.85,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1995,200000,7.69,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1995,300000,11.54,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",1995,500000,19.23,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1995,50000,2.63,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1995,100000,5.26,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1995,200000,10.52,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1995,300000,15.79,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1995,500000,26.31,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1995,50000,2.07,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1995,100000,4.15,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1995,200000,8.30,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1995,300000,12.45,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",1995,500000,20.75,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1995,50000,2.43,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1995,100000,4.86,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1995,200000,9.72,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1995,300000,14.57,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",1995,500000,24.29,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2000,50000,2.25,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2000,100000,4.50,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2000,200000,9.00,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2000,300000,13.50,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2000,500000,22.50,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",2000,50000,1.90,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",2000,100000,3.80,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",2000,200000,7.60,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",2000,300000,11.40,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",2000,500000,19.00,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2000,50000,2.60,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2000,100000,5.20,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2000,200000,10.40,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2000,300000,15.60,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2000,500000,26.00,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",2000,50000,2.05,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",2000,100000,4.10,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",2000,200000,8.20,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",2000,300000,12.30,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",2000,500000,20.50,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2000,50000,2.40,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2000,100000,4.80,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2000,200000,9.60,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2000,300000,14.40,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2000,500000,24.00,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2005,50000,2.25,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2005,100000,4.50,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2005,200000,9.00,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2005,300000,13.50,eur_summe
+Allianz,PrivatSchutz Plus,"{""progression"":350,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2005,500000,22.50,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",2005,50000,1.90,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",2005,100000,3.80,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",2005,200000,7.60,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",2005,300000,11.40,eur_summe
+AXA,Komfort Unfall,"{""progression"":225,""mitwirkung_krankheit"":true,""todesfall_summe"":true,""gliedertaxe"":""standard""}",2005,500000,19.00,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2005,50000,2.60,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2005,100000,5.20,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2005,200000,10.40,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2005,300000,15.60,eur_summe
+ERGO,Unfallschutz Best,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2005,500000,26.00,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",2005,50000,2.05,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",2005,100000,4.10,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",2005,200000,8.20,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",2005,300000,12.30,eur_summe
+Generali,VarioCARE,"{""progression"":350,""mitwirkung_krankheit"":true,""todesfall_summe"":false,""gliedertaxe"":""standard""}",2005,500000,20.50,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2005,50000,2.40,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2005,100000,4.80,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2005,200000,9.60,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2005,300000,14.40,eur_summe
+HDI,AccidentExklusiv,"{""progression"":500,""mitwirkung_krankheit"":false,""todesfall_summe"":true,""gliedertaxe"":""verbessert""}",2005,500000,24.00,eur_summe

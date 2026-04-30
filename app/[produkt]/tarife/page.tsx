@@ -27,6 +27,7 @@ interface TarifePageData {
   }
   config: {
     anbieter: string[] | null
+    zielgruppe: string[] | null
   } | null
   contentRow: {
     meta_title: string | null
@@ -49,7 +50,7 @@ async function fetchTarifePageData(slug: string): Promise<TarifePageData | null>
 
   const { data: config } = await supabase
     .from('produkt_config')
-    .select('anbieter')
+    .select('anbieter, zielgruppe')
     .eq('produkt_id', produkt.id)
     .single()
 
@@ -151,6 +152,7 @@ export default async function TarifePage({ params }: PageProps) {
           produktName={produkt.name}
           anbieter={config?.anbieter ?? []}
           produktId={produkt.id}
+          zielgruppeTag={config?.zielgruppe?.[0] ?? 'allgemein'}
         />
 
 

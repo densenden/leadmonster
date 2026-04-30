@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import type { AnbieterTarif, AnbieterBadge } from '@/lib/tarife/lookup'
+import { getProduktConfig } from '@/lib/tarife/produkt-config'
 import { LeadForm } from '@/components/sections/LeadForm'
 
 // ---------------------------------------------------------------------------
@@ -10,6 +11,11 @@ import { LeadForm } from '@/components/sections/LeadForm'
 
 export interface VergleichsRechnerProps {
   produktId: string
+  /** Produkttyp — steuert Summen-Optionen, Labels und Default-Alter (siehe
+   *  lib/tarife/produkt-config). Optional: Fallback ist Sterbegeld-Konfig. */
+  produktTyp?: string
+  /** Produktname — fließt in Lead-Form-Default-Text. */
+  produktName?: string
   zielgruppeTag: string
   intentTag?: string
   headline: string
@@ -27,13 +33,6 @@ export interface VergleichsRechnerProps {
 // ---------------------------------------------------------------------------
 
 const CURRENT_YEAR = new Date().getFullYear()
-// Range bewusst breit gewählt für Pilot — engt sich pro Produkt ein, sobald
-// produkt_config.alter_min/max ergänzt wird.
-const MIN_AGE = 26
-const MAX_AGE = 86
-const SUM_OPTIONS = [5000, 8000, 10000] as const
-const DEFAULT_SUMME = 8000
-const DEFAULT_AGE = 65
 
 const BADGE_LABEL: Record<AnbieterBadge, string> = {
   guenstigster: 'Günstigster',
@@ -62,6 +61,31 @@ function formatBeitrag(value: number): string {
   })
 }
 
+function formatSumme(value: number): string {
+  return value.toLocaleString('de-DE')
+}
+
+/** Baut den vorbefüllten Interesse-Text für die LeadForm. */
+function buildInteresseText(args: {
+  produktName?: string
+  anbieter: string | null
+  tarifName?: string | null
+  beitrag?: number
+  jahr: number
+  summe: number
+  summeSuffix: string
+}): string {
+  const altersText = `Geburtsjahr ${args.jahr} (${CURRENT_YEAR - args.jahr} Jahre)`
+  const summeText = `${formatSumme(args.summe)} ${args.summeSuffix}`
+  if (args.anbieter) {
+    const tarif = args.tarifName ? ` (${args.tarifName})` : ''
+    const beitrag = args.beitrag ? `, ca. ${formatBeitrag(args.beitrag)} €/Monat` : ''
+    return `Anfrage zum Anbieter ${args.anbieter}${tarif}. ${altersText}, ${summeText}${beitrag}. Bitte um persönliche Beratung.`
+  }
+  const produkt = args.produktName ? ` für die ${args.produktName}` : ''
+  return `Beratungsanfrage${produkt}. ${altersText}, ${summeText}. Bitte um persönlichen Vergleich aller Anbieter.`
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -73,12 +97,14 @@ function formatBeitrag(value: number): string {
  *         via /api/vergleich-tarife.
  * Step 2: Klick auf "{Anbieter} anfragen" oder "Beratung zu allen Anbietern"
  *         → LeadForm erscheint mit gewuenschterAnbieter als Hidden-Field +
- *         intent_tag='preis'.
+ *         intent_tag='preis' + vorbefülltem Interesse-Text.
  *
  * Cache-Strategie liegt in der API-Route (s-maxage=3600).
  */
 export function VergleichsRechner({
   produktId,
+  produktTyp,
+  produktName,
   zielgruppeTag,
   intentTag = 'preis',
   headline,
@@ -87,8 +113,10 @@ export function VergleichsRechner({
   ctaLabel = 'Beratung anfordern',
   initialData,
 }: VergleichsRechnerProps) {
-  const [geburtsjahr, setGeburtsjahr] = useState(CURRENT_YEAR - DEFAULT_AGE)
-  const [summe, setSumme] = useState<number>(DEFAULT_SUMME)
+  const config = useMemo(() => getProduktConfig(produktTyp), [produktTyp])
+
+  const [geburtsjahr, setGeburtsjahr] = useState(CURRENT_YEAR - config.default_age)
+  const [summe, setSumme] = useState<number>(config.default_summe)
   const [results, setResults] = useState<AnbieterTarif[]>(initialData ?? [])
   const [loading, setLoading] = useState(false)
   const [activeAnbieter, setActiveAnbieter] = useState<string | null>(null)
@@ -99,11 +127,15 @@ export function VergleichsRechner({
   // Geburtsjahr-Auswahlliste — älteste oben, neueste unten.
   const geburtsjahrOptions = useMemo(() => {
     const list: number[] = []
-    for (let year = CURRENT_YEAR - MIN_AGE; year >= CURRENT_YEAR - MAX_AGE; year--) {
+    for (
+      let year = CURRENT_YEAR - config.min_age;
+      year >= CURRENT_YEAR - config.max_age;
+      year--
+    ) {
       list.push(year)
     }
     return list
-  }, [])
+  }, [config.min_age, config.max_age])
 
   // Fetch on input change.
   useEffect(() => {
@@ -137,6 +169,21 @@ export function VergleichsRechner({
       }
     }
   }, [activeAnbieter])
+
+  // Default-Text für die LeadForm — basiert auf aktueller Auswahl.
+  const activeRow = activeAnbieter ? results.find(r => r.anbieter_name === activeAnbieter) : null
+  const defaultInteresse = useMemo(() => {
+    if (activeAnbieter === null) return undefined
+    return buildInteresseText({
+      produktName,
+      anbieter: activeAnbieter || null,
+      tarifName: activeRow?.tarif_name,
+      beitrag: activeRow?.beitrag_eur,
+      jahr: geburtsjahr,
+      summe,
+      summeSuffix: config.summe_suffix,
+    })
+  }, [activeAnbieter, activeRow, geburtsjahr, summe, produktName, config.summe_suffix])
 
   return (
     <section
@@ -182,18 +229,18 @@ export function VergleichsRechner({
                 htmlFor="vr-summe"
                 className="block text-sm font-body font-light text-brand-neutral-base mb-2"
               >
-                Wunschsumme
+                {config.summe_label}
               </label>
               <select
                 id="vr-summe"
-                aria-label="Gewünschte Versicherungssumme"
+                aria-label={config.summe_label}
                 value={summe}
                 onChange={e => setSumme(Number(e.target.value))}
                 className="w-full border border-[#e5e5e5] rounded-none px-3 py-2 text-sm font-body font-light text-[#333333] focus:outline-none focus:ring-2 focus:ring-brand-link min-h-[44px] bg-white cursor-pointer"
               >
-                {SUM_OPTIONS.map(opt => (
+                {config.summen.map(opt => (
                   <option key={opt} value={opt}>
-                    {opt.toLocaleString('de-DE')} &euro;
+                    {formatSumme(opt)} {config.summe_suffix}
                   </option>
                 ))}
               </select>
@@ -226,7 +273,7 @@ export function VergleichsRechner({
                       Tarif
                     </th>
                     <th scope="col" className="px-4 py-3 text-right text-sm font-medium whitespace-nowrap">
-                      Beitrag / Monat
+                      {config.beitrag_label}
                     </th>
                     <th scope="col" className="px-4 py-3 text-left text-sm font-medium">
                       Auszeichnungen
@@ -311,7 +358,7 @@ export function VergleichsRechner({
           </div>
         )}
 
-        {/* LeadForm — conditional reveal */}
+        {/* LeadForm — conditional reveal mit Prefill aus aktueller Auswahl */}
         <div
           ref={leadFormRef}
           className={[
@@ -325,10 +372,12 @@ export function VergleichsRechner({
         >
           {activeAnbieter !== null && (
             <LeadForm
+              key={activeAnbieter || 'global'}
               produktId={produktId}
               zielgruppeTag={zielgruppeTag}
               intentTag={intentTag}
               gewuenschterAnbieter={activeAnbieter || undefined}
+              defaultInteresse={defaultInteresse}
             />
           )}
         </div>

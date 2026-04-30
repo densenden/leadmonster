@@ -116,7 +116,9 @@ describe('VergleichsRechner — Eingabe-Wechsel triggert fetch', () => {
     await waitFor(() => expect(fetchSpy).toHaveBeenCalled())
     fetchSpy.mockClear()
 
-    const select = screen.getByLabelText(/Gewünschte Versicherungssumme/i)
+    // VergleichsRechner zieht das summe_label aus produkt-config; ohne explizites
+    // produktTyp-Prop greift der Fallback "sterbegeld" → "Wunschsumme".
+    const select = screen.getByLabelText(/Wunschsumme/i)
     fireEvent.change(select, { target: { value: '5000' } })
 
     await waitFor(() => {
@@ -156,6 +158,58 @@ describe('VergleichsRechner — Anbieter-CTA → LeadForm', () => {
 
     // Kein Anbieter-Hinweis-Block
     expect(screen.queryByTestId('leadform-anbieter-hint')).not.toBeInTheDocument()
+  })
+})
+
+describe('VergleichsRechner — Produkt-Typ-Adaptivität', () => {
+  it('zeigt für produktTyp="pflege" das Label "Gewünschte Pflegerente" und Pflege-Summen', () => {
+    render(<VergleichsRechner {...DEFAULT_PROPS} produktTyp="pflege" initialData={[]} />)
+    const select = screen.getByLabelText(/Gewünschte Pflegerente/i) as HTMLSelectElement
+    expect(select).toBeInTheDocument()
+    const values = Array.from(select.options).map(o => o.value)
+    expect(values).toContain('500')
+    expect(values).toContain('1000')
+    expect(values).toContain('3000')
+    // Sterbegeld-Werte dürfen nicht im Pflege-Select erscheinen
+    expect(values).not.toContain('8000')
+  })
+
+  it('zeigt für produktTyp="bu" das Label "Gewünschte BU-Rente" und BU-Summen', () => {
+    render(<VergleichsRechner {...DEFAULT_PROPS} produktTyp="bu" initialData={[]} />)
+    const select = screen.getByLabelText(/Gewünschte BU-Rente/i) as HTMLSelectElement
+    const values = Array.from(select.options).map(o => o.value)
+    expect(values).toContain('1500')
+    expect(values).toContain('3000')
+  })
+
+  it('fällt bei unbekanntem produktTyp auf Sterbegeld-Konfig zurück', () => {
+    render(<VergleichsRechner {...DEFAULT_PROPS} produktTyp="exotisch" initialData={[]} />)
+    expect(screen.getByLabelText(/Wunschsumme/i)).toBeInTheDocument()
+  })
+})
+
+describe('VergleichsRechner — defaultInteresse Prefill', () => {
+  it('prefillt das Interesse-Textarea mit Anbieter+Tarif+Beitrag bei Anbieter-CTA', async () => {
+    render(<VergleichsRechner {...DEFAULT_PROPS} produktName="Sterbegeld24Plus" />)
+    fireEvent.click(screen.getByTestId('vr-cta-dela'))
+
+    await waitFor(() => {
+      const textarea = screen.getByLabelText(/Ihr Interesse/i) as HTMLTextAreaElement
+      expect(textarea.value).toContain('DELA')
+      expect(textarea.value).toContain('sorgenfrei Leben')
+      expect(textarea.value).toContain('17,14')
+    })
+  })
+
+  it('prefillt das Interesse-Textarea mit Produktname bei globalem CTA', async () => {
+    render(<VergleichsRechner {...DEFAULT_PROPS} produktName="Sterbegeld24Plus" />)
+    fireEvent.click(screen.getByTestId('vr-cta-global'))
+
+    await waitFor(() => {
+      const textarea = screen.getByLabelText(/Ihr Interesse/i) as HTMLTextAreaElement
+      expect(textarea.value).toContain('Sterbegeld24Plus')
+      expect(textarea.value).toContain('Beratungsanfrage')
+    })
   })
 })
 

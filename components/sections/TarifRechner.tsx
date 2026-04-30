@@ -14,6 +14,9 @@ interface TarifRechnerProps {
   produktName: string
   anbieter: string[]
   produktId: string
+  /** Zielgruppe-Tag aus produkt_config — wird ans LeadForm durchgereicht und
+   *  landet auf dem Lead. Default `'allgemein'`, falls die Page keinen Wert hat. */
+  zielgruppeTag?: string
 }
 
 // Supported sum tiers in EUR — must match keys defined in TARIF_DATA.
@@ -33,7 +36,7 @@ const SUM_OPTIONS = [5000, 7500, 10000, 12500, 15000] as const
  * Design note: tokens.json specifies border-radius: 0px, but the spec requires 12px
  * card radius (rounded-xl) for the calculator card surface — intentional override.
  */
-export function TarifRechner({ produktTyp, produktName, anbieter, produktId }: TarifRechnerProps) {
+export function TarifRechner({ produktTyp, produktName, anbieter, produktId, zielgruppeTag = 'allgemein' }: TarifRechnerProps) {
   const [age, setAge] = useState(55)
   const [sum, setSum] = useState(10000)
   // Result + LeadForm sind direkt beim Page-Load sichtbar — der User soll
@@ -239,7 +242,7 @@ export function TarifRechner({ produktTyp, produktName, anbieter, produktId }: T
               key={formKey}
               intentTag="preis"
               produktId={produktId}
-              zielgruppeTag=""
+              zielgruppeTag={zielgruppeTag}
               defaultInteresse={prefillInteresse}
             />
           </>

@@ -137,7 +137,14 @@ describe('GenerateRatgeberButton — POST behaviour', () => {
     vi.stubGlobal('fetch', mockFetch)
 
     const { GenerateRatgeberButton } = await import('../_components/generate-ratgeber-button')
-    render(React.createElement(GenerateRatgeberButton, { produktId: 'prod-uuid-1' }))
+    const { GenerationLockProvider } = await import('../_components/generation-lock')
+    render(
+      React.createElement(
+        GenerationLockProvider,
+        null,
+        React.createElement(GenerateRatgeberButton, { produktId: 'prod-uuid-1' }),
+      ),
+    )
 
     // Click the button to expand the inline form
     const expandButton = screen.getByRole('button', { name: /Weiteren Ratgeber generieren/i })
@@ -180,7 +187,14 @@ describe('GenerateRatgeberButton — empty topic validation', () => {
     vi.stubGlobal('fetch', mockFetch)
 
     const { GenerateRatgeberButton } = await import('../_components/generate-ratgeber-button')
-    render(React.createElement(GenerateRatgeberButton, { produktId: 'prod-uuid-1' }))
+    const { GenerationLockProvider } = await import('../_components/generation-lock')
+    render(
+      React.createElement(
+        GenerationLockProvider,
+        null,
+        React.createElement(GenerateRatgeberButton, { produktId: 'prod-uuid-1' }),
+      ),
+    )
 
     // Expand the form
     const expandButton = screen.getByRole('button', { name: /Weiteren Ratgeber generieren/i })

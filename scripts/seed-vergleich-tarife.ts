@@ -5,8 +5,11 @@
  * upsertet die Zeilen in `tarife` (mit anbieter_name IS NOT NULL). Idempotent
  * via UNIQUE-Constraint (produkt_id, anbieter_name, alter_von, summe).
  *
- * CSV-Format (Header in dieser Reihenfolge):
- *   anbieter_name,tarif_name,besonderheiten_json,geburtsjahr,summe_eur,beitrag_eur
+ * CSV-Format (Header):
+ *   anbieter_name,tarif_name,besonderheiten_json,geburtsjahr,summe_eur,beitrag_eur,[einheit]
+ *
+ * - `einheit` ist optional: Default = 'eur_summe' (Versicherungssumme).
+ *   Für pflege/bu sollte 'eur_monat' (Monatsrente) explizit gesetzt sein.
  *
  * Aufruf:
  *   npx tsx scripts/seed-vergleich-tarife.ts <produkt_slug> [csv_pfad]
@@ -143,6 +146,10 @@ async function main() {
     if (Number.isNaN(geburtsjahr) || Number.isNaN(beitrag)) {
       throw new Error(`Ungültige Zahl in CSV: ${JSON.stringify(r)}`)
     }
+    const einheit = (r.einheit && r.einheit.trim()) || 'eur_summe'
+    if (einheit !== 'eur_summe' && einheit !== 'eur_monat') {
+      throw new Error(`Ungültige einheit "${einheit}" — erwartet eur_summe | eur_monat`)
+    }
     return {
       produkt_id: produkt.id,
       anbieter_name: r.anbieter_name,
@@ -153,7 +160,7 @@ async function main() {
       summe: parseInt(r.summe_eur, 10),
       beitrag_low: beitrag,
       beitrag_high: beitrag,
-      einheit: 'eur_summe',
+      einheit,
     }
   })
 

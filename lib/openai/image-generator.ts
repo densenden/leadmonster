@@ -160,7 +160,7 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
 
   // bilder-Row anlegen
   const supabase = createAdminClient()
-  const { data: row } = await supabase
+  const { data: row, error: insertError } = await supabase
     .from('bilder')
     .insert({
       produkt_id: input.produktId ?? null,
@@ -177,6 +177,13 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
     .select('id')
     .single()
 
+  if (insertError) {
+    // Bild ist bereits in Storage abgelegt — DB-Row fehlt aber. Sichtbar in der
+    // Bilder-Bibliothek wird es erst, wenn die Row existiert. Hochwerfen, damit
+    // der Aufrufer den Fehler sieht und nicht stillschweigend "alles ok" meldet.
+    throw new Error(`bilder-Insert fehlgeschlagen: ${insertError.message}`)
+  }
+
   return {
     url,
     alt: input.altText,
@@ -186,23 +193,5 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
   }
 }
 
-// ---------------------------------------------------------------------------
-// Convenience: Produktbezogenen Hero-Prompt bauen
-// ---------------------------------------------------------------------------
-
-const PROMPT_BY_TYP: Record<string, string> = {
-  sterbegeld:
-    'Elderly German couple at a calm park bench in golden afternoon light, warm and dignified, no faces clearly visible, looking towards the horizon',
-  pflege:
-    'A caring nurse helping an elderly person in a bright, modern German home, warm light, hopeful atmosphere',
-  leben:
-    'Young German family with two children walking in front of their house, sunset light, protective composition',
-  bu:
-    'A focused craftsperson or office worker in a German workplace, soft window light, sense of resilience and competence',
-  unfall:
-    'A safe German residential street with a family on bicycles, calm and protective atmosphere, soft daylight',
-}
-
-export function defaultHeroPrompt(produktTyp: string): string {
-  return PROMPT_BY_TYP[produktTyp] ?? PROMPT_BY_TYP.sterbegeld
-}
+// Re-export for back-compat with callers that imported from this module.
+export { defaultHeroPrompt } from './hero-prompt'

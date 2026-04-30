@@ -7,16 +7,25 @@ interface HeroProps {
   subline: string
   cta_text: string
   cta_anchor: string
+  image_url?: string | null
+  image_alt?: string | null
 }
 
-export function Hero({ headline, subline, cta_text, cta_anchor }: HeroProps) {
+export function Hero({
+  headline,
+  subline,
+  cta_text,
+  cta_anchor,
+  image_url,
+}: HeroProps) {
   // aria-label needs a clean string — strip markdown link syntax.
   const ariaLabel = headline.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+  const bgUrl = image_url ?? '/images/hero-bg.jpg'
   return (
     <section
       aria-label={ariaLabel}
       className="relative w-full py-[70px] md:py-[140px] bg-cover bg-center"
-      style={{ backgroundImage: "url('/images/hero-bg.jpg')" }}
+      style={{ backgroundImage: `url('${bgUrl}')` }}
     >
       {/* Navy overlay at 70% opacity */}
       <div className="absolute inset-0 bg-[#1a365d]/70" />

@@ -9,6 +9,8 @@ import { formatGermanDateTime } from '@/lib/utils/date'
 import { BildDeleteButton } from './_components/BildDeleteButton'
 import { BildFilterBar } from './_components/BildFilterBar'
 
+export const dynamic = 'force-dynamic'
+
 interface BildRow {
   id: string
   produkt_id: string | null

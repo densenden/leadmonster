@@ -90,7 +90,26 @@ export async function postProcessProduct(
   // -------------------------------------------------------------------------
   if (autoLink) {
     try {
-      const linker = await loadLinker({ kategorie: produkt.typ as string })
+      // Welche Ratgeber-Themen sind für DIESES Produkt vorhanden? Wenn ein
+      // Wissensfundus-Slug auch als Produkt-Ratgeber existiert, linken wir
+      // intern → /{produktSlug}/ratgeber/{slug} statt /wissen/{slug}.
+      const { data: ratgeberRows } = await supabase
+        .from('generierter_content')
+        .select('slug')
+        .eq('produkt_id', produktId)
+        .eq('page_type', 'ratgeber')
+        .eq('status', 'publiziert')
+        .not('slug', 'is', null)
+
+      const produktRatgeberSlugs = (ratgeberRows ?? [])
+        .map(r => r.slug as string | null)
+        .filter((s): s is string => s !== null && s.length > 0)
+
+      const linker = await loadLinker({
+        kategorie: produkt.typ as string,
+        produktSlug: produkt.slug as string,
+        produktRatgeberSlugs,
+      })
 
       const { data: rows } = await supabase
         .from('generierter_content')

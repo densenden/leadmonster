@@ -3,19 +3,21 @@
  *
  * Liest aus der `wissensfundus`-Tabelle alle Einträge mit `published=true`
  * und nicht-leeren `link_phrases`, und ersetzt im Eingabetext die erste
- * Vorkommens-Stelle jeder Phrase durch einen Markdown-Link auf
- * `/wissen/{slug}`.
+ * Vorkommens-Stelle jeder Phrase durch einen Markdown-Link.
+ *
+ * URL-Strategie (site-aware):
+ *   - Wenn `produktSlug` UND ein passender Ratgeber im selben Produkt
+ *     existiert (gleicher slug) → `/{produktSlug}/ratgeber/{slug}` (in-context)
+ *   - Sonst → `/wissen/{slug}` (globale Wissensbasis)
+ *
+ *   Damit bleibt der User auf der Produkt-Seite wenn der Ratgeber dort
+ *   gespiegelt ist; sonst wandert er ins zentrale Wissen-Verzeichnis.
  *
  * Designentscheidungen:
  *   - Pro Phrase max. 1 Ersetzung pro Text (vermeidet Spam)
- *   - Bestehende Markdown-Links werden nicht gestört (regex match
- *     ignoriert text innerhalb von [...](...)-Konstrukten via Lookbehind/-ahead Approximation)
+ *   - Bestehende Markdown-Links werden nicht gestört
  *   - Längste Phrasen zuerst (vermeidet, dass "Pflegegrad" gegen "Pflege" verliert)
  *   - Case-insensitive match, aber Original-Casing wird übernommen
- *
- * Nutzung im Generator:
- *   const linker = await loadLinker()
- *   text = linker.linkify(text)
  */
 import { createAdminClient } from '@/lib/supabase/server'
 
@@ -34,13 +36,27 @@ export interface Linker {
   linkify(text: string): string
 }
 
+export interface LoadLinkerOptions {
+  /** Produkttyp-Filter — Linker zieht <kategorie> + 'allgemein'. */
+  kategorie?: string
+  /** Aktiver Produkt-Slug (z.B. 'sterbegeld24plus'). Aktiviert in-context Linking. */
+  produktSlug?: string
+  /**
+   * Slugs der Ratgeber-Artikel, die für diesen Produkt existieren.
+   * Wenn ein wissensfundus-Slug HIER drin ist UND `produktSlug` gesetzt ist,
+   * verlinkt der Linker nach `/{produktSlug}/ratgeber/{slug}` statt
+   * `/wissen/{slug}`. So bleibt der User auf der Produktseite.
+   */
+  produktRatgeberSlugs?: string[]
+}
+
 /**
  * Lädt alle Wissensfundus-Einträge mit Slug + link_phrases aus der DB
  * und kompiliert sie zu einem wiederverwendbaren Linker. In Produktion
  * sollte der Linker pro Generator-Lauf einmal gebaut und für alle
  * Sektionen wiederverwendet werden.
  */
-export async function loadLinker(opts?: { kategorie?: string }): Promise<Linker> {
+export async function loadLinker(opts?: LoadLinkerOptions): Promise<Linker> {
   const supabase = createAdminClient()
   let query = supabase
     .from('wissensfundus')
@@ -81,6 +97,17 @@ export async function loadLinker(opts?: { kategorie?: string }): Promise<Linker>
     )
     .sort((a, b) => b.phrase.length - a.phrase.length)
 
+  // Set für O(1) Lookup ob Slug als product-internal Ratgeber existiert.
+  const ratgeberSet = new Set(opts?.produktRatgeberSlugs ?? [])
+  const produktSlug = opts?.produktSlug
+
+  function urlFor(slug: string): string {
+    if (produktSlug && ratgeberSet.has(slug)) {
+      return `/${produktSlug}/ratgeber/${slug}`
+    }
+    return `/wissen/${slug}`
+  }
+
   return {
     linkify(text: string): string {
       if (!text || compiled.length === 0) return text
@@ -89,13 +116,12 @@ export async function loadLinker(opts?: { kategorie?: string }): Promise<Linker>
 
       for (const rule of compiled) {
         if (used.has(rule.slug)) continue
-        // Erste Vorkommens-Stelle finden, die NICHT bereits in einem MD-Link steht.
         const match = findUnlinkedMatch(out, rule.regex)
         if (!match) continue
         const before = out.slice(0, match.index)
         const matched = out.slice(match.index, match.index + match[0].length)
         const after = out.slice(match.index + match[0].length)
-        out = `${before}[${matched}](/wissen/${rule.slug})${after}`
+        out = `${before}[${matched}](${urlFor(rule.slug)})${after}`
         used.add(rule.slug)
       }
       return out

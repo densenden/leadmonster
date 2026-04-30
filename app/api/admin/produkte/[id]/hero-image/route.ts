@@ -5,7 +5,8 @@
 import { type NextRequest } from 'next/server'
 import { z } from 'zod'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { generateImage, defaultHeroPrompt } from '@/lib/openai/image-generator'
+import { generateImage } from '@/lib/openai/image-generator'
+import { buildHeroPrompt } from '@/lib/openai/hero-prompt'
 
 const bodySchema = z.object({
   prompt: z.string().min(8).max(2000).optional(),
@@ -53,7 +54,25 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     return Response.json({ data: null, error: { code: 'NOT_FOUND' } }, { status: 404 })
   }
 
-  const prompt = parsed.data.prompt ?? defaultHeroPrompt(produkt.typ as string)
+  let prompt = parsed.data.prompt
+  if (!prompt) {
+    const { data: configRow } = await supabase
+      .from('produkt_config')
+      .select('zielgruppe, fokus, anbieter, argumente')
+      .eq('produkt_id', produkt.id)
+      .maybeSingle()
+    prompt = buildHeroPrompt(produkt.typ as string, {
+      zielgruppe: configRow?.zielgruppe ?? null,
+      fokus: configRow?.fokus ?? null,
+      anbieter: configRow?.anbieter ?? null,
+      argumente:
+        configRow?.argumente != null &&
+        typeof configRow.argumente === 'object' &&
+        !Array.isArray(configRow.argumente)
+          ? (configRow.argumente as Record<string, string>)
+          : null,
+    })
+  }
   const altText = parsed.data.altText ?? `Hauptbild ${produkt.name}`
 
   try {
@@ -65,10 +84,13 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       pageType: 'hauptseite',
     })
 
-    await supabase
+    const { error: updateError } = await supabase
       .from('produkte')
       .update({ hero_image_url: out.url, hero_image_alt: altText })
       .eq('id', produkt.id)
+    if (updateError) {
+      throw new Error(`produkte-Update fehlgeschlagen: ${updateError.message}`)
+    }
 
     // Also push URL into the hauptseite hero section if it exists.
     const { data: hauptseiteRow } = await supabase

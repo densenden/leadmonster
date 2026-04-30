@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { buildHeroPrompt } from '@/lib/openai/hero-prompt'
 
 interface HeroImagePanelProps {
   produktId: string
@@ -9,19 +10,10 @@ interface HeroImagePanelProps {
   produktTyp: string
   initialUrl: string | null
   initialAlt: string | null
-}
-
-const DEFAULT_PROMPTS_BY_TYP: Record<string, string> = {
-  sterbegeld:
-    'Elderly German couple at a calm park bench in golden afternoon light, warm and dignified, no faces clearly visible, looking towards the horizon',
-  pflege:
-    'A caring nurse helping an elderly person in a bright, modern German home, warm light, hopeful atmosphere',
-  leben:
-    'Young German family with two children walking in front of their house, sunset light, protective composition',
-  bu:
-    'A focused craftsperson or office worker in a German workplace, soft window light, sense of resilience and competence',
-  unfall:
-    'A safe German residential street with a family on bicycles, calm and protective atmosphere, soft daylight',
+  zielgruppe?: string[] | null
+  fokus?: string | null
+  anbieter?: string[] | null
+  argumente?: Record<string, string> | null
 }
 
 export function HeroImagePanel({
@@ -30,14 +22,31 @@ export function HeroImagePanel({
   produktTyp,
   initialUrl,
   initialAlt,
+  zielgruppe,
+  fokus,
+  anbieter,
+  argumente,
 }: HeroImagePanelProps) {
   const router = useRouter()
   const [url, setUrl] = useState(initialUrl)
   const [alt, setAlt] = useState(initialAlt ?? '')
-  const [prompt, setPrompt] = useState(DEFAULT_PROMPTS_BY_TYP[produktTyp] ?? '')
-  const [showPrompt, setShowPrompt] = useState(false)
+
+  // Auto-built prompt that reflects the saved Produkt-Konfig (Zielgruppe, Fokus,
+  // Argumente). Recomputed only on mount — user edits remain authoritative.
+  const autoPrompt = useMemo(
+    () => buildHeroPrompt(produktTyp, { zielgruppe, fokus, anbieter, argumente }),
+    [produktTyp, zielgruppe, fokus, anbieter, argumente],
+  )
+
+  const [prompt, setPrompt] = useState(autoPrompt)
+  const [promptDirty, setPromptDirty] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState('')
+
+  function handleResetPrompt() {
+    setPrompt(autoPrompt)
+    setPromptDirty(false)
+  }
 
   async function handleGenerate() {
     if (
@@ -50,7 +59,7 @@ export function HeroImagePanel({
     setIsGenerating(true)
     try {
       const body: Record<string, string> = {}
-      if (showPrompt && prompt.trim()) body.prompt = prompt.trim()
+      if (prompt.trim()) body.prompt = prompt.trim()
       if (alt.trim()) body.altText = alt.trim()
 
       const res = await fetch(`/api/admin/produkte/${produktId}/hero-image`, {
@@ -117,27 +126,35 @@ export function HeroImagePanel({
           </div>
 
           <div>
-            <button
-              type="button"
-              onClick={() => setShowPrompt(s => !s)}
-              className="text-xs text-[#1a3252] hover:underline"
-            >
-              {showPrompt ? '▾ Prompt ausblenden' : '▸ Prompt anpassen (optional)'}
-            </button>
-            {showPrompt && (
-              <textarea
-                value={prompt}
-                onChange={e => setPrompt(e.target.value)}
-                rows={4}
-                placeholder="Englischer Bild-Prompt — Stil-Guard wird automatisch ergänzt"
-                className="mt-2 w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#abd5f4]"
-              />
-            )}
-            {!showPrompt && (
-              <p className="text-xs text-gray-400 mt-1">
-                Standard-Prompt für Typ &bdquo;{produktTyp}&ldquo; wird verwendet.
-              </p>
-            )}
+            <div className="mb-1 flex items-center justify-between">
+              <label className="block text-sm font-medium text-[#333333]">
+                Bild-Prompt
+              </label>
+              {promptDirty && (
+                <button
+                  type="button"
+                  onClick={handleResetPrompt}
+                  className="text-xs text-[#1a3252] hover:underline"
+                >
+                  Auf Produkt-Auswahl zurücksetzen
+                </button>
+              )}
+            </div>
+            <textarea
+              value={prompt}
+              onChange={e => {
+                setPrompt(e.target.value)
+                setPromptDirty(e.target.value !== autoPrompt)
+              }}
+              rows={5}
+              placeholder="Englischer Bild-Prompt — Stil-Guard wird automatisch ergänzt"
+              className="w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#abd5f4]"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              {promptDirty
+                ? 'Eigener Prompt — Änderungen am Produkt unten setzen den Vorschlag erst nach Speichern + Reload neu.'
+                : 'Auto-Vorschlag aus Zielgruppe + Vertriebsfokus + Argumenten. Frei editierbar.'}
+            </p>
           </div>
 
           <button

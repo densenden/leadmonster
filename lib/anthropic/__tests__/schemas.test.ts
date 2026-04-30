@@ -64,22 +64,30 @@ describe('HauptseiteResponseSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('rejects meta_title longer than 60 characters', () => {
+  it('truncates meta_title longer than 60 characters', () => {
+    // Schema was relaxed from .max(60) to .transform(slice(0,60)) so smaller
+    // LLMs that overshoot get silently trimmed instead of failing the whole pipeline.
     const payload = {
       ...validHauptseitePayload(),
-      meta_title: 'A'.repeat(61),
+      meta_title: 'A'.repeat(80),
     }
     const result = HauptseiteResponseSchema.safeParse(payload)
-    expect(result.success).toBe(false)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.meta_title.length).toBe(60)
+    }
   })
 
-  it('rejects meta_desc longer than 160 characters', () => {
+  it('truncates meta_desc longer than 160 characters', () => {
     const payload = {
       ...validHauptseitePayload(),
-      meta_desc: 'B'.repeat(161),
+      meta_desc: 'B'.repeat(200),
     }
     const result = HauptseiteResponseSchema.safeParse(payload)
-    expect(result.success).toBe(false)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.meta_desc.length).toBe(160)
+    }
   })
 })
 

@@ -81,6 +81,16 @@ export default async function ProduktBearbeitenPage({ params }: PageProps) {
           produktTyp={initialData.typ}
           initialUrl={initialData.hero_image_url ?? null}
           initialAlt={initialData.hero_image_alt ?? null}
+          zielgruppe={initialData.produkt_config?.zielgruppe ?? null}
+          fokus={initialData.produkt_config?.fokus ?? null}
+          anbieter={initialData.produkt_config?.anbieter ?? null}
+          argumente={
+            initialData.produkt_config?.argumente != null &&
+            typeof initialData.produkt_config.argumente === 'object' &&
+            !Array.isArray(initialData.produkt_config.argumente)
+              ? (initialData.produkt_config.argumente as Record<string, string>)
+              : null
+          }
         />
       </div>
     </div>
