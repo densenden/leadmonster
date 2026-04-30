@@ -87,28 +87,32 @@ export function buildVertriebssteuerungBlock(
 //
 // Keep these strings tightly aligned with lib/anthropic/schemas.ts.
 const OUTPUT_SCHEMAS: Record<PageType, string> = {
-  hauptseite: `## Output-Schema (JSON)
+  hauptseite: `## Output-Schema (JSON) — STRENGE Mengen-Anforderungen!
 {
   "meta_title": "string, max 60 Zeichen",
   "meta_desc":  "string, max 160 Zeichen",
   "schema_markup": { "@context": "https://schema.org", "@type": "InsuranceAgency", ...weitere Felder },
   "sections": [
     { "type": "hero",     "headline": "string", "subline": "string", "cta_text": "string", "cta_anchor": "#formular" },
-    { "type": "features", "items": [ { "icon": "shield", "title": "string", "text": "string" }, ... ] },
-    { "type": "trust",    "stat_items": [ { "label": "string", "value": "string" }, ... 3-6 items ] },
-    { "type": "faq",      "items": [ { "frage": "string", "antwort": "string" }, ... ] }
+    { "type": "features", "items": [ { "icon": "shield", "title": "string", "text": "string" }, ... GENAU 4 BIS 6 ITEMS ] },
+    { "type": "trust",    "stat_items": [ { "label": "string", "value": "string" }, ... GENAU 3 BIS 6 ITEMS ] },
+    { "type": "faq",      "items": [ { "frage": "string", "antwort": "string" }, ... GENAU 8 BIS 15 ITEMS ] }
   ]
-}`,
-  faq: `## Output-Schema (JSON)
+}
+
+WICHTIG: features.items braucht 4-6 Einträge, trust.stat_items braucht 3-6, faq.items braucht 8-15. Weniger = Validierungsfehler.`,
+  faq: `## Output-Schema (JSON) — STRENGE Mengen!
 {
   "meta_title": "string, max 60",
   "meta_desc":  "string, max 160",
   "schema_markup": { "@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [...] },
   "sections": [
-    { "type": "faq", "items": [ { "frage": "string (Frage wie Nutzer sie stellt)", "antwort": "string (direkte Antwort, 1. Satz = Kernantwort)" }, ... mind. 10 items ] }
+    { "type": "faq", "items": [ { "frage": "string (Frage wie Nutzer sie stellt)", "antwort": "string (direkte Antwort, 1. Satz = Kernantwort)" }, ... GENAU 8 BIS 15 ITEMS ] }
   ]
-}`,
-  vergleich: `## Output-Schema (JSON)
+}
+
+WICHTIG: faq.items MUSS 8-15 Einträge enthalten. Weniger als 8 = Fehler.`,
+  vergleich: `## Output-Schema (JSON) — STRENGE Mengen!
 {
   "meta_title": "string, max 60",
   "meta_desc":  "string, max 160",
@@ -125,11 +129,12 @@ const OUTPUT_SCHEMAS: Record<PageType, string> = {
           "beitrag_beispiel": "string (z.B. 'ab 23 €/Monat')",
           "besonderheit": "string (kurzer USP)"
         }
-        // 3-10 Anbieter
       ]
     }
   ]
-}`,
+}
+
+WICHTIG: anbieter MUSS 3-10 Einträge enthalten. Weniger als 3 = Fehler.`,
   tarif: `## Output-Schema (JSON)
 {
   "meta_title": "string, max 60",
@@ -140,17 +145,20 @@ const OUTPUT_SCHEMAS: Record<PageType, string> = {
     { "type": "tarif_rechner", "alter_min": 18, "alter_max": 85, "summe_min": 5000, "summe_max": 25000, "disclaimer": "string" }
   ]
 }`,
-  ratgeber: `## Output-Schema (JSON)
+  ratgeber: `## Output-Schema (JSON) — STRENGE Mengen!
 {
   "meta_title": "string, max 60",
   "meta_desc":  "string, max 160",
   "schema_markup": { "@context": "https://schema.org", "@type": "Article", ... },
   "sections": [
     { "type": "intro",     "headline": "string", "intro": "string (2-3 Sätze Definition)" },
-    { "type": "paragraph", "heading": "string", "body": "string" }
-    // 3-6 weitere Paragraph- oder Steps-Sections
+    { "type": "paragraph", "heading": "string", "body_paragraphs": ["Absatz 1", "Absatz 2", "Absatz 3", "Absatz 4"] }
   ]
-}`,
+}
+
+WICHTIG:
+- Mindestens 1 intro-Section + mindestens 3 paragraph-Sections (insgesamt min. 4 Sections).
+- paragraph.body_paragraphs MUSS 4-6 Strings enthalten.`,
 }
 
 // Compose the full system + user message pair for a given page type.

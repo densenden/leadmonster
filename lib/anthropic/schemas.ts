@@ -30,7 +30,8 @@ export const TrustSectionSchema = z.object({
 
 export const FaqSectionSchema = z.object({
   type: z.literal('faq'),
-  items: z.array(z.object({ frage: z.string(), antwort: z.string() })).length(10),
+  // Relaxed from exact length(10) so smaller LLMs that under-deliver by 1-2 don't fail the whole pipeline.
+  items: z.array(z.object({ frage: z.string(), antwort: z.string() })).min(8).max(15),
 })
 
 export const VergleichSectionSchema = z.object({
