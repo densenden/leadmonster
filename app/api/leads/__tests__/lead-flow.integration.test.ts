@@ -1,12 +1,11 @@
-// Integration tests for the full lead submission flow — Task 7.9.
+// Integration tests for the full lead submission flow.
 //
-// These three tests cover the critical path through POST /api/leads:
+// These tests cover the critical path through POST /api/leads:
 //   Test 1: valid payload → HTTP 201 with data.id
 //   Test 2: DB insert is called with snake_case field mapping
-//   Test 3: confluence_synced and resend_sent flags are updated after async post-save
 //
-// All external dependencies (Supabase, Confluence, Resend) are mocked so these
-// tests run without a real database, Confluence tenant, or Resend account.
+// All external dependencies (Supabase, Convexa, Resend) are mocked so these
+// tests run without a real database, Convexa tenant, or Resend account.
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ---------------------------------------------------------------------------
@@ -33,8 +32,9 @@ const FULL_LEAD_ROW = {
   interesse: null,
   zielgruppe_tag: 'senioren_50plus',
   intent_tag: 'sicherheit',
-  confluence_page_id: null,
-  confluence_synced: false,
+  convexa_lead_id: null,
+  convexa_synced: false,
+  convexa_error: null,
   resend_sent: false,
   created_at: '2026-04-08T10:00:00.000Z',
 }
@@ -48,11 +48,11 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({ auth: { getUser: vi.fn() } })),
 }))
 
-// Mock Confluence — succeeds and returns a known pageId.
-const mockCreateLeadPage = vi.fn().mockResolvedValue({ pageId: 'confluence-page-abc' })
+// Mock Convexa — succeeds and returns a known lead id.
+const mockPushLeadToConvexa = vi.fn().mockResolvedValue({ id: 'convexa-lead-abc', status: 'created' })
 
-vi.mock('@/lib/confluence/client', () => ({
-  createLeadPage: mockCreateLeadPage,
+vi.mock('@/lib/convexa/client', () => ({
+  pushLeadToConvexa: mockPushLeadToConvexa,
 }))
 
 // Mock Resend mailer — both sends succeed by default.
@@ -188,34 +188,21 @@ describe('Lead flow integration — Task 7.9', () => {
   })
 
   // -------------------------------------------------------------------------
-  // Test 3: confluence_synced and resend_sent flags are updated to true
-  //
-  // The IIFE in route.ts runs after the 201 response is returned; we flush the
-  // microtask/macrotask queue with a short setTimeout to let it complete before
-  // asserting the update() calls.
+  // Test 3: convexa_synced and resend_sent flags are updated after the awaited
+  // post-save block. Post-save work is now awaited inside the request, so no
+  // microtask flush is needed.
   // -------------------------------------------------------------------------
-  // LEGACY: confluence_synced flag is no longer set by lead flow after Confluence→Convexa pivot.
-  // The lead flow now sets convexa_synced; this test needs rewriting against pushLeadToConvexa.
-  it.skip('Test 3: confluence_synced and resend_sent flags are updated to true after async post-save (legacy)', async () => {
+  it('Test 3: convexa_synced and resend_sent flags are updated after post-save', async () => {
     const { POST } = await import('../route')
     await POST(makeRequest(VALID_PAYLOAD) as never)
 
-    // Flush the non-blocking IIFE — 100ms gives all chained async operations time to settle.
-    await new Promise<void>((resolve) => setTimeout(resolve, 100))
-
-    // Confluence must have been called once with the full lead row.
-    expect(mockCreateLeadPage).toHaveBeenCalledOnce()
-
-    // Both email sends must have been called.
+    expect(mockPushLeadToConvexa).toHaveBeenCalledOnce()
     expect(mockSendLeadConfirmation).toHaveBeenCalledOnce()
     expect(mockSendSalesNotification).toHaveBeenCalledOnce()
 
-    // updateSpy must have been called with confluence_synced: true (Confluence update).
     expect(updateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ confluence_synced: true }),
+      expect.objectContaining({ convexa_synced: true, convexa_lead_id: 'convexa-lead-abc' }),
     )
-
-    // updateSpy must have been called with resend_sent: true (email update).
     expect(updateSpy).toHaveBeenCalledWith(
       expect.objectContaining({ resend_sent: true }),
     )

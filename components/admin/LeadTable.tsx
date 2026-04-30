@@ -1,9 +1,8 @@
 // Admin Lead overview table — Server Component.
 // Renders the filter form, paginated leads table, and empty state.
-// All interactions (filter, pagination, re-sync) work without client-side JavaScript:
-//   - Filter form uses GET navigation.
-//   - Pagination uses plain <a> links.
-//   - Re-sync uses native HTML form POST.
+// Filter form uses GET navigation; pagination uses plain <a> links.
+// Re-sync is intentionally omitted: leads push to Convexa on submit, and any
+// failure is surfaced via the convexa_error column for ops to inspect.
 import { Badge } from '@/components/ui/Badge'
 
 // ---------------------------------------------------------------------------
@@ -16,8 +15,9 @@ interface LeadRow {
   nachname: string | null
   email: string
   intent_tag: string | null
-  confluence_synced: boolean
-  confluence_page_id: string | null
+  convexa_synced: boolean
+  convexa_lead_id: string | null
+  convexa_error: string | null
   resend_sent: boolean
   created_at: string
   produkte: { name: string } | null
@@ -31,19 +31,15 @@ interface LeadTableProps {
   totalCount: number
   currentFilters: {
     produkt?: string
-    confluence_synced?: string
+    convexa_synced?: string
     intent_tag?: string
   }
-  confluenceBaseUrl: string | null
-  confluenceSpaceKey: string | null
 }
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-// Formats an ISO timestamp as "DD.MM.YYYY HH:mm" using the German locale.
-// Uses Intl.DateTimeFormat — no date library required.
 function formatTimestamp(iso: string): string {
   return new Intl.DateTimeFormat('de-DE', {
     dateStyle: 'short',
@@ -51,7 +47,6 @@ function formatTimestamp(iso: string): string {
   }).format(new Date(iso))
 }
 
-// Builds a URL query string from an object, omitting empty/undefined values.
 function buildQueryString(params: Record<string, string | number | undefined>): string {
   const entries = Object.entries(params).filter(
     ([, v]) => v !== undefined && v !== '',
@@ -70,13 +65,10 @@ export function LeadTable({
   currentPage,
   totalPages,
   currentFilters,
-  confluenceBaseUrl,
-  confluenceSpaceKey,
 }: LeadTableProps) {
-  // Build query string for pagination — preserves active filters.
   const filterParams = {
     produkt: currentFilters.produkt,
-    confluence_synced: currentFilters.confluence_synced,
+    convexa_synced: currentFilters.convexa_synced,
     intent_tag: currentFilters.intent_tag,
   }
 
@@ -85,11 +77,8 @@ export function LeadTable({
 
   return (
     <div className="space-y-6">
-      {/* ------------------------------------------------------------------ */}
-      {/* Filter Form                                                          */}
-      {/* ------------------------------------------------------------------ */}
+      {/* Filter Form */}
       <form method="get" action="/admin/leads" className="flex flex-wrap items-end gap-3">
-        {/* Product filter */}
         <div className="flex flex-col gap-1">
           <label htmlFor="filter-produkt" className="text-xs font-medium text-[#666666]">
             Produkt
@@ -109,15 +98,14 @@ export function LeadTable({
           </select>
         </div>
 
-        {/* Confluence sync filter */}
         <div className="flex flex-col gap-1">
           <label htmlFor="filter-sync" className="text-xs font-medium text-[#666666]">
-            Confluence Sync
+            Convexa Sync
           </label>
           <select
             id="filter-sync"
-            name="confluence_synced"
-            defaultValue={currentFilters.confluence_synced ?? ''}
+            name="convexa_synced"
+            defaultValue={currentFilters.convexa_synced ?? ''}
             className="border border-gray-200 rounded-md px-2 py-1 text-sm bg-white text-[#333333] focus:outline-none focus:ring-1 focus:ring-[#abd5f4]"
           >
             <option value="">Alle</option>
@@ -126,7 +114,6 @@ export function LeadTable({
           </select>
         </div>
 
-        {/* Intent tag filter */}
         <div className="flex flex-col gap-1">
           <label htmlFor="filter-intent" className="text-xs font-medium text-[#666666]">
             Intent
@@ -159,9 +146,7 @@ export function LeadTable({
         </a>
       </form>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Empty State                                                          */}
-      {/* ------------------------------------------------------------------ */}
+      {/* Empty State */}
       {leads.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <p className="text-lg text-[#666666]">Keine Leads gefunden.</p>
@@ -174,9 +159,7 @@ export function LeadTable({
         </div>
       ) : (
         <>
-          {/* -------------------------------------------------------------- */}
-          {/* Leads Table                                                      */}
-          {/* -------------------------------------------------------------- */}
+          {/* Leads Table */}
           <div className="overflow-x-auto rounded-lg border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
@@ -186,11 +169,9 @@ export function LeadTable({
                     'E-Mail',
                     'Produkt',
                     'Intent',
-                    'Confluence Sync',
+                    'Convexa Sync',
                     'Resend',
                     'Zeitstempel',
-                    'Confluence Link',
-                    'Aktion',
                   ].map((col) => (
                     <th
                       key={col}
@@ -208,88 +189,42 @@ export function LeadTable({
                     key={lead.id}
                     className="hover:bg-blue-50 transition-colors duration-150"
                   >
-                    {/* Name */}
                     <td className="px-4 py-3 whitespace-nowrap text-[#333333]">
                       {[lead.vorname, lead.nachname].filter(Boolean).join(' ') || '—'}
                     </td>
 
-                    {/* E-Mail */}
                     <td className="px-4 py-3 text-[#333333]">{lead.email}</td>
 
-                    {/* Produkt */}
                     <td className="px-4 py-3 whitespace-nowrap text-[#666666]">
                       {lead.produkte?.name ?? '—'}
                     </td>
 
-                    {/* Intent Tag */}
                     <td className="px-4 py-3">
                       <Badge variant="neutral">{lead.intent_tag ?? '—'}</Badge>
                     </td>
 
-                    {/* Confluence Sync */}
                     <td className="px-4 py-3">
-                      <Badge variant={lead.confluence_synced ? 'success' : 'danger'}>
-                        {lead.confluence_synced ? 'Ja' : 'Nein'}
+                      <Badge variant={lead.convexa_synced ? 'success' : 'danger'}>
+                        {lead.convexa_synced ? 'Ja' : 'Nein'}
                       </Badge>
+                      {lead.convexa_error ? (
+                        <span
+                          title={lead.convexa_error}
+                          className="ml-2 text-xs text-red-600 cursor-help"
+                        >
+                          Fehler
+                        </span>
+                      ) : null}
                     </td>
 
-                    {/* Resend Sent */}
                     <td className="px-4 py-3">
                       <Badge variant={lead.resend_sent ? 'success' : 'neutral'}>
                         {lead.resend_sent ? 'Ja' : 'Nein'}
                       </Badge>
                     </td>
 
-                    {/* Zeitstempel */}
                     <td className="px-4 py-3 whitespace-nowrap text-[#666666]">
                       {formatTimestamp(lead.created_at)}
-                    </td>
-
-                    {/* Confluence Link */}
-                    <td className="px-4 py-3">
-                      {lead.confluence_page_id !== null && confluenceBaseUrl !== null ? (
-                        <a
-                          href={`${confluenceBaseUrl}/wiki/spaces/${confluenceSpaceKey}/pages/${lead.confluence_page_id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-blue-500 hover:text-blue-700 text-xs"
-                          aria-label="In Confluence öffnen"
-                        >
-                          {/* External link icon — inline SVG, no additional dependencies */}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-3.5 w-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                            aria-hidden="true"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                            />
-                          </svg>
-                          Öffnen
-                        </a>
-                      ) : null}
-                    </td>
-
-                    {/* Aktion — re-sync form, only for unsynced leads */}
-                    <td className="px-4 py-3">
-                      {lead.confluence_synced === false ? (
-                        <form action="/api/confluence" method="POST">
-                          <input type="hidden" name="leadId" value={lead.id} />
-                          <input type="hidden" name="action" value="resync" />
-                          <button
-                            type="submit"
-                            className="px-2 py-1 rounded border border-gray-200 text-xs text-[#666666] hover:bg-gray-50 hover:border-gray-300 transition-colors"
-                          >
-                            Re-sync
-                          </button>
-                        </form>
-                      ) : null}
                     </td>
                   </tr>
                 ))}
@@ -297,9 +232,7 @@ export function LeadTable({
             </table>
           </div>
 
-          {/* -------------------------------------------------------------- */}
-          {/* Pagination                                                       */}
-          {/* -------------------------------------------------------------- */}
+          {/* Pagination */}
           {totalPages > 1 && (
             <nav
               aria-label="Seitennavigation"

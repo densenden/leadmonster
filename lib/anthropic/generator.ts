@@ -238,7 +238,45 @@ export async function generateContent(
         const raw = await callLLMWithRetry(system, user, pageType, produktId)
         const parsed = JSON.parse(raw) as Json
         const schema = PageResponseSchemas[pageType]
-        const validated = schema.parse(parsed)
+        const validated = schema.parse(parsed) as {
+          sections: Array<{ type: string; [k: string]: unknown }>
+          meta_title: string
+          meta_desc: string
+          schema_markup: Record<string, unknown>
+        }
+
+        // Programmatische Injection der vergleichsrechner-Section auf der
+        // Hauptseite. Tarife sind deterministisch in der DB — der LLM soll
+        // diese Section nicht erzeugen (s. prompt-builder.ts). Wenn ≥2
+        // distinkte Anbieter in tarife liegen: Section nach 'features' einfügen.
+        if (pageType === 'hauptseite') {
+          const { data: anbieterRows } = await supabase
+            .from('tarife')
+            .select('anbieter_name')
+            .eq('produkt_id', produktId)
+            .not('anbieter_name', 'is', null)
+
+          const distinct = new Set(
+            (anbieterRows ?? []).map(r => r.anbieter_name).filter((n): n is string => !!n),
+          )
+          const distinctCount = distinct.size
+
+          // Etwaige vom LLM erzeugte Doppel-Section entfernen
+          validated.sections = validated.sections.filter(s => s.type !== 'vergleichsrechner')
+
+          if (distinctCount >= 2) {
+            const featuresIdx = validated.sections.findIndex(s => s.type === 'features')
+            const insertIdx = featuresIdx >= 0 ? featuresIdx + 1 : 1
+            validated.sections.splice(insertIdx, 0, {
+              type: 'vergleichsrechner',
+              headline: `${produkt.name} im Anbieter-Vergleich`,
+              intro: `Geburtsjahr und Wunschsumme wählen — wir zeigen die Tarife von ${distinctCount} Top-Anbietern in Echtzeit, sortiert nach Beitrag.`,
+              input_hint: 'Geburtsjahr & Wunschsumme wählen',
+              cta_label: 'Beratung anfordern',
+              anbieter_count_hint: distinctCount,
+            })
+          }
+        }
 
         const canonicalUrl = `${baseUrl}/${produkt.slug}${pageType !== 'hauptseite' ? '/' + pageType : ''}`
         const schemaMarkup = buildSchemaMarkup(pageType, {

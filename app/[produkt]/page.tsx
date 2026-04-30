@@ -15,6 +15,7 @@ import { FeatureGrid } from '@/components/sections/FeatureGrid'
 import { TrustBar } from '@/components/sections/TrustBar'
 import { FAQ } from '@/components/sections/FAQ'
 import { LeadForm } from '@/components/sections/LeadForm'
+import { VergleichsRechner } from '@/components/sections/VergleichsRechner'
 import type {
   ContentSection,
   HeroSection,
@@ -22,6 +23,7 @@ import type {
   TrustSection,
   FaqSection,
   LeadFormSection,
+  VergleichsrechnerSection,
 } from '@/lib/types/content'
 
 // Re-render at most once per hour; allow slugs not pre-built at build time.
@@ -116,6 +118,22 @@ function renderSection(
           </div>
         </section>
       )
+    case 'vergleichsrechner': {
+      const s = section as VergleichsrechnerSection
+      return (
+        <VergleichsRechner
+          key={index}
+          produktId={ctx.produktId}
+          zielgruppeTag={ctx.zielgruppeTag}
+          intentTag="preis"
+          headline={s.headline}
+          intro={s.intro}
+          inputHint={s.input_hint}
+          ctaLabel={s.cta_label}
+          anbieterCountHint={s.anbieter_count_hint}
+        />
+      )
+    }
     default:
       return null
   }

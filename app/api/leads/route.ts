@@ -4,6 +4,11 @@
  * CSRF protection: lightweight X-Requested-With header check + JSON-only content-type.
  * Upgrade path: replace with token-based CSRF (e.g., double-submit cookie) when stricter
  * security is required.
+ *
+ * Post-save work (Convexa sync + emails) is awaited inside the request — earlier
+ * versions used fire-and-forget after Response.json, which is unsafe on Vercel
+ * because the function is torn down right after the response, killing in-flight work.
+ * The trade-off is +1–2s response latency, which is acceptable for a form submit.
  */
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
@@ -75,6 +80,7 @@ export async function POST(request: NextRequest) {
 
   const parsed = leadSchema.safeParse(body)
   if (!parsed.success) {
+    console.warn('[api/leads] Validation failed:', parsed.error.issues)
     return Response.json(
       {
         data: null,
@@ -95,56 +101,64 @@ export async function POST(request: NextRequest) {
 
   // 5. DB insert using service role client (never the anon client).
   const supabase = createAdminClient()
-  const { data: lead, error } = await supabase
+  const insertPayload: Record<string, unknown> = {
+    produkt_id: parsed.data.produktId,
+    vorname: parsed.data.vorname,
+    nachname: parsed.data.nachname,
+    email: parsed.data.email,
+    telefon: parsed.data.telefon,
+    interesse: parsed.data.interesse,
+    zielgruppe_tag: parsed.data.zielgruppeTag,
+    intent_tag: parsed.data.intentTag,
+  }
+  // Only include gewuenschter_anbieter when set — keeps the payload narrow and
+  // tolerant to schemas that haven't applied the column yet.
+  if (parsed.data.gewuenschterAnbieter) {
+    insertPayload.gewuenschter_anbieter = parsed.data.gewuenschterAnbieter
+  }
+
+  const { data: lead, error: insertError } = await supabase
     .from('leads')
-    .insert({
-      produkt_id: parsed.data.produktId,
-      vorname: parsed.data.vorname,
-      nachname: parsed.data.nachname,
-      email: parsed.data.email,
-      telefon: parsed.data.telefon,
-      interesse: parsed.data.interesse,
-      zielgruppe_tag: parsed.data.zielgruppeTag,
-      intent_tag: parsed.data.intentTag,
-      gewuenschter_anbieter: parsed.data.gewuenschterAnbieter,
-    })
+    .insert(insertPayload)
     .select('id')
     .single()
 
-  if (error || !lead) {
-    console.error('[api/leads] DB insert error:', error)
+  if (insertError || !lead) {
+    console.error('[api/leads] DB insert error:', {
+      message: insertError?.message,
+      code: insertError?.code,
+      details: insertError?.details,
+      hint: insertError?.hint,
+    })
     return Response.json(
       {
         data: null,
         error: {
           code: 'SERVER_ERROR',
-          message: 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.',
+          message: 'Lead konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.',
         },
       },
       { status: 500 },
     )
   }
 
-  // 6. Post-save: Confluence sync + email dispatch — non-blocking.
-  // Runs asynchronously after the 201 response is returned; any error here
-  // is logged but never propagates to the HTTP response.
-  ;(async () => {
-    try {
-      const { data: produkt } = await supabase
-        .from('produkte')
-        .select('name, slug, typ')
-        .eq('id', parsed.data.produktId)
-        .single()
+  // 6. Post-save work — wrapped in try/catch so any downstream failure is logged
+  // but never converts a successful save into an HTTP 500.
+  try {
+    const { data: produkt } = await supabase
+      .from('produkte')
+      .select('name, slug, typ')
+      .eq('id', parsed.data.produktId)
+      .single()
 
-      const produktName = produkt?.name ?? 'Unbekannt'
-      const produktSlug = produkt?.slug ?? ''
-      const produktTyp = produkt?.typ ?? ''
+    const produktName = produkt?.name ?? 'Unbekannt'
+    const produktSlug = produkt?.slug ?? ''
+    const produktTyp = produkt?.typ ?? ''
 
-      // Fetch full lead row for downstream Convexa + email use.
-      const { data: fullLead } = await supabase.from('leads').select('*').eq('id', lead.id).single()
-      if (!fullLead) return
+    const { data: fullLead } = await supabase.from('leads').select('*').eq('id', lead.id).single()
 
-      // Convexa CRM sync — failure is non-blocking; sets convexa_synced=false for re-sync.
+    if (fullLead) {
+      // Convexa CRM sync — sets convexa_synced=false on failure for later re-sync.
       try {
         const result = await pushLeadToConvexa(fullLead, {
           produktName,
@@ -168,23 +182,23 @@ export async function POST(request: NextRequest) {
           .eq('id', lead.id)
       }
 
-      // Email dispatch — both sends run in parallel to minimise total latency.
+      // Email dispatch — both sends run in parallel.
+      // Awaited so Vercel serverless doesn't tear down the function mid-flight.
       const [confirmationSent, notificationSent] = await Promise.all([
         sendLeadConfirmation(fullLead),
         sendSalesNotification(fullLead, produktName),
       ])
 
+      if (!confirmationSent) console.error(`[api/leads] Confirmation email failed lead=${lead.id}`)
+      if (!notificationSent) console.error(`[api/leads] Sales notification email failed lead=${lead.id}`)
+
       if (confirmationSent && notificationSent) {
-        try {
-          await supabase.from('leads').update({ resend_sent: true }).eq('id', lead.id)
-        } catch (err) {
-          console.error('[api/leads] Failed to update resend_sent flag:', err)
-        }
+        await supabase.from('leads').update({ resend_sent: true }).eq('id', lead.id)
       }
-    } catch (err) {
-      console.error('[api/leads] Post-save processing error:', err)
     }
-  })()
+  } catch (err) {
+    console.error(`[api/leads] Post-save processing failed lead=${lead.id}:`, err)
+  }
 
   return Response.json({ data: { id: lead.id }, error: null }, { status: 201 })
 }

@@ -58,6 +58,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.7,
     })
+    entries.push({
+      url: buildCanonicalUrl(`/${produkt.slug}/vergleichsrechner`),
+      lastModified,
+      changeFrequency: 'monthly',
+      priority: 0.85,
+    })
   }
 
   // Published ratgeber content — joined with produkte to get the product slug.

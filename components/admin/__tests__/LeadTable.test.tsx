@@ -32,6 +32,15 @@ function makeLead(overrides: Partial<{
     resend_sent: overrides.resend_sent ?? false,
     created_at: overrides.created_at ?? '2026-04-01T10:00:00.000Z',
     produkte: overrides.produkte !== undefined ? overrides.produkte : { name: 'Sterbegeld24Plus' },
+    // Convexa + UTM + VergleichsRechner fields (April 2026 schema additions)
+    convexa_synced: false,
+    convexa_lead_id: null,
+    convexa_error: null,
+    source_url: null,
+    utm_source: null,
+    utm_medium: null,
+    utm_campaign: null,
+    gewuenschter_anbieter: null,
   }
 }
 

@@ -109,6 +109,17 @@ export default async function ProdukteListPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-3">
+                      {produkt.slug && (
+                        <Link
+                          href={`/${produkt.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-[#02a9e6] hover:underline"
+                          title={`Live-Seite öffnen: /${produkt.slug}`}
+                        >
+                          Live ↗
+                        </Link>
+                      )}
                       <Link
                         href={`/admin/produkte/${produkt.id}`}
                         className="text-sm text-[#1a365d] hover:underline"
