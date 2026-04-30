@@ -36,6 +36,7 @@ interface ScrapeResult {
   saved?: { thema: string; ok: boolean; error?: string }[]
   error?: string
   message?: string
+  details?: Record<string, string[]>
 }
 
 const KATEGORIE_OPTIONS = [
@@ -47,6 +48,12 @@ const KATEGORIE_OPTIONS = [
   { value: 'krankenzusatz', label: 'Krankenzusatz' },
   { value: 'bav', label: 'Betriebliche Altersvorsorge' },
 ]
+
+// Auto-prepend https:// if user typed bare domain.
+function ensureProtocol(url: string): string {
+  if (/^https?:\/\//i.test(url)) return url
+  return `https://${url}`
+}
 
 function slugify(str: string): string {
   return str
@@ -87,7 +94,7 @@ export default function ScraperPage() {
       const res = await fetch('/api/admin/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, kategorie, thema_prefix: themaPrefix, save: false }),
+        body: JSON.stringify({ url: ensureProtocol(url), kategorie, thema_prefix: themaPrefix, save: false }),
       })
       const data: ScrapeResult = await res.json()
       setResult(data)
@@ -105,7 +112,7 @@ export default function ScraperPage() {
       const res = await fetch('/api/admin/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, kategorie, thema_prefix: themaPrefix, save: true }),
+        body: JSON.stringify({ url: ensureProtocol(url), kategorie, thema_prefix: themaPrefix, save: true }),
       })
       const data: ScrapeResult = await res.json()
       setResult(prev => ({ ...prev, saved: data.saved }))
@@ -212,7 +219,16 @@ export default function ScraperPage() {
       {/* Error */}
       {result?.error && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-sm text-red-700">
-          <strong>Fehler:</strong> {result.message ?? result.error}
+          <p><strong>Fehler:</strong> {result.message ?? result.error}</p>
+          {result.details && (
+            <ul className="mt-2 list-disc list-inside space-y-0.5">
+              {Object.entries(result.details).map(([field, msgs]) => (
+                <li key={field}>
+                  <code className="font-mono">{field}</code>: {Array.isArray(msgs) ? msgs.join(', ') : String(msgs)}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 

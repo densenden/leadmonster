@@ -20,6 +20,7 @@ const TYP_OPTIONS = [
   { value: 'pflege', label: 'Pflegeversicherung' },
   { value: 'leben', label: 'Lebensversicherung' },
   { value: 'unfall', label: 'Unfallversicherung' },
+  { value: 'bu', label: 'Berufsunfähigkeitsversicherung' },
 ] as const
 
 const ZIELGRUPPE_OPTIONS = [
@@ -249,7 +250,10 @@ export function ProduktForm({ mode, initialData }: ProduktFormProps) {
       }
 
       // Navigate to the product edit page after successful save.
+      // router.refresh() forces re-fetch of the Server Component so the
+      // freshly-saved name/slug/typ appear instead of cached old values.
       router.push(`/admin/produkte/${json.data.id}`)
+      router.refresh()
     } catch {
       setGlobalError('Verbindungsfehler. Bitte prüfen Sie Ihre Internetverbindung.')
     } finally {

@@ -7,8 +7,10 @@ import { z } from 'zod'
 export const produktSchema = z.object({
   name: z.string().min(2).max(100),
   slug: z.string().min(2).max(80).regex(/^[a-z0-9-]+$/),
-  typ: z.enum(['sterbegeld', 'pflege', 'leben', 'unfall']),
-  status: z.enum(['entwurf', 'aktiv', 'archiviert']).optional(),
+  // Includes 'bu' (Berufsunfähigkeit) per migration 20260429000000_convexa_blog_tarife_bu.sql
+  typ: z.enum(['sterbegeld', 'pflege', 'leben', 'unfall', 'bu']),
+  // Includes 'review' (intermediate state between entwurf and publiziert)
+  status: z.enum(['entwurf', 'review', 'aktiv', 'archiviert']).optional(),
   accent_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   zielgruppe: z.array(z.string()).optional(),
   fokus: z.enum(['sicherheit', 'preis', 'sofortschutz']).optional(),
