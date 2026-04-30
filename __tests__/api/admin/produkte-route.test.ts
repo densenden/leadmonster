@@ -6,6 +6,10 @@ vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://test.supabase.co')
 vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'test-anon-key')
 vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'test-service-role-key')
 
+// Routes call revalidatePath after every mutation, which requires Next's
+// static generation store. Mock it out so unit tests can run outside Next.
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
+
 // --- Mock factories ---
 
 function makeSessionClient(hasSession: boolean) {

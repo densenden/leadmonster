@@ -4,6 +4,12 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { MonsterLogo } from '@/components/MonsterLogo'
 import { resolveAccentColor } from '@/lib/utils/accent'
 
+// Always re-fetch — die Startseite ist die Produkt-Übersicht und muss
+// CRUD-Operationen aus dem Admin sofort widerspiegeln. Ohne diese Direktive
+// wird die Page als statische Page gecacht und zeigt bis zum nächsten Build
+// veraltete Daten ("3 alte Produkte").
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'LeadMonster — Versicherungsprodukte',
   description: 'Übersicht aller Versicherungsprodukte im LeadMonster System',

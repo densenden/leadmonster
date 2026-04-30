@@ -3,8 +3,30 @@
 // Service role client is used for all DB writes — never exposed to the browser.
 // Raw Supabase error messages are never forwarded to the client.
 import { type NextRequest } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { produktSchema, produktUpdateSchema } from '@/lib/validations/produkt'
+
+// Trigger ISR/Edge-Revalidation für alle Pfade, die die Produktliste enthalten,
+// nach jeder Mutation. Wird aus POST/PATCH/DELETE aufgerufen.
+function revalidateProduktPaths(slug?: string) {
+  // Startseite (Produkt-Grid)
+  revalidatePath('/')
+  // Sitemap (listet alle Produkt-Routen)
+  revalidatePath('/sitemap.xml')
+  // Admin-Übersicht (zur Sicherheit, hat schon force-dynamic)
+  revalidatePath('/admin/produkte')
+  // Produkt-Subroutes — beim Slug-Change muss sowohl alter als auch neuer Slug
+  // revalidiert werden. Slug-Change ist selten genug, dass wir den alten nicht
+  // separat tracken — der nächste Request darauf produziert ein 404.
+  if (slug) {
+    revalidatePath(`/${slug}`)
+    revalidatePath(`/${slug}/faq`)
+    revalidatePath(`/${slug}/vergleich`)
+    revalidatePath(`/${slug}/tarife`)
+    revalidatePath(`/${slug}/vergleichsrechner`)
+  }
+}
 
 // POST /api/admin/produkte
 // Creates a new product and its config. Returns 201 with { data: { id } }.
@@ -98,6 +120,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  revalidateProduktPaths(slug)
   return Response.json({ data: { id: produkt.id }, error: null }, { status: 201 })
 }
 
@@ -181,5 +204,6 @@ export async function PATCH(request: NextRequest) {
     )
   }
 
+  revalidateProduktPaths(slug)
   return Response.json({ data: { id }, error: null }, { status: 200 })
 }
