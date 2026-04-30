@@ -81,17 +81,91 @@ export function buildVertriebssteuerungBlock(
   return `## Vertriebssteuerung\n\nZielgruppe: ${zielgruppe}\nFokus: ${fokusText}`
 }
 
+// Pre-baked output-schema specs for each page-type — this is the contract
+// the LLM MUST follow. Without injecting these explicitly, smaller models
+// (Haiku, gpt-4o-mini) hallucinate top-level keys and fail Zod validation.
+//
+// Keep these strings tightly aligned with lib/anthropic/schemas.ts.
+const OUTPUT_SCHEMAS: Record<PageType, string> = {
+  hauptseite: `## Output-Schema (JSON)
+{
+  "meta_title": "string, max 60 Zeichen",
+  "meta_desc":  "string, max 160 Zeichen",
+  "schema_markup": { "@context": "https://schema.org", "@type": "InsuranceAgency", ...weitere Felder },
+  "sections": [
+    { "type": "hero",     "headline": "string", "subline": "string", "cta_text": "string", "cta_anchor": "#formular" },
+    { "type": "features", "items": [ { "icon": "shield", "title": "string", "text": "string" }, ... ] },
+    { "type": "trust",    "stat_items": [ { "label": "string", "value": "string" }, ... 3-6 items ] },
+    { "type": "faq",      "items": [ { "frage": "string", "antwort": "string" }, ... ] }
+  ]
+}`,
+  faq: `## Output-Schema (JSON)
+{
+  "meta_title": "string, max 60",
+  "meta_desc":  "string, max 160",
+  "schema_markup": { "@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [...] },
+  "sections": [
+    { "type": "faq", "items": [ { "frage": "string (Frage wie Nutzer sie stellt)", "antwort": "string (direkte Antwort, 1. Satz = Kernantwort)" }, ... mind. 10 items ] }
+  ]
+}`,
+  vergleich: `## Output-Schema (JSON)
+{
+  "meta_title": "string, max 60",
+  "meta_desc":  "string, max 160",
+  "schema_markup": { "@context": "https://schema.org", "@type": "ItemList", ... },
+  "sections": [
+    {
+      "type": "vergleich",
+      "anbieter": [
+        {
+          "name": "string (z.B. AXA)",
+          "wartezeit": "string (z.B. 'Keine bei Unfalltod' oder '6 Monate')",
+          "gesundheitsfragen": "string ('Ja' | 'Nein' | 'Vereinfacht')",
+          "garantierte_aufnahme": true,
+          "beitrag_beispiel": "string (z.B. 'ab 23 €/Monat')",
+          "besonderheit": "string (kurzer USP)"
+        }
+        // 3-10 Anbieter
+      ]
+    }
+  ]
+}`,
+  tarif: `## Output-Schema (JSON)
+{
+  "meta_title": "string, max 60",
+  "meta_desc":  "string, max 160",
+  "schema_markup": { "@context": "https://schema.org", "@type": "Product", ... },
+  "sections": [
+    { "type": "hero", "headline": "string", "subline": "string", "cta_text": "string", "cta_anchor": "#rechner" },
+    { "type": "tarif_rechner", "alter_min": 18, "alter_max": 85, "summe_min": 5000, "summe_max": 25000, "disclaimer": "string" }
+  ]
+}`,
+  ratgeber: `## Output-Schema (JSON)
+{
+  "meta_title": "string, max 60",
+  "meta_desc":  "string, max 160",
+  "schema_markup": { "@context": "https://schema.org", "@type": "Article", ... },
+  "sections": [
+    { "type": "intro",     "headline": "string", "intro": "string (2-3 Sätze Definition)" },
+    { "type": "paragraph", "heading": "string", "body": "string" }
+    // 3-6 weitere Paragraph- oder Steps-Sections
+  ]
+}`,
+}
+
 // Compose the full system + user message pair for a given page type.
 // Combines all four layers and appends the JSON-only output instruction.
 export function composePrompt(
   pageType: PageType,
   layers: { wissensfundus: string; produktDna: string; vertriebssteuerung: string },
 ): { system: string; user: string } {
+  const schemaSpec = OUTPUT_SCHEMAS[pageType]
   const userParts = [
     layers.wissensfundus,
     layers.produktDna,
     layers.vertriebssteuerung,
-    `\nErstelle jetzt den ${pageType}-Inhalt. Antworte mit gültigem JSON only, keine Markdown-Fences, passend zum Output-Schema für diesen Seitentyp.`,
+    schemaSpec,
+    `\nErstelle jetzt den ${pageType}-Inhalt. WICHTIG: Antworte ausschließlich mit gültigem JSON, das EXAKT das oben gezeigte Output-Schema erfüllt. Keine Markdown-Fences, keine Erklärungen außerhalb des JSON-Objekts. Top-Level-Keys MÜSSEN sein: meta_title, meta_desc, schema_markup, sections.`,
   ].filter(Boolean)
 
   return { system: SYSTEM_PROMPT, user: userParts.join('\n\n') }
