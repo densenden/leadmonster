@@ -129,13 +129,16 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // All page types failed
+  // All page types failed — surface the first underlying error so the
+  // operator can act on it (rate-limit, billing, schema mismatch, etc).
+  const firstFailure = result.failed[0]
+  const firstMessage = firstFailure?.error_message ?? 'unknown'
   return Response.json(
     {
       data: null,
       error: {
         code: 'GENERATION_FAILED',
-        message: 'Alle Seitentypen konnten nicht generiert werden',
+        message: `Alle Seitentypen fehlgeschlagen. Erster Fehler: ${firstMessage}`,
         details: result.failed,
       },
     },

@@ -24,12 +24,20 @@ export function GenerateButton({ produktId }: GenerateButtonProps) {
         body: JSON.stringify({ produktId }),
       })
       if (!res.ok) {
-        setError('Generierung fehlgeschlagen. Bitte erneut versuchen.')
+        // Surface the real error so admin can act on it (rate limit, billing, etc).
+        let detail = ''
+        try {
+          const json = await res.json()
+          detail = json.error?.message ?? json.error?.code ?? json.message ?? JSON.stringify(json).slice(0, 300)
+        } catch {
+          detail = await res.text().catch(() => '')
+        }
+        setError(`Generierung fehlgeschlagen (HTTP ${res.status})${detail ? ': ' + detail : ''}`)
         return
       }
       router.refresh()
-    } catch {
-      setError('Netzwerkfehler. Bitte erneut versuchen.')
+    } catch (err) {
+      setError(`Netzwerkfehler: ${err instanceof Error ? err.message : 'unbekannt'}`)
     } finally {
       setIsGenerating(false)
     }
