@@ -106,10 +106,13 @@ export type SectionUnion = z.infer<typeof SectionUnionSchema>
 
 // Note: Zod v4 requires explicit key schema in z.record().
 // z.record(z.string(), z.unknown()) is the v4-compatible form of z.record(z.unknown()).
+// LLMs frequently exceed length limits by 5-15 chars. Clip via transform
+// instead of rejecting — better UX than failing the whole pipeline because
+// meta_title is 64 chars instead of 60.
 const BaseResponseSchema = z.object({
   sections: z.array(SectionUnionSchema),
-  meta_title: z.string().max(60),
-  meta_desc: z.string().max(160),
+  meta_title: z.string().transform(s => s.slice(0, 60)),
+  meta_desc: z.string().transform(s => s.slice(0, 160)),
   schema_markup: z.record(z.string(), z.unknown()),
 })
 

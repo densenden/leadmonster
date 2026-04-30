@@ -100,9 +100,9 @@ describe('FaqResponseSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('rejects an faq section with more than 10 items', () => {
+  it('rejects an faq section with more than 15 items', () => {
     const payload = {
-      sections: [{ type: 'faq', items: faqItemsFixture(11) }],
+      sections: [{ type: 'faq', items: faqItemsFixture(16) }],
       meta_title: 'FAQ',
       meta_desc: 'FAQ',
       schema_markup: {},
