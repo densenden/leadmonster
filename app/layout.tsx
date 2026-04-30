@@ -20,10 +20,8 @@ export const metadata: Metadata = {
   description: 'Skalierbares Vertriebs-Content-System für Versicherungsprodukte',
   robots: { index: true, follow: true },
   openGraph: { siteName: 'LeadMonster', locale: 'de_DE', type: 'website' },
-  icons: {
-    icon: '/images/ft26-logo.svg',
-    shortcut: '/images/ft26-logo.svg',
-  },
+  // Icons werden automatisch aus app/icon.svg + app/apple-icon.svg gepickt
+  // (Next.js File-Convention) — keine explizite Konfig nötig.
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

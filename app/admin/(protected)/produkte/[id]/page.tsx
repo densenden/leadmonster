@@ -66,7 +66,9 @@ export default async function ProduktBearbeitenPage({ params }: PageProps) {
         </p>
       </div>
 
-      <ProduktForm mode="edit" initialData={initialData} />
+      {/* key forces remount when product changes so useState-captured initialData
+          doesn't leak across products (avoids "old names reappearing" bug) */}
+      <ProduktForm key={initialData.id} mode="edit" initialData={initialData} />
     </div>
   )
 }
