@@ -12,6 +12,9 @@ export const produktSchema = z.object({
   // Includes 'review' (intermediate state between entwurf and publiziert)
   status: z.enum(['entwurf', 'review', 'aktiv', 'archiviert']).optional(),
   accent_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  // Convexa-Form-Token pro Produkt — überschreibt den globalen Default.
+  // Leerstring wird zu null normalisiert (= "nutze globalen Default").
+  convexa_form_token: z.string().max(200).optional().or(z.literal('')),
   zielgruppe: z.array(z.string()).optional(),
   fokus: z.enum(['sicherheit', 'preis', 'sofortschutz']).optional(),
   anbieter: z.array(z.string().min(1)).optional(),

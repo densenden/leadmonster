@@ -207,6 +207,7 @@ describe('ProduktForm — edit mode', () => {
     status: 'aktiv',
     domain: null,
     accent_color: null,
+    convexa_form_token: null,
     hero_image_url: null,
     hero_image_alt: null,
     og_image_url: null,

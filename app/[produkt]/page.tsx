@@ -26,8 +26,9 @@ import type {
   VergleichsrechnerSection,
 } from '@/lib/types/content'
 
-// Re-render at most once per hour; allow slugs not pre-built at build time.
-export const revalidate = 3600
+// Re-render at most once per minute so freshly published content appears
+// without admin needing to wait for a manual revalidation.
+export const revalidate = 60
 export const dynamicParams = true
 
 // Pre-build all slugs that have a published hauptseite content row.
@@ -155,8 +156,9 @@ export default async function ProduktPage({ params }: { params: { produkt: strin
       .from('generierter_content')
       .select('content, title, slug, status, produkt_id, produkte!inner(id, slug, name, typ)')
       .eq('page_type', 'hauptseite')
+      .eq('status', 'publiziert')
       .eq('produkte.slug', params.produkt)
-      .single(),
+      .maybeSingle(),
     supabase
       .from('produkte')
       .select('id, name, typ, hero_image_url, hero_image_alt, short_pitch, produkt_config(zielgruppe, fokus)')

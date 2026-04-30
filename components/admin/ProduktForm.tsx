@@ -91,6 +91,11 @@ export function ProduktForm({ mode, initialData }: ProduktFormProps) {
   const [accentColor, setAccentColor] = useState(
     resolveAccentColor(initialData?.typ ?? '', initialData?.accent_color)
   )
+  // Convexa-Form-Token pro Produkt — leer = nutze globalen Default aus
+  // einstellungen.convexa_form_token bzw. process.env.CONVEXA_FORM_TOKEN.
+  const [convexaFormToken, setConvexaFormToken] = useState(
+    initialData?.convexa_form_token ?? '',
+  )
 
   // Slug pristine flag — when true, slug auto-updates from name.
   const [slugPristine, setSlugPristine] = useState(mode === 'create')
@@ -193,6 +198,8 @@ export function ProduktForm({ mode, initialData }: ProduktFormProps) {
       if (row.key.trim()) argumenteRecord[row.key.trim()] = row.value
     }
 
+    const tokenTrimmed = convexaFormToken.trim()
+
     const payload =
       mode === 'edit'
         ? {
@@ -202,6 +209,7 @@ export function ProduktForm({ mode, initialData }: ProduktFormProps) {
             typ,
             status,
             accent_color: /^#[0-9a-fA-F]{6}$/.test(accentColor) ? accentColor : undefined,
+            convexa_form_token: tokenTrimmed,
             zielgruppe,
             fokus: fokus || undefined,
             anbieter,
@@ -212,6 +220,7 @@ export function ProduktForm({ mode, initialData }: ProduktFormProps) {
             slug,
             typ,
             accent_color: /^#[0-9a-fA-F]{6}$/.test(accentColor) ? accentColor : undefined,
+            convexa_form_token: tokenTrimmed,
             zielgruppe,
             fokus: fokus || undefined,
             anbieter,
@@ -379,6 +388,28 @@ export function ProduktForm({ mode, initialData }: ProduktFormProps) {
         </div>
         <p className="mt-1 text-xs text-[#999999]">
           Wird automatisch nach Produkttyp vorausgefüllt — frei anpassbar.
+        </p>
+      </div>
+
+      {/* Convexa-Form-Token */}
+      <div>
+        <label htmlFor="convexa_form_token" className={LABEL_CLASS}>
+          Convexa Form-Token
+        </label>
+        <input
+          id="convexa_form_token"
+          name="convexa_form_token"
+          type="text"
+          value={convexaFormToken}
+          onChange={(e) => setConvexaFormToken(e.target.value)}
+          placeholder="leer = globalen Default aus den Einstellungen verwenden"
+          autoComplete="off"
+          spellCheck={false}
+          className={`${INPUT_CLASS} font-mono`}
+        />
+        <p className="mt-1 text-xs text-[#999999]">
+          Pro-Produkt-Token aus convexa.app — überschreibt den globalen
+          Default. Endpunkt: <span className="font-mono">https://api.convexa.app/submissions/&lt;token&gt;</span>
         </p>
       </div>
 

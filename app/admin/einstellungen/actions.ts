@@ -15,10 +15,10 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 // ---------------------------------------------------------------------------
 
 const settingsSchema = z.object({
-  // Convexa fields can be empty (skeleton stage — token from support@convexa.app pending).
+  // Convexa-Endpoint + Form-Token (gemäß PDF "Einspielung von Leaddaten" 2026-04-30).
+  // Token darf leer sein — Client fällt dann auf process.env.CONVEXA_FORM_TOKEN zurück.
   convexa_base_url: z.string().url('Bitte eine gültige URL eingeben.').or(z.literal('')),
-  convexa_api_token: z.string().optional().default(''),
-  convexa_workspace_id: z.string().optional().default(''),
+  convexa_form_token: z.string().max(200).optional().default(''),
   sales_notification_email: z.string().email('Bitte eine gültige E-Mail-Adresse eingeben.'),
   // AI text-LLM provider + model (validated against the catalog at call time).
   ai_text_provider: z.enum(['anthropic', 'openai']),
@@ -26,9 +26,8 @@ const settingsSchema = z.object({
 })
 
 const BESCHREIBUNG: Record<string, string> = {
-  convexa_base_url: 'Convexa API Base-URL (Default: https://app.convexa.app)',
-  convexa_api_token: 'Convexa API-Token (Bearer) — wird sicher gespeichert',
-  convexa_workspace_id: 'Convexa Workspace-/Mandanten-ID',
+  convexa_base_url: 'Convexa API Base-URL (Default: https://api.convexa.app)',
+  convexa_form_token: 'Convexa Form-Token aus URL https://api.convexa.app/submissions/{token} — Default für alle Produkte ohne eigenen Token',
   sales_notification_email: 'E-Mail-Adresse für Vertrieb-Benachrichtigungen bei neuen Leads',
   ai_text_provider: 'KI-Provider für Text-Generierung: anthropic | openai',
   ai_text_model: 'Konkretes Modell beim gewählten Provider',
@@ -56,8 +55,7 @@ export async function saveSettings(
   // 2. Extract and validate fields from FormData.
   const raw = {
     convexa_base_url: (formData.get('convexa_base_url') as string) ?? '',
-    convexa_api_token: (formData.get('convexa_api_token') as string) ?? '',
-    convexa_workspace_id: (formData.get('convexa_workspace_id') as string) ?? '',
+    convexa_form_token: (formData.get('convexa_form_token') as string) ?? '',
     sales_notification_email: (formData.get('sales_notification_email') as string) ?? '',
     ai_text_provider: (formData.get('ai_text_provider') as string) ?? 'openai',
     ai_text_model: (formData.get('ai_text_model') as string) ?? 'gpt-4o-mini',
@@ -91,9 +89,8 @@ export async function saveSettings(
 
   try {
     await upsertKey('convexa_base_url', values.convexa_base_url)
-    // TODO: encrypt convexa_api_token before storing (Supabase Vault or pgcrypto)
-    await upsertKey('convexa_api_token', values.convexa_api_token)
-    await upsertKey('convexa_workspace_id', values.convexa_workspace_id)
+    // TODO: encrypt convexa_form_token before storing (Supabase Vault or pgcrypto)
+    await upsertKey('convexa_form_token', values.convexa_form_token)
     await upsertKey('sales_notification_email', values.sales_notification_email)
     await upsertKey('ai_text_provider', values.ai_text_provider)
     await upsertKey('ai_text_model', values.ai_text_model)

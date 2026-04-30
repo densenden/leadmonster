@@ -387,14 +387,23 @@ Formular-Submit
   → POST /api/leads
   → Zod-Validation + Honeypot + Rate-Limit
   → Insert leads (Supabase)
-  → Async parallel:
-       a) sendLeadConfirmation (Resend)
-       b) sendSalesNotification (Resend)
-       c) convexa.push(lead) → setzt convexa_lead_id, convexa_synced=true
+  → Synchron (awaited):
+       a) convexa.push(lead) → POST https://api.convexa.app/submissions/<token>
+       b) sendLeadConfirmation (Resend)
+       c) sendSalesNotification (Resend)
   → 201 Response
 ```
 
-`lib/convexa/client.ts` ist initial Skeleton (POST `/v1/leads` als Annahme), wird scharfgeschaltet sobald Anbieter API-Doku liefert. Solange API fehlt: Leads bleiben mit `convexa_synced=false` in der DB; ein Cron/Manual-Sync-Button im Admin holt sie nach. **E-Mail-Vorlage für die API-Anfrage liegt unter `docs/convexa-api-anfrage.md`.**
+**Convexa-API ist live** ([lib/convexa/client.ts](lib/convexa/client.ts), Stand 2026-04-30):
+- Endpunkt: `POST https://api.convexa.app/submissions/{Formular-Token}`
+- Auth: Token in der URL, **kein Bearer-Header**
+- Body: JSON mit PascalCase-Feldern (`Email`, `FirstName`, `LastName`, `Phone`, `Interest`, `Product`, `ProductSlug`, `ProductType`, `Zielgruppe`, `Intent`, `GewuenschterAnbieter`, `SourceUrl`, `UtmSource`, `UtmMedium`, `UtmCampaign`)
+- Antwort: `200 OK` ohne Body bei Erfolg / `404` bei ungültigem Token / `400` bei Format-Fehler
+- Token-Auflösung in absteigender Priorität: `produkte.convexa_form_token` → `einstellungen.convexa_form_token` → `process.env.CONVEXA_FORM_TOKEN`
+
+**Pro Produkt eigenen Token** in der Admin-Produkt-Form (Convexa-Spec: „Token ist spezifisch für jede Kampagne"). Globaler Default in [Einstellungen](app/admin/(protected)/einstellungen/page.tsx) oder via `.env.local`.
+
+Bei Convexa-Fehler bleibt der Lead mit `convexa_synced=false` + `convexa_error=<message>` in Supabase liegen — Re-Sync via [resyncPendingLeads()](lib/convexa/client.ts) (Admin-Button in Folge-Iteration).
 
 ---
 

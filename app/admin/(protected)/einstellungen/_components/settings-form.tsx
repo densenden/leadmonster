@@ -16,7 +16,10 @@ import { LLM_OPTIONS } from '@/lib/llm/options'
 
 export interface SettingsFormProps {
   convexaBaseUrl: string
+  convexaFormToken: string
+  /** @deprecated Bearer-Token wird nicht mehr genutzt — Convexa-Spec verwendet Form-Token in URL. */
   convexaApiToken: string
+  /** @deprecated Workspace wird nicht mehr genutzt — Form-Token reicht zur Identifikation. */
   convexaWorkspaceId: string
   salesNotificationEmail: string
   aiTextProvider: string
@@ -117,8 +120,7 @@ function Field({
 
 export function SettingsForm(props: SettingsFormProps) {
   const [convexaBaseUrl, setConvexaBaseUrl] = useState(props.convexaBaseUrl)
-  const [convexaApiToken, setConvexaApiToken] = useState(props.convexaApiToken)
-  const [convexaWorkspaceId, setConvexaWorkspaceId] = useState(props.convexaWorkspaceId)
+  const [convexaFormToken, setConvexaFormToken] = useState(props.convexaFormToken)
   const [salesNotificationEmail, setSalesNotificationEmail] = useState(props.salesNotificationEmail)
 
   // AI provider+model — combined into a single dropdown using "<provider>:<model>"
@@ -140,8 +142,7 @@ export function SettingsForm(props: SettingsFormProps) {
     startTransition(async () => {
       const fd = new FormData()
       fd.set('convexa_base_url', convexaBaseUrl)
-      fd.set('convexa_api_token', convexaApiToken)
-      fd.set('convexa_workspace_id', convexaWorkspaceId)
+      fd.set('convexa_form_token', convexaFormToken)
       fd.set('sales_notification_email', salesNotificationEmail)
       fd.set('ai_text_provider', aiProvider)
       fd.set('ai_text_model', aiModel)
@@ -178,21 +179,21 @@ export function SettingsForm(props: SettingsFormProps) {
           <Field
             id="convexa_base_url"
             label="Convexa API Base-URL"
-            helperText="Default: https://app.convexa.app"
-            placeholder="https://app.convexa.app"
+            helperText="Default: https://api.convexa.app"
+            placeholder="https://api.convexa.app"
             value={convexaBaseUrl}
             onChange={setConvexaBaseUrl}
             autoComplete="url"
           />
 
           <Field
-            id="convexa_api_token"
-            label="API-Token"
-            helperText="Bearer-Token von Convexa (wird sicher gespeichert)"
-            value={convexaApiToken}
-            onChange={setConvexaApiToken}
+            id="convexa_form_token"
+            label="Form-Token (Default für alle Produkte)"
+            helperText="Token aus convexa.app Formular-Konfiguration. Endpunkt: https://api.convexa.app/submissions/<token>. Pro Produkt überschreibbar."
+            value={convexaFormToken}
+            onChange={setConvexaFormToken}
             type={showToken ? 'text' : 'password'}
-            autoComplete="current-password"
+            autoComplete="off"
             rightElement={
               <button
                 type="button"
@@ -203,14 +204,6 @@ export function SettingsForm(props: SettingsFormProps) {
                 {showToken ? <EyeOffIcon /> : <EyeIcon />}
               </button>
             }
-          />
-
-          <Field
-            id="convexa_workspace_id"
-            label="Workspace-ID"
-            helperText="Convexa Workspace-/Mandanten-ID"
-            value={convexaWorkspaceId}
-            onChange={setConvexaWorkspaceId}
           />
         </div>
       </Card>

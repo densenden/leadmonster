@@ -268,6 +268,7 @@ export type Database = {
       produkte: {
         Row: {
           accent_color: string | null
+          convexa_form_token: string | null
           created_at: string
           domain: string | null
           hero_image_alt: string | null
@@ -283,6 +284,7 @@ export type Database = {
         }
         Insert: {
           accent_color?: string | null
+          convexa_form_token?: string | null
           created_at?: string
           domain?: string | null
           hero_image_alt?: string | null
@@ -298,6 +300,7 @@ export type Database = {
         }
         Update: {
           accent_color?: string | null
+          convexa_form_token?: string | null
           created_at?: string
           domain?: string | null
           hero_image_alt?: string | null

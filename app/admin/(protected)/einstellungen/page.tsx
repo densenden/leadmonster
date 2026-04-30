@@ -7,6 +7,9 @@ import { SettingsForm } from './_components/settings-form'
 
 const SETTINGS_KEYS = [
   'convexa_base_url',
+  'convexa_form_token',
+  // Legacy — werden nur noch gelesen, falls in der DB vorhanden, Schreibpfad
+  // ignoriert sie. Können nach einem späteren Cleanup entfernt werden.
   'convexa_api_token',
   'convexa_workspace_id',
   'sales_notification_email',
@@ -37,6 +40,7 @@ export default async function EinstellungenPage() {
 
       <SettingsForm
         convexaBaseUrl={get('convexa_base_url')}
+        convexaFormToken={get('convexa_form_token')}
         convexaApiToken={get('convexa_api_token')}
         convexaWorkspaceId={get('convexa_workspace_id')}
         salesNotificationEmail={get('sales_notification_email')}
