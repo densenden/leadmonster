@@ -6,7 +6,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server'
-import type { ActionResult } from '@/lib/supabase/types'
+import type { ActionResult, Json } from '@/lib/supabase/types'
 import { redaktionSchema } from '@/lib/validation/redaktion'
 import { buildSchemaPerson } from '@/lib/redaktion/schema-person'
 
@@ -62,12 +62,12 @@ export async function createAutor(formData: FormData): Promise<ActionResult> {
     return { success: false, fieldErrors: parsed.error.flatten().fieldErrors }
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://finanzteam26.de'
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://www.sterbegeld24plus.de'
   const supabase = createAdminClient()
 
   const insertRow = {
     ...parsed.data,
-    schema_person: buildSchemaPerson({ ...parsed.data, foto_url: null }, baseUrl),
+    schema_person: buildSchemaPerson({ ...parsed.data, foto_url: null }, baseUrl) as unknown as Json,
   }
 
   const { error } = await supabase.from('redaktion').insert(insertRow)
@@ -88,7 +88,7 @@ export async function updateAutor(id: string, formData: FormData): Promise<Actio
     return { success: false, fieldErrors: parsed.error.flatten().fieldErrors }
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://finanzteam26.de'
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://www.sterbegeld24plus.de'
   const supabase = createAdminClient()
 
   const { data: existing } = await supabase
@@ -104,7 +104,7 @@ export async function updateAutor(id: string, formData: FormData): Promise<Actio
 
   const updateRow = {
     ...parsed.data,
-    schema_person: buildSchemaPerson(merged, baseUrl),
+    schema_person: buildSchemaPerson(merged, baseUrl) as unknown as Json,
   }
 
   const { error } = await supabase

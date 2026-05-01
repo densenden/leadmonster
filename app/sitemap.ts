@@ -5,6 +5,7 @@ import type { MetadataRoute } from 'next'
 import { createAdminClient } from '@/lib/supabase/server'
 import { buildCanonicalUrl } from '@/lib/seo/metadata'
 import { loadAnbieterForProdukt, slugifyAnbieter } from '@/lib/anbieter/load'
+import { MARKTDATEN_THEMEN } from '@/lib/marktdaten/queries'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fail fast — sitemap cannot be built without a base URL.
@@ -163,6 +164,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.4,
+    })
+  }
+
+  // Marktdaten-Hub
+  entries.push({
+    url: buildCanonicalUrl('/marktdaten'),
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.55,
+  })
+  for (const t of MARKTDATEN_THEMEN) {
+    entries.push({
+      url: buildCanonicalUrl(`/marktdaten/${t.slug}`),
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.5,
     })
   }
 

@@ -76,7 +76,7 @@ export async function TrustBlock({ produktId, produktName }: Props) {
                   </div>
                 </div>
                 <blockquote className="text-base text-[#1a3252] leading-relaxed">
-                  „{p.body ?? p.titel}"
+                  „{p.body ?? p.titel}&ldquo;
                 </blockquote>
                 {p.score && (
                   <p className="mt-3 text-xl font-bold text-[#02a9e6]">{p.score}</p>
@@ -103,7 +103,7 @@ export async function TrustBlock({ produktId, produktName }: Props) {
                   {r.score && <span className="text-[#02a9e6] font-bold">{r.score}</span>}
                 </div>
                 <blockquote className="text-sm text-[#4a5568] leading-relaxed italic">
-                  „{r.body ?? r.titel}"
+                  „{r.body ?? r.titel}&ldquo;
                 </blockquote>
               </li>
             ))}

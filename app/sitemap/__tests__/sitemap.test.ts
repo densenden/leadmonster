@@ -15,21 +15,32 @@ type MockData = {
 }
 
 function buildSupabaseMock(data: MockData) {
-  // Chainable query builder mock.
+  // Chainable query builder mock — supports all chain methods used by sitemap.ts.
   const makeBuilder = (result: { data: unknown; error: null }) => {
-    const builder = {
-      select: () => builder,
-      eq: (_col: string, _val: string) => builder,
-      then: (resolve: (v: { data: unknown; error: null }) => unknown) => resolve(result),
-      [Symbol.toStringTag]: 'Promise',
-    }
-    // Make it await-able.
-    Object.defineProperty(builder, Symbol.toStringTag, { value: 'Promise' })
-    return {
-      ...builder,
-      // awaiting the builder resolves to the result
-      then: (onfulfilled: (v: typeof result) => unknown) =>
-        Promise.resolve(result).then(onfulfilled),
+    const chain: Record<string, unknown> = {}
+    const passthrough = () => chain
+    chain.select = passthrough
+    chain.eq = passthrough
+    chain.in = passthrough
+    chain.not = passthrough
+    chain.order = passthrough
+    chain.gte = passthrough
+    chain.lte = passthrough
+    chain.single = () => Promise.resolve(result)
+    chain.maybeSingle = () => Promise.resolve(result)
+    chain.then = (onfulfilled: (v: typeof result) => unknown) =>
+      Promise.resolve(result).then(onfulfilled)
+    return chain as {
+      select: () => typeof chain
+      eq: () => typeof chain
+      in: () => typeof chain
+      not: () => typeof chain
+      order: () => typeof chain
+      gte: () => typeof chain
+      lte: () => typeof chain
+      single: () => Promise<typeof result>
+      maybeSingle: () => Promise<typeof result>
+      then: (onfulfilled: (v: typeof result) => unknown) => Promise<unknown>
     }
   }
 
@@ -37,7 +48,8 @@ function buildSupabaseMock(data: MockData) {
     from: vi.fn((table: string) => {
       if (table === 'produkte') return makeBuilder({ data: data.produkte, error: null })
       if (table === 'generierter_content') return makeBuilder({ data: data.ratgeber, error: null })
-      return makeBuilder({ data: null, error: null })
+      // Default empty for new tables (anbieter_aggregat, wissensfundus, blog_posts, redaktion, …)
+      return makeBuilder({ data: [], error: null })
     }),
   }
 }
@@ -122,8 +134,10 @@ describe('sitemap', () => {
     // The mock only returns rows that match the filter — so passing empty array
     // simulates "no published products found".
     const result = await getSitemap({ produkte: [], ratgeber: [] })
-    const nonHomepageRoutes = result.filter((e) => new URL(e.url).pathname !== '/')
-    expect(nonHomepageRoutes).toHaveLength(0)
+    // Bei null Produkten enthält der Sitemap nur statische Hubs:
+    // /, /wissen, /marktdaten und die 4 marktdaten-Themen-Entries.
+    const produktRoutes = result.filter((e) => /\/(?:[a-z0-9-]+)\/(?:faq|vergleich|tarife|vergleichsrechner|ratgeber|anbieter)\b/.test(new URL(e.url).pathname))
+    expect(produktRoutes).toHaveLength(0)
   })
 
   it('includes ratgeber entries from generierter_content with priority 0.6', async () => {

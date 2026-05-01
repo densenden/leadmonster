@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { ReviewDuePanel } from '@/components/admin/ReviewDuePanel'
 
 // Always re-fetch — admin dashboard counts must reflect live DB state.
 export const dynamic = 'force-dynamic'
@@ -47,7 +48,7 @@ export default async function AdminDashboardPage() {
       <h1 className="text-2xl font-bold text-[#1a365d] mb-1">Dashboard</h1>
       <p className="text-gray-500 mb-8 text-sm">Willkommen, {user?.email}</p>
 
-      <div className="grid grid-cols-3 gap-5 mb-10">
+      <div className="grid grid-cols-3 gap-5 mb-6">
         {tiles.map((t) => (
           <div key={t.label} className="bg-white border border-gray-200 rounded-xl p-6">
             <p className="text-3xl font-bold text-[#1a365d]">{t.count}</p>
@@ -57,6 +58,10 @@ export default async function AdminDashboardPage() {
             </Link>
           </div>
         ))}
+      </div>
+
+      <div className="mb-10">
+        <ReviewDuePanel />
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl p-6">

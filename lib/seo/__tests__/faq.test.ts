@@ -172,7 +172,7 @@ describe('buildFAQMetadata', () => {
     expect(canonical).toBe('https://sterbegeld24plus.de/sterbegeld24plus/faq')
   })
 
-  it('falls back to leadmonster.de domain when neither domain nor env var is set', () => {
+  it('falls back to default base URL when neither domain nor env var is set', () => {
     const result = buildFAQMetadata({
       produkt: { name: 'Sterbegeld24Plus', slug: 'sterbegeld24plus' },
       faqRecord: { meta_title: null, meta_desc: null, status: 'publiziert' },

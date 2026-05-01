@@ -3,6 +3,7 @@
 // validates required fields, and injects the canonical URL before saving.
 import type { PageType } from '@/lib/anthropic/types'
 import type { StepsSection } from '@/lib/types/ratgeber'
+import { resolveBaseUrl, buildOrganization } from './organization'
 
 // Thrown when required Schema.org fields are missing — the generator
 // catches this and marks the affected page type as failed.
@@ -228,10 +229,7 @@ export interface VergleichSchemaInput {
  *  Stored in generierter_content.schema_markup and served verbatim from the page. */
 export function generateVergleichSchema(input: VergleichSchemaInput): object {
   const { anbieter, produktName, produktTyp, produktSlug, criteria } = input
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://leadmonster.de'
-
-  // Ensure baseUrl has https:// prefix for schema item URLs
-  const origin = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`
+  const origin = resolveBaseUrl()
 
   const breadcrumb = {
     '@type': 'BreadcrumbList',
@@ -288,19 +286,14 @@ export interface ArticleSchemaInput {
 }
 
 /** Builds a Schema.org Article object for a ratgeber guide page.
- *  Verwendet InsuranceAgency als Default-Author/Publisher; bei expliziter
+ *  Verwendet die zentrale Org-Definition als Default-Author/Publisher; bei expliziter
  *  `author`-Angabe wird zusätzlich auf die Person referenziert (E-E-A-T).
  *  Intended for use inside combineSchemas() — no @context included. */
 export function buildArticleSchema(input: ArticleSchemaInput): Record<string, unknown> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'leadmonster.de'
-  const origin = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`
+  const origin = resolveBaseUrl()
   const canonicalUrl = input.url ?? `${origin}/${input.produktSlug}/ratgeber/${input.thema}`
 
-  const publisher = {
-    '@type': 'InsuranceAgency',
-    name: 'finanzteam26 GmbH & Co. KG',
-    url: origin,
-  }
+  const publisher = buildOrganization(origin)
 
   const author = input.author
     ? {

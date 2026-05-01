@@ -93,7 +93,7 @@ Berufsunfähigkeit, Sterbegeld und Pflege spezialisiert ist.`,
 }
 
 async function main() {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://finanzteam26.de'
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://www.sterbegeld24plus.de'
 
   // Wenn Row schon existiert, foto_url NICHT überschreiben (das macht der
   // import-redaktion-foto.ts-Lauf danach exklusiv).

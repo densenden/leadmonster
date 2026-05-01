@@ -6,6 +6,8 @@
  * Server- + edge-safe (kein Node-Built-in dependency).
  */
 
+import { buildOrganization } from '@/lib/seo/organization'
+
 export interface RedaktionForSchema {
   slug: string
   vorname: string
@@ -27,19 +29,13 @@ export interface RedaktionForSchema {
   website_url?: string | null
 }
 
-const FT26_ORG = {
-  '@type': 'Organization' as const,
-  name: 'finanzteam26 GmbH & Co. KG',
-  url: 'https://finanzteam26.de',
-}
-
 function absoluteUrl(value: string | null | undefined, baseUrl: string): string | undefined {
   if (!value) return undefined
   if (value.startsWith('http://') || value.startsWith('https://')) return value
   return `${baseUrl}${value.startsWith('/') ? '' : '/'}${value}`
 }
 
-export function buildSchemaPerson(p: RedaktionForSchema, baseUrl: string) {
+export function buildSchemaPerson(p: RedaktionForSchema, baseUrl: string): Record<string, unknown> {
   const sameAs = [p.linkedin_url, p.xing_url, p.website_url].filter(Boolean) as string[]
 
   const credentials = [
@@ -73,7 +69,7 @@ export function buildSchemaPerson(p: RedaktionForSchema, baseUrl: string) {
     sameAs: sameAs.length > 0 ? sameAs : undefined,
     knowsAbout: p.expertise && p.expertise.length > 0 ? p.expertise : undefined,
     hasCredential: credentials.length > 0 ? credentials : undefined,
-    worksFor: FT26_ORG,
+    worksFor: buildOrganization(baseUrl) as unknown as Record<string, unknown>,
     email: p.email ?? undefined,
     telephone: p.telefon ?? undefined,
   }

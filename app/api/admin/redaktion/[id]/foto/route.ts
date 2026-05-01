@@ -3,6 +3,7 @@
 // Recompute schema_person + Update redaktion-Row.
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import type { Json } from '@/lib/supabase/types'
 import { toSquareWebp } from '@/lib/images/process'
 import { buildSchemaPerson } from '@/lib/redaktion/schema-person'
 
@@ -66,7 +67,7 @@ export async function POST(
     .update({
       foto_url: url,
       foto_alt: fotoAlt,
-      schema_person: buildSchemaPerson({ ...autor, foto_url: url }, BASE_URL),
+      schema_person: buildSchemaPerson({ ...autor, foto_url: url }, BASE_URL) as unknown as Json,
     })
     .eq('id', id)
   if (updateError) {

@@ -41,6 +41,15 @@ vi.mock('@/components/sections/LeadForm', () => ({
     React.createElement('div', { 'data-testid': 'lead-form', 'data-intent': intentTag }, 'LeadForm'),
 }))
 
+// AuthorByline ist ein async Server Component — im Test als Sync-Stub mocken,
+// damit React-DOM die Children synchron rendern kann.
+vi.mock('@/components/sections/AuthorByline', () => ({
+  AuthorByline: () => React.createElement('div', { 'data-testid': 'author-byline' }, 'Author'),
+}))
+vi.mock('@/lib/redaktion/load', () => ({
+  resolveAuthor: vi.fn().mockResolvedValue({ autor: null, reviewer: null, reviewedAt: null, source: 'none' }),
+}))
+
 // ---------------------------------------------------------------------------
 // Shared mock data factory
 // ---------------------------------------------------------------------------
@@ -69,19 +78,26 @@ function makePublishedRatgeberRow(
 }
 
 function mockProduktQuery() {
-  mockFrom.mockReturnValue({
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: {
-        id: 'prod-1',
-        name: 'Sterbegeld24Plus',
-        slug: 'sterbegeld24plus',
-        domain: null,
-      },
-      error: null,
-    }),
-  })
+  // Supports both .single() (used by direct produkt fetch) and .maybeSingle()
+  // (used by lib/redaktion/load.ts:resolveAuthor for standard_autor_id lookup)
+  // and .in() (used by load.ts to fetch redaktion rows). Default `data` is the
+  // produkt row; for `redaktion`-table calls the `in()` chain returns an empty
+  // array so resolveAuthor falls through to source: 'none'.
+  const produktRow = {
+    id: 'prod-1',
+    name: 'Sterbegeld24Plus',
+    slug: 'sterbegeld24plus',
+    domain: null,
+    standard_autor_id: null,
+  }
+  const builder: Record<string, unknown> = {}
+  const pass = () => builder
+  builder.select = pass
+  builder.eq = pass
+  builder.in = () => Promise.resolve({ data: [], error: null })
+  builder.single = () => Promise.resolve({ data: produktRow, error: null })
+  builder.maybeSingle = () => Promise.resolve({ data: produktRow, error: null })
+  mockFrom.mockReturnValue(builder)
 }
 
 // ---------------------------------------------------------------------------

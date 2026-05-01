@@ -132,7 +132,7 @@ describe('buildArticleSchema', () => {
     expect(result.headline).toBe('Was ist eine Sterbegeldversicherung?')
     expect(result.datePublished).toBe('2026-04-01T00:00:00.000Z')
     expect(result.author).toBeDefined()
-    expect((result.author as Record<string, unknown>)['@type']).toBe('InsuranceAgency')
+    expect((result.author as Record<string, unknown>)['@type']).toBe('Organization')
   })
 })
 

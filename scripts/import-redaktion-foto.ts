@@ -16,7 +16,7 @@ import { buildSchemaPerson } from '../lib/redaktion/schema-person'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPABASE_SECRET = process.env.SUPABASE_SECRET_KEY
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://finanzteam26.de'
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://www.sterbegeld24plus.de'
 
 if (!SUPABASE_URL || !SUPABASE_SECRET) {
   console.error('NEXT_PUBLIC_SUPABASE_URL und SUPABASE_SECRET_KEY müssen in .env.local gesetzt sein.')

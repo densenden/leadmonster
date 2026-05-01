@@ -5,6 +5,7 @@
 // `'%s | LeadMonster'` template — product subsites must NOT show LeadMonster
 // branding. Same applies to openGraph.siteName (set to product name).
 import type { Metadata } from 'next'
+import { resolveBaseUrl } from './organization'
 
 export interface ProduktMetadataInput {
   slug: string
@@ -12,7 +13,7 @@ export interface ProduktMetadataInput {
   meta_desc: string
   /** Product name — used for openGraph.siteName so it does NOT show LeadMonster. */
   produktName?: string
-  /** Optional custom domain — falls back to NEXT_PUBLIC_BASE_URL env var, then 'leadmonster.de'. */
+  /** Optional custom domain — falls back to NEXT_PUBLIC_BASE_URL env var, then sterbegeld24plus.de. */
   domain?: string
 }
 
@@ -25,7 +26,7 @@ export function buildProduktMetadata({
   produktName,
   domain,
 }: ProduktMetadataInput): Metadata {
-  const baseUrl = `https://${domain ?? process.env.NEXT_PUBLIC_BASE_URL ?? 'leadmonster.de'}`
+  const baseUrl = resolveBaseUrl(domain)
   const canonical = `${baseUrl}/${slug}`
 
   return {
@@ -58,8 +59,8 @@ interface FAQMetadataParams {
 // Applies fallback title/description when DB fields are absent.
 // Sets noindex for any status other than 'publiziert'.
 export function buildFAQMetadata({ produkt, faqRecord, itemCount }: FAQMetadataParams): Metadata {
-  const baseUrl = produkt.domain ?? process.env.NEXT_PUBLIC_BASE_URL ?? 'leadmonster.de'
-  const canonical = `https://${baseUrl}/${produkt.slug}/faq`
+  const baseUrl = resolveBaseUrl(produkt.domain)
+  const canonical = `${baseUrl}/${produkt.slug}/faq`
 
   const rawTitle =
     faqRecord.meta_title ?? `Häufige Fragen zu ${produkt.name} | ${itemCount} Antworten`
