@@ -23,13 +23,14 @@ interface PageProps {
   params: { id: string }
 }
 
-// Canonical display order for page types.
+// Canonical display order for page types in the top accordion.
+// Ratgeber is intentionally NOT here — it has its own dedicated section
+// below the accordion (each article is independently editable).
 const PAGE_TYPE_ORDER: GenerierterContent['page_type'][] = [
   'hauptseite',
   'faq',
   'vergleich',
   'tarif',
-  'ratgeber',
   'impressum',
   'kontakt',
   'datenschutz',
@@ -69,15 +70,35 @@ const RATGEBER_STATUS_CLASSES: Record<GenerierterContent['status'], string> = {
 export default async function ContentManagementPage({ params }: PageProps) {
   const supabase = createAdminClient()
 
-  // Verify the product exists before fetching its content.
+  // Verify the product exists before fetching its content. Include the
+  // fields the ContentPreview-/SectionImagePanel-chain needs for the
+  // auto-prompt and the style-reference suggestion.
   const { data: produktRow } = await supabase
     .from('produkte')
-    .select('id, name')
+    .select(
+      'id, name, typ, style_description, produkt_config(zielgruppe, fokus, argumente)',
+    )
     .eq('id', params.id)
     .maybeSingle()
 
   if (!produktRow) {
     notFound()
+  }
+
+  // produkt_config kommt aus dem Join als Array — flatten auf das erste Element.
+  const cfg = (() => {
+    const c = (produktRow as unknown as { produkt_config?: unknown }).produkt_config
+    if (Array.isArray(c)) return c[0] ?? null
+    return c ?? null
+  })() as { zielgruppe?: string[] | null; fokus?: string | null; argumente?: Record<string, string> | null } | null
+
+  const produktContext = {
+    typ: (produktRow as { typ?: string }).typ ?? 'sterbegeld',
+    name: (produktRow as { name?: string }).name ?? '',
+    zielgruppe: cfg?.zielgruppe ?? null,
+    fokus: cfg?.fokus ?? null,
+    argumente: cfg?.argumente ?? null,
+    styleDescription: (produktRow as { style_description?: string | null }).style_description ?? null,
   }
 
   // Fetch all generierter_content rows for this product, most recent first.
@@ -184,7 +205,16 @@ export default async function ContentManagementPage({ params }: PageProps) {
                       </div>
 
                       {/* Interactive editor panel */}
-                      <ContentPreview row={row} produktId={params.id} />
+                      <ContentPreview
+                        row={row}
+                        produktId={params.id}
+                        produktTyp={produktContext.typ}
+                        produktName={produktContext.name}
+                        zielgruppe={produktContext.zielgruppe}
+                        fokus={produktContext.fokus}
+                        argumente={produktContext.argumente}
+                        styleDescription={produktContext.styleDescription}
+                      />
                     </div>
                   ))}
                 </div>
@@ -208,49 +238,66 @@ export default async function ContentManagementPage({ params }: PageProps) {
           </span>
         </div>
 
-        {/* Ratgeber table — slug, title, status badge, generated_at */}
+        {/* Ratgeber-Liste — pro Artikel ein <details>-Element. Im Summary
+            stehen Slug/Titel/Status/Datum (read-only Übersicht), beim
+            Aufklappen erscheint die volle ContentPreview-Komponente mit
+            Editor + Status-Dropdown (entwurf → review → publiziert) +
+            Bild-Generator pro Section. */}
         {ratgeberRows.length > 0 ? (
-          <div className="overflow-x-auto border border-gray-200 bg-white">
-            <table className="w-full text-sm">
-              <thead className="bg-[#1a365d]/5">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#333333] uppercase tracking-wide">
-                    Slug
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#333333] uppercase tracking-wide">
-                    Titel
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#333333] uppercase tracking-wide">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#333333] uppercase tracking-wide">
-                    Generiert am
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {ratgeberRows.map((row) => (
-                  <tr key={row.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-mono text-xs text-[#666666]">
-                      {row.slug ?? '—'}
-                    </td>
-                    <td className="px-4 py-3 text-[#333333]">
-                      {row.title ?? '—'}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${RATGEBER_STATUS_CLASSES[row.status]}`}
-                      >
-                        {row.status}
+          <div className="space-y-2">
+            {ratgeberRows.map((row) => (
+              <details
+                key={row.id}
+                className="border border-gray-200 bg-white"
+              >
+                <summary className="flex flex-wrap cursor-pointer items-center gap-3 bg-[#1a365d]/5 px-4 py-3 hover:bg-[#1a365d]/10">
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${RATGEBER_STATUS_CLASSES[row.status]}`}
+                  >
+                    {row.status}
+                  </span>
+                  <span className="font-medium text-[#333333] text-sm">
+                    {row.title ?? row.slug ?? '—'}
+                  </span>
+                  <span className="font-mono text-xs text-[#666666]">
+                    {row.slug ?? '—'}
+                  </span>
+                  <span className="ml-auto text-xs text-gray-400">
+                    {row.generated_at
+                      ? `Generiert: ${formatGermanDateTime(row.generated_at)}`
+                      : '—'}
+                  </span>
+                  <span className="text-xs text-[#1a3252] hover:underline">
+                    Bearbeiten ▼
+                  </span>
+                </summary>
+                <div className="border-t border-gray-100 p-4 space-y-3">
+                  <div className="flex flex-wrap gap-4 text-xs text-gray-400">
+                    <span>
+                      Generiert am:{' '}
+                      <span className="text-[#666666]">
+                        {row.generated_at ? formatGermanDateTime(row.generated_at) : '—'}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-gray-400">
-                      {row.generated_at ? formatGermanDateTime(row.generated_at) : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </span>
+                    <span>
+                      {row.published_at
+                        ? `Veröffentlicht am: ${formatGermanDateTime(row.published_at)}`
+                        : 'Noch nicht veröffentlicht'}
+                    </span>
+                  </div>
+                  <ContentPreview
+                    row={row}
+                    produktId={params.id}
+                    produktTyp={produktContext.typ}
+                    produktName={produktContext.name}
+                    zielgruppe={produktContext.zielgruppe}
+                    fokus={produktContext.fokus}
+                    argumente={produktContext.argumente}
+                    styleDescription={produktContext.styleDescription}
+                  />
+                </div>
+              </details>
+            ))}
           </div>
         ) : (
           <div className="border border-dashed border-gray-300 py-10 text-center">

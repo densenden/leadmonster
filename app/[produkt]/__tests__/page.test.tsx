@@ -192,11 +192,15 @@ describe('ProduktPage — section renderer', () => {
   })
 
   it('calls notFound() when no row is returned from Supabase', async () => {
+    // Page macht zwei parallele Queries (generierter_content + produkte) — der
+    // zweite Pfad nutzt .single() für produkte, der erste .maybeSingle() für
+    // generierter_content. Beide müssen im Mock-Chain abgedeckt sein.
     const chain = {
       from: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     }
     mockAdminFrom.mockReturnValue(chain)
 

@@ -17,7 +17,9 @@ import {
 } from '@/lib/seo/schema'
 import { calculateReadingTime } from '@/lib/utils/reading-time'
 import { RatgeberRenderer } from './_components/ratgeber-renderer'
-import type { StepsSection } from '@/lib/types/ratgeber'
+import { AuthorByline } from '@/components/sections/AuthorByline'
+import { resolveAuthor } from '@/lib/redaktion/load'
+import type { StepsSection, IntroSection, BodySection } from '@/lib/types/ratgeber'
 
 // Re-render at most once per hour; allow slugs not pre-built at build time.
 export const revalidate = 3600
@@ -99,14 +101,28 @@ export default async function RatgeberArticlePage({ params }: PageProps) {
     { name: articleTitle, url: `${origin}/${params.produkt}/ratgeber/${params.thema}` },
   ])
 
+  // Author + Reviewer auflösen — für Schema + Byline
+  const resolved = await resolveAuthor({
+    autorId: row.autor_id,
+    reviewerId: row.reviewed_by,
+    reviewedAt: row.reviewed_at,
+    produktId,
+  })
+
   // Article schema — always present
   const articleSchema = buildArticleSchema({
     headline: articleTitle,
     description: row.meta_desc ?? '',
     datePublished: row.published_at ?? row.generated_at,
-    dateModified: row.generated_at,
+    dateModified: row.reviewed_at ?? row.generated_at,
     produktSlug: params.produkt,
     thema: params.thema,
+    author: resolved.autor
+      ? { slug: resolved.autor.slug, name: `${resolved.autor.vorname} ${resolved.autor.nachname}` }
+      : undefined,
+    reviewedBy: resolved.reviewer
+      ? { slug: resolved.reviewer.slug, name: `${resolved.reviewer.vorname} ${resolved.reviewer.nachname}` }
+      : undefined,
   })
 
   // HowTo schema — only when at least one steps section exists
@@ -162,28 +178,123 @@ export default async function RatgeberArticlePage({ params }: PageProps) {
           </ol>
         </nav>
 
-        {/* Article header */}
-        <header className="mb-8">
-          <h1 className="font-heading font-bold text-[#1a365d] text-3xl leading-tight mb-2">
-            {articleTitle}
-          </h1>
-          {/* Reading time estimate — displayed directly below title */}
-          <p className="text-sm text-[#666666] mt-1">
-            Lesezeit: ca. {readingTime} Minuten
-          </p>
-        </header>
+        {/* Hero — Cover-Bild aus erster intro-Section, falls vorhanden, plus
+            Article-Header. Wenn kein Cover gesetzt ist, fällt nur der
+            Header-Block zurück. */}
+        {(() => {
+          const intro = sections.find((s): s is IntroSection => s.type === 'intro')
+          const cover = intro?.image_url
+          const coverAlt = intro?.image_alt ?? articleTitle
+          if (cover) {
+            return (
+              <section className="mb-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+                <div className="md:col-span-7 order-2 md:order-1">
+                  <p className="text-xs uppercase tracking-widest text-[#02a9e6] font-semibold mb-3">
+                    {produktName} · Ratgeber
+                  </p>
+                  <h1 className="font-heading font-bold text-[#1a365d] text-3xl md:text-4xl leading-tight mb-3">
+                    {articleTitle}
+                  </h1>
+                  <p className="text-sm text-[#666666]">
+                    Lesezeit: ca. {readingTime} Minuten
+                  </p>
+                </div>
+                <div className="md:col-span-5 order-1 md:order-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={cover}
+                    alt={coverAlt}
+                    className="w-full aspect-[4/3] object-cover rounded-xl shadow-md"
+                  />
+                </div>
+              </section>
+            )
+          }
+          return (
+            <header className="mb-8">
+              <p className="text-xs uppercase tracking-widest text-[#02a9e6] font-semibold mb-2">
+                {produktName} · Ratgeber
+              </p>
+              <h1 className="font-heading font-bold text-[#1a365d] text-3xl leading-tight mb-2">
+                {articleTitle}
+              </h1>
+              <p className="text-sm text-[#666666] mt-1">
+                Lesezeit: ca. {readingTime} Minuten
+              </p>
+            </header>
+          )
+        })()}
 
-        {/* Section content */}
-        <RatgeberRenderer
-          sections={sections}
-          articleSlug={params.thema}
-          produktSlug={params.produkt}
-          produktId={produktId}
-          zielgruppeTag="allgemein"
-        />
+        {/* AuthorByline direkt unter H1 */}
+        <div className="mb-6 max-w-3xl">
+          <AuthorByline
+            autorId={row.autor_id}
+            reviewerId={row.reviewed_by}
+            reviewedAt={row.reviewed_at}
+            produktId={produktId}
+            standDate={row.reviewed_at ?? row.generated_at}
+            variant="card"
+          />
+        </div>
+
+        {/* Two-column layout — content on the left, sticky ToC on the right */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <article className="lg:col-span-8 prose-lg max-w-none">
+            <RatgeberRenderer
+              sections={sections}
+              articleSlug={params.thema}
+              produktSlug={params.produkt}
+              produktId={produktId}
+              zielgruppeTag="allgemein"
+            />
+          </article>
+
+          {/* ToC — collected from body section headings, hidden on mobile */}
+          <aside className="lg:col-span-4 hidden lg:block">
+            <div className="sticky top-6 space-y-6">
+              {(() => {
+                const headings = sections
+                  .filter((s): s is BodySection => s.type === 'body')
+                  .map(s => s.heading)
+                  .filter(Boolean)
+                if (headings.length < 2) return null
+                return (
+                  <nav aria-label="Inhaltsverzeichnis" className="border-l-2 border-[#abd5f4] pl-4">
+                    <p className="text-xs uppercase tracking-widest text-[#02a9e6] font-semibold mb-2">
+                      Inhalt
+                    </p>
+                    <ol className="space-y-1.5 text-sm text-[#1a365d]">
+                      {headings.map((h, i) => (
+                        <li key={i} className="leading-snug">
+                          {h}
+                        </li>
+                      ))}
+                    </ol>
+                  </nav>
+                )
+              })()}
+
+              {/* Quick CTA card */}
+              <div className="bg-gradient-to-br from-[#1a365d] to-[#02a9e6] text-white p-5 rounded-xl shadow-md">
+                <p className="text-sm font-semibold mb-1">
+                  Persönliche Beratung gefällig?
+                </p>
+                <p className="text-xs text-white/85 mb-3 leading-relaxed">
+                  Unser Team beantwortet Ihre Fragen zu {produktName} unverbindlich.
+                </p>
+                <a
+                  href="#formular"
+                  className="inline-block bg-white text-[#1a365d] text-xs font-bold px-3 py-2 rounded hover:bg-[#abd5f4] transition-colors"
+                >
+                  Jetzt Beratung anfordern →
+                </a>
+              </div>
+            </div>
+          </aside>
+        </div>
 
         {/* Back link to ratgeber index */}
-        <div className="mt-10 pt-6 border-t border-gray-200">
+        <div className="mt-12 pt-6 border-t border-gray-200">
           <a
             href={`/${params.produkt}/ratgeber`}
             className="text-sm text-[#1a365d] hover:underline"

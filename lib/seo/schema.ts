@@ -279,21 +279,45 @@ export interface ArticleSchemaInput {
   dateModified?: string
   produktSlug: string
   thema: string
+  /** Optional canonical URL override (z. B. für blog/wissen). */
+  url?: string
+  /** Optional Person-Author. Wird als @id-Referenz gerendert; das volle Person-Objekt liegt im AuthorByline. */
+  author?: { slug: string; name: string }
+  /** Optional Reviewer (häufig identisch mit author). */
+  reviewedBy?: { slug: string; name: string }
 }
 
 /** Builds a Schema.org Article object for a ratgeber guide page.
- *  Uses InsuranceAgency as the author entity.
+ *  Verwendet InsuranceAgency als Default-Author/Publisher; bei expliziter
+ *  `author`-Angabe wird zusätzlich auf die Person referenziert (E-E-A-T).
  *  Intended for use inside combineSchemas() — no @context included. */
 export function buildArticleSchema(input: ArticleSchemaInput): Record<string, unknown> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'leadmonster.de'
   const origin = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`
-  const canonicalUrl = `${origin}/${input.produktSlug}/ratgeber/${input.thema}`
+  const canonicalUrl = input.url ?? `${origin}/${input.produktSlug}/ratgeber/${input.thema}`
 
-  const author = {
+  const publisher = {
     '@type': 'InsuranceAgency',
-    name: 'LeadMonster',
+    name: 'finanzteam26 GmbH & Co. KG',
     url: origin,
   }
+
+  const author = input.author
+    ? {
+        '@type': 'Person',
+        '@id': `${origin}/redaktion/${input.author.slug}#person`,
+        name: input.author.name,
+        url: `${origin}/redaktion/${input.author.slug}`,
+      }
+    : publisher
+
+  const reviewedBy = input.reviewedBy
+    ? {
+        '@type': 'Person',
+        '@id': `${origin}/redaktion/${input.reviewedBy.slug}#person`,
+        name: input.reviewedBy.name,
+      }
+    : undefined
 
   return {
     '@type': 'Article',
@@ -303,7 +327,8 @@ export function buildArticleSchema(input: ArticleSchemaInput): Record<string, un
     datePublished: input.datePublished,
     dateModified: input.dateModified ?? input.datePublished,
     author,
-    publisher: author,
+    publisher,
+    reviewedBy,
     mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalUrl },
   }
 }

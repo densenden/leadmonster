@@ -55,6 +55,7 @@ export async function createArtikel(formData: FormData): Promise<ActionResult> {
 
 // Update an existing wissensfundus article by id.
 // Validates the session, id, and all fields before updating.
+// Schreibt zusätzlich `wortzahl` automatisch — Sitemap filtert auf >=800 Wörter.
 export async function updateArtikel(id: string, formData: FormData): Promise<ActionResult> {
   if (!id) return { success: false, error: 'Ungültige ID' }
 
@@ -74,10 +75,16 @@ export async function updateArtikel(id: string, formData: FormData): Promise<Act
     return { success: false, fieldErrors: parsed.error.flatten().fieldErrors }
   }
 
+  const wortzahl = parsed.data.inhalt
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/[#>*_~`\-|]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean).length
+
   const supabase = createAdminClient()
   const { error } = await supabase
     .from('wissensfundus')
-    .update(parsed.data)
+    .update({ ...parsed.data, wortzahl })
     .eq('id', id)
 
   if (error) return { success: false, error: 'Datenbankfehler beim Aktualisieren' }

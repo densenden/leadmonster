@@ -4,9 +4,18 @@
 // Generates an image for a section, then writes image_url + image_alt
 // back into that section via the supplied onSet callback.
 //
+// Auto-Prompt-Update 2026-04-30: das Prompt-Feld wird nicht mehr leer
+// initialisiert — es kommt mit einem Section-Type-spezifischen Vorschlag
+// aus lib/openai/section-prompt.ts vor (Brand-Look, Composition, Story-Beat).
+//
 // Note: this only updates the section in local editor state (parent then
 // gets dirty-state), so the user still has to "Speichern" to persist.
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import {
+  buildSectionPrompt,
+  defaultSlotForSection,
+  type SectionImageSlot,
+} from '@/lib/openai/section-prompt'
 
 interface SectionImagePanelProps {
   produktId: string
@@ -19,19 +28,24 @@ interface SectionImagePanelProps {
   currentAlt?: string
   /** Called with the freshly generated url + alt to be merged into the section. */
   onSet: (url: string, alt: string) => void
+  /** Produkt-Kontext für den Auto-Prompt — wenn nicht gesetzt, wird der
+   *  Default-Look von "sterbegeld" verwendet. */
+  produktTyp?: string
+  produktName?: string
+  zielgruppe?: string[] | null
+  fokus?: string | null
+  argumente?: Record<string, string> | null
+  /** Pro-Produkt-Stil-Direktive aus dem Style-Reference-Upload. */
+  styleDescription?: string | null
+  /** Optionaler Story-Hook für die Sektion (z. B. die Headline). */
+  contextHint?: string
 }
 
-const SLOT_OPTIONS = [
-  { value: 'hero', label: 'Hero (1792×1024)' },
+const SLOT_OPTIONS: Array<{ value: SectionImageSlot; label: string }> = [
+  { value: 'hero', label: 'Hero (1536×1024)' },
   { value: 'feature', label: 'Feature (1024×1024)' },
   { value: 'inline', label: 'Inline (1024×1024)' },
 ]
-
-function defaultSlot(sectionType: string): 'hero' | 'feature' | 'inline' {
-  if (sectionType === 'hero') return 'hero'
-  if (sectionType === 'feature_grid' || sectionType === 'features') return 'feature'
-  return 'inline'
-}
 
 export function SectionImagePanel({
   produktId,
@@ -41,13 +55,48 @@ export function SectionImagePanel({
   currentUrl,
   currentAlt,
   onSet,
+  produktTyp = 'sterbegeld',
+  zielgruppe,
+  fokus,
+  argumente,
+  styleDescription,
+  contextHint,
 }: SectionImagePanelProps) {
   const [open, setOpen] = useState(false)
-  const [slot, setSlot] = useState<'hero' | 'feature' | 'inline'>(defaultSlot(sectionType))
-  const [prompt, setPrompt] = useState('')
+  const [slot, setSlot] = useState<SectionImageSlot>(defaultSlotForSection(sectionType))
+
+  // Auto-Prompt — neu berechnet, wenn sich Slot oder Section-Kontext ändert.
+  const autoPrompt = useMemo(
+    () =>
+      buildSectionPrompt({
+        produktTyp,
+        sectionType,
+        slot,
+        contextHint,
+        styleDescription,
+        zielgruppe,
+        fokus,
+        argumente,
+      }),
+    [produktTyp, sectionType, slot, contextHint, styleDescription, zielgruppe, fokus, argumente],
+  )
+
+  const [prompt, setPrompt] = useState(autoPrompt)
+  const [promptDirty, setPromptDirty] = useState(false)
   const [altText, setAltText] = useState(currentAlt ?? '')
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState('')
+
+  // Wenn sich der Auto-Prompt ändert (z. B. weil User Slot wechselt) und der
+  // User noch nichts manuell editiert hat, übernimm den neuen Vorschlag.
+  useEffect(() => {
+    if (!promptDirty) setPrompt(autoPrompt)
+  }, [autoPrompt, promptDirty])
+
+  function handleResetPrompt() {
+    setPrompt(autoPrompt)
+    setPromptDirty(false)
+  }
 
   async function handleGenerate() {
     setError('')
@@ -133,7 +182,7 @@ export function SectionImagePanel({
             <label className="block text-xs text-[#666666] mb-0.5">Slot / Größe</label>
             <select
               value={slot}
-              onChange={e => setSlot(e.target.value as 'hero' | 'feature' | 'inline')}
+              onChange={e => setSlot(e.target.value as SectionImageSlot)}
               className="w-full border border-gray-300 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#abd5f4]"
             >
               {SLOT_OPTIONS.map(o => (
@@ -143,14 +192,35 @@ export function SectionImagePanel({
           </div>
 
           <div>
-            <label className="block text-xs text-[#666666] mb-0.5">Prompt (Englisch empfohlen)</label>
+            <div className="mb-0.5 flex items-center justify-between">
+              <label className="block text-xs text-[#666666]">
+                Prompt (Englisch empfohlen)
+              </label>
+              {promptDirty && (
+                <button
+                  type="button"
+                  onClick={handleResetPrompt}
+                  className="text-[11px] text-[#1a3252] hover:underline"
+                >
+                  Auf Auto-Vorschlag zurücksetzen
+                </button>
+              )}
+            </div>
             <textarea
               value={prompt}
-              onChange={e => setPrompt(e.target.value)}
-              rows={3}
-              placeholder="z. B. Senior couple smiling on a park bench…"
-              className="w-full border border-gray-300 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#abd5f4]"
+              onChange={e => {
+                setPrompt(e.target.value)
+                setPromptDirty(e.target.value !== autoPrompt)
+              }}
+              rows={6}
+              placeholder="Editorial storytelling photograph for ..."
+              className="w-full border border-gray-300 px-2 py-1 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#abd5f4]"
             />
+            <p className="text-[11px] text-gray-400 mt-1">
+              {promptDirty
+                ? 'Eigener Prompt — Stil-Guard wird automatisch ergänzt.'
+                : `Auto-Vorschlag aus Produkttyp "${produktTyp}", Section "${sectionType}" und Slot "${slot}". Frei editierbar.`}
+            </p>
           </div>
 
           <div>

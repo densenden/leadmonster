@@ -6,6 +6,8 @@ import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/server'
 import { ProduktForm } from '@/components/admin/ProduktForm'
 import { HeroImagePanel } from './_components/HeroImagePanel'
+import { StyleReferencePanel } from './_components/StyleReferencePanel'
+import { StandardAutorPanel } from './_components/StandardAutorPanel'
 import type { ProduktWithConfig, Produkt, ProduktConfig } from '@/lib/supabase/types'
 
 // Always re-fetch — admin product edit page must show fresh DB state.
@@ -35,6 +37,14 @@ export default async function ProduktBearbeitenPage({ params }: PageProps) {
     .select('*')
     .eq('produkt_id', params.id)
     .maybeSingle()
+
+  // Autorenliste für Standard-Autor-Dropdown
+  const { data: autorenRows } = await supabase
+    .from('redaktion')
+    .select('id, slug, vorname, nachname, rolle, foto_url')
+    .eq('public', true)
+    .order('nachname', { ascending: true })
+  const autoren = autorenRows ?? []
 
   // Compose into the ProduktWithConfig shape.
   const initialData: ProduktWithConfig = {
@@ -74,7 +84,19 @@ export default async function ProduktBearbeitenPage({ params }: PageProps) {
           doesn't leak across products (avoids "old names reappearing" bug) */}
       <ProduktForm key={initialData.id} mode="edit" initialData={initialData} />
 
-      <div className="mt-10">
+      <div className="mt-10 space-y-8">
+        <StandardAutorPanel
+          produktId={initialData.id}
+          autoren={autoren}
+          initialAutorId={initialData.standard_autor_id ?? null}
+        />
+
+        <StyleReferencePanel
+          produktId={initialData.id}
+          initialUrl={(initialData as { style_reference_url?: string | null }).style_reference_url ?? null}
+          initialDescription={(initialData as { style_description?: string | null }).style_description ?? null}
+        />
+
         <HeroImagePanel
           produktId={initialData.id}
           produktName={initialData.name}

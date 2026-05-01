@@ -58,12 +58,17 @@ const SLOT_SIZES: Record<ImageSlot, { size: string; w: number; h: number }> = {
   inline:     { size: '1024x1024', w: 1024, h: 1024 },
 }
 
-// Stil-Guard wird an jeden Prompt angehängt — sorgt für konsistenten,
-// professionellen Look ohne Texteinblendungen oder problematische Inhalte.
+// Stil-Guard wird an jeden Prompt angehängt — finale Direktiven, die
+// IMMER gelten, egal was der Caller-Prompt sagt. Storytelling-fokussiert,
+// gesichtsfrei, einheitlich pro Produkt (Brand-Look kommt aus dem Section-
+// /Hero-Prompt, hier ist nur die invariante Schicht).
 const STYLE_GUARD =
-  ' Photorealistic, professional German insurance brand photography, soft natural lighting, ' +
-  'calm composition, no text overlays, no watermarks, no faces of identifiable real people, ' +
-  'aspect appropriate to layout, premium feel, neutral warm color palette.'
+  ' Editorial storytelling photography, German lifestyle context, ' +
+  'cinematic depth-of-field, soft natural lighting, calm composition, ' +
+  'premium magazine-feature feel. ' +
+  'Strictly no front-facing portraits, no recognisable real-person faces, ' +
+  'no text overlays, no watermarks, no UI mockups, no brand logos, no flag motifs. ' +
+  'Humans appear only through hands, silhouettes, back-views or symbolic absence.'
 
 // ---------------------------------------------------------------------------
 // OpenAI HTTP-Aufruf (kein SDK — minimaler Footprint)

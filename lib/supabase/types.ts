@@ -87,15 +87,20 @@ export type Database = {
       }
       generierter_content: {
         Row: {
+          autor_id: string | null
           content: Json | null
           created_at: string
+          freshness_score: number | null
           generated_at: string
           id: string
           meta_desc: string | null
           meta_title: string | null
+          next_review_at: string | null
           page_type: string
           produkt_id: string
           published_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           schema_markup: Json | null
           slug: string | null
           status: string
@@ -103,15 +108,20 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          autor_id?: string | null
           content?: Json | null
           created_at?: string
+          freshness_score?: number | null
           generated_at?: string
           id?: string
           meta_desc?: string | null
           meta_title?: string | null
+          next_review_at?: string | null
           page_type: string
           produkt_id: string
           published_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           schema_markup?: Json | null
           slug?: string | null
           status?: string
@@ -119,15 +129,20 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          autor_id?: string | null
           content?: Json | null
           created_at?: string
+          freshness_score?: number | null
           generated_at?: string
           id?: string
           meta_desc?: string | null
           meta_title?: string | null
+          next_review_at?: string | null
           page_type?: string
           produkt_id?: string
           published_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           schema_markup?: Json | null
           slug?: string | null
           status?: string
@@ -278,7 +293,10 @@ export type Database = {
           og_image_url: string | null
           short_pitch: string | null
           slug: string
+          standard_autor_id: string | null
           status: string
+          style_description: string | null
+          style_reference_url: string | null
           typ: string
           updated_at: string
         }
@@ -294,7 +312,10 @@ export type Database = {
           og_image_url?: string | null
           short_pitch?: string | null
           slug: string
+          standard_autor_id?: string | null
           status?: string
+          style_description?: string | null
+          style_reference_url?: string | null
           typ: string
           updated_at?: string
         }
@@ -310,50 +331,243 @@ export type Database = {
           og_image_url?: string | null
           short_pitch?: string | null
           slug?: string
+          standard_autor_id?: string | null
           status?: string
+          style_description?: string | null
+          style_reference_url?: string | null
           typ?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "produkte_standard_autor_id_fkey"
+            columns: ["standard_autor_id"]
+            isOneToOne: false
+            referencedRelation: "redaktion"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wissensfundus: {
         Row: {
+          autor_id: string | null
           created_at: string
+          freshness_score: number | null
           id: string
           inhalt: string
           kategorie: string
           link_phrases: string[] | null
+          next_review_at: string | null
           published: boolean
+          reviewed_at: string | null
+          reviewed_by: string | null
           slug: string | null
           tags: string[] | null
           thema: string
           updated_at: string
+          wortzahl: number | null
         }
         Insert: {
+          autor_id?: string | null
           created_at?: string
+          freshness_score?: number | null
           id?: string
           inhalt: string
           kategorie: string
           link_phrases?: string[] | null
+          next_review_at?: string | null
           published?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           slug?: string | null
           tags?: string[] | null
           thema: string
           updated_at?: string
+          wortzahl?: number | null
         }
         Update: {
+          autor_id?: string | null
           created_at?: string
+          freshness_score?: number | null
           id?: string
           inhalt?: string
           kategorie?: string
           link_phrases?: string[] | null
+          next_review_at?: string | null
           published?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           slug?: string | null
           tags?: string[] | null
           thema?: string
           updated_at?: string
+          wortzahl?: number | null
         }
         Relationships: []
+      }
+      redaktion: {
+        Row: {
+          artikel_anzahl: number
+          created_at: string
+          email: string | null
+          expertise: string[] | null
+          foto_alt: string | null
+          foto_url: string | null
+          id: string
+          ihk_kammer: string | null
+          jahre_erfahrung: number | null
+          kurz_bio: string
+          lang_bio_md: string
+          linkedin_url: string | null
+          nachname: string
+          paragraph_34d: string | null
+          public: boolean
+          qualifikationen: string[] | null
+          reviewed_anzahl: number
+          rolle: string
+          schema_person: Json | null
+          slug: string
+          telefon: string | null
+          titel: string | null
+          updated_at: string
+          vermittlerregister_nr: string | null
+          vorname: string
+          website_url: string | null
+          xing_url: string | null
+        }
+        Insert: {
+          artikel_anzahl?: number
+          created_at?: string
+          email?: string | null
+          expertise?: string[] | null
+          foto_alt?: string | null
+          foto_url?: string | null
+          id?: string
+          ihk_kammer?: string | null
+          jahre_erfahrung?: number | null
+          kurz_bio: string
+          lang_bio_md: string
+          linkedin_url?: string | null
+          nachname: string
+          paragraph_34d?: string | null
+          public?: boolean
+          qualifikationen?: string[] | null
+          reviewed_anzahl?: number
+          rolle: string
+          schema_person?: Json | null
+          slug: string
+          telefon?: string | null
+          titel?: string | null
+          updated_at?: string
+          vermittlerregister_nr?: string | null
+          vorname: string
+          website_url?: string | null
+          xing_url?: string | null
+        }
+        Update: {
+          artikel_anzahl?: number
+          created_at?: string
+          email?: string | null
+          expertise?: string[] | null
+          foto_alt?: string | null
+          foto_url?: string | null
+          id?: string
+          ihk_kammer?: string | null
+          jahre_erfahrung?: number | null
+          kurz_bio?: string
+          lang_bio_md?: string
+          linkedin_url?: string | null
+          nachname?: string
+          paragraph_34d?: string | null
+          public?: boolean
+          qualifikationen?: string[] | null
+          reviewed_anzahl?: number
+          rolle?: string
+          schema_person?: Json | null
+          slug?: string
+          telefon?: string | null
+          titel?: string | null
+          updated_at?: string
+          vermittlerregister_nr?: string | null
+          vorname?: string
+          website_url?: string | null
+          xing_url?: string | null
+        }
+        Relationships: []
+      }
+      trust_baustein: {
+        Row: {
+          aktiv: boolean
+          autor_alter: string | null
+          autor_name: string | null
+          belegt_durch: string | null
+          bild_alt: string | null
+          bild_url: string | null
+          body: string | null
+          created_at: string
+          id: string
+          jahr: number | null
+          produkt_id: string | null
+          quelle_name: string | null
+          quelle_url: string | null
+          reihenfolge: number
+          score: string | null
+          slug: string
+          titel: string
+          typ: string
+          updated_at: string
+        }
+        Insert: {
+          aktiv?: boolean
+          autor_alter?: string | null
+          autor_name?: string | null
+          belegt_durch?: string | null
+          bild_alt?: string | null
+          bild_url?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          jahr?: number | null
+          produkt_id?: string | null
+          quelle_name?: string | null
+          quelle_url?: string | null
+          reihenfolge?: number
+          score?: string | null
+          slug: string
+          titel: string
+          typ: string
+          updated_at?: string
+        }
+        Update: {
+          aktiv?: boolean
+          autor_alter?: string | null
+          autor_name?: string | null
+          belegt_durch?: string | null
+          bild_alt?: string | null
+          bild_url?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          jahr?: number | null
+          produkt_id?: string | null
+          quelle_name?: string | null
+          quelle_url?: string | null
+          reihenfolge?: number
+          score?: string | null
+          slug?: string
+          titel?: string
+          typ?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trust_baustein_produkt_id_fkey"
+            columns: ["produkt_id"]
+            isOneToOne: false
+            referencedRelation: "produkte"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tarife: {
         Row: {
@@ -414,18 +628,23 @@ export type Database = {
       blog_posts: {
         Row: {
           author: string | null
+          autor_id: string | null
           content_md: string
           cover_image_alt: string | null
           cover_image_url: string | null
           created_at: string
           excerpt: string | null
+          freshness_score: number | null
           id: string
           kategorien: string[] | null
           meta_desc: string | null
           meta_title: string | null
+          next_review_at: string | null
           produkt_id: string | null
           published_at: string | null
           reading_time: number | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           schema_markup: Json | null
           slug: string
           source_origin: string | null
@@ -437,18 +656,23 @@ export type Database = {
         }
         Insert: {
           author?: string | null
+          autor_id?: string | null
           content_md: string
           cover_image_alt?: string | null
           cover_image_url?: string | null
           created_at?: string
           excerpt?: string | null
+          freshness_score?: number | null
           id?: string
           kategorien?: string[] | null
           meta_desc?: string | null
           meta_title?: string | null
+          next_review_at?: string | null
           produkt_id?: string | null
           published_at?: string | null
           reading_time?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           schema_markup?: Json | null
           slug: string
           source_origin?: string | null
@@ -460,18 +684,23 @@ export type Database = {
         }
         Update: {
           author?: string | null
+          autor_id?: string | null
           content_md?: string
           cover_image_alt?: string | null
           cover_image_url?: string | null
           created_at?: string
           excerpt?: string | null
+          freshness_score?: number | null
           id?: string
           kategorien?: string[] | null
           meta_desc?: string | null
           meta_title?: string | null
+          next_review_at?: string | null
           produkt_id?: string | null
           published_at?: string | null
           reading_time?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           schema_markup?: Json | null
           slug?: string
           source_origin?: string | null
@@ -553,7 +782,37 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      tarife_besonderheiten_aggregiert: {
+        Row: {
+          produkt_id: string
+          anbieter_name: string
+          tarif_name: string | null
+          beitrag_min: number
+          beitrag_max: number
+          tarif_count: number
+          gesundheitspruefung: boolean
+          doppelte_unfall: boolean
+          rueckholung: boolean
+          lebenslang: boolean
+          kindermitversicherung: boolean
+          wartezeit_min_monate: number | null
+          wartezeit_alt_monate: number | null
+          zahlung_bis_alter: number | null
+          alter_von_min: number
+          alter_bis_max: number
+          summe_min: number
+          summe_max: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarife_produkt_id_fkey"
+            columns: ["produkt_id"]
+            isOneToOne: false
+            referencedRelation: "produkte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
@@ -701,6 +960,20 @@ export type GenerierterContent = Database['public']['Tables']['generierter_conte
 export type Wissensfundus = Database['public']['Tables']['wissensfundus']['Row']
 export type Lead = Database['public']['Tables']['leads']['Row']
 export type Fokus = NonNullable<ProduktConfig['fokus']>
+export type Redaktion = Database['public']['Tables']['redaktion']['Row']
+export type RedaktionInsert = Database['public']['Tables']['redaktion']['Insert']
+export type RedaktionUpdate = Database['public']['Tables']['redaktion']['Update']
+export type TrustBaustein = Database['public']['Tables']['trust_baustein']['Row']
+export type TrustBausteinInsert = Database['public']['Tables']['trust_baustein']['Insert']
+export type TrustBausteinTyp =
+  | 'pressezitat'
+  | 'siegel'
+  | 'kunden_review'
+  | 'partner_logo'
+  | 'zahl'
+  | 'auszeichnung'
+  | 'verband'
+export type BlogPost = Database['public']['Tables']['blog_posts']['Row']
 
 export interface ActionResult<T = null> {
   success: boolean

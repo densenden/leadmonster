@@ -66,6 +66,19 @@ interface SeedRow {
   tags: string[]
   link_phrases: string[]
   published: boolean
+  wortzahl: number
+  autor_id?: string | null
+  reviewed_by?: string | null
+  reviewed_at?: string | null
+  next_review_at?: string | null
+}
+
+function countWords(md: string): number {
+  return md
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/[#>*_~`\-|]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean).length
 }
 
 function collectSeeds(filterKategorie?: string): SeedRow[] {
@@ -82,14 +95,16 @@ function collectSeeds(filterKategorie?: string): SeedRow[] {
       const raw = readFileSync(join(dir, file), 'utf-8')
       const { meta, body } = parseFrontmatter(raw)
       const slug = (meta.slug as string) || basename(file, '.md')
+      const inhalt = body.trim()
       rows.push({
         slug,
         kategorie: (meta.kategorie as string) || kat,
         thema: (meta.thema as string) || slug,
-        inhalt: body.trim(),
+        inhalt,
         tags: (meta.tags as string[]) || [],
         link_phrases: (meta.link_phrases as string[]) || [],
         published: meta.published !== false,
+        wortzahl: countWords(inhalt),
       })
     }
   }
@@ -111,17 +126,46 @@ async function main() {
 
   const supabase = createClient(url, key, { auth: { persistSession: false } })
 
+  // Default-Author + Cadence aus DB ziehen
+  const { data: christian } = await supabase
+    .from('redaktion')
+    .select('id')
+    .eq('slug', 'christian-wimmer')
+    .maybeSingle()
+  const autorId = christian?.id ?? null
+  const { data: cadence } = await supabase
+    .from('einstellungen')
+    .select('wert')
+    .eq('schluessel', 'redaktion_review_intervall_tage')
+    .maybeSingle()
+  const days = Number(cadence?.wert ?? '180') || 180
+  const now = new Date()
+  const reviewedAt = now.toISOString()
+  const nextReviewAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString()
+
+  let okCount = 0
+  let warnCount = 0
   for (const row of rows) {
+    const enriched: SeedRow = {
+      ...row,
+      autor_id: autorId,
+      reviewed_by: autorId,
+      reviewed_at: reviewedAt,
+      next_review_at: nextReviewAt,
+    }
     const { error } = await supabase
       .from('wissensfundus')
-      .upsert(row, { onConflict: 'slug' })
+      .upsert(enriched, { onConflict: 'slug' })
     if (error) {
       console.error(`❌  ${row.slug}:`, error.message)
     } else {
-      console.log(`✅  ${row.kategorie}/${row.slug}`)
+      okCount++
+      const flag = row.wortzahl < 800 && row.published ? '⚠️ <800 Wörter' : ''
+      if (flag) warnCount++
+      console.log(`✅  ${row.kategorie}/${row.slug} (${row.wortzahl} W) ${flag}`)
     }
   }
-  console.log('🎉 fertig')
+  console.log(`🎉 ${okCount}/${rows.length} okay, ${warnCount} unter SEO-Mindestlänge`)
 }
 
 main().catch(err => {

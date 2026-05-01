@@ -109,4 +109,33 @@ describe('Vergleich component', () => {
     const disclaimer = screen.getByText(/Alle Angaben ohne Gewähr\. Stand: 02\.04\.2026\./)
     expect(disclaimer).toBeDefined()
   })
+
+  // Bug-Fix 2026-04-30: Auto-Cross-Linker (lib/linker/auto-link.ts) fügt
+  // Markdown-Links wie [Begriff](/wissen/slug) in besonderheit/wartezeit etc.
+  // ein. Vorher wurden die als Literal-Text angezeigt, jetzt als <a>.
+  it('rendert Markdown-Links in besonderheit als echten <a>-Tag', () => {
+    const withLink: AnbieterOffer[] = [{
+      name: 'AXA',
+      wartezeit: 'Keine bei [Unfalltod](/wissen/sterbegeld-wartezeit-sofortschutz)',
+      gesundheitsfragen: 'Vereinfacht',
+      garantierte_aufnahme: true,
+      beitrag_beispiel: 'ab 7,99 €/Monat',
+      besonderheit: 'Schutz bei [Unfalltod](/wissen/unfalltod) sofort',
+    }]
+    const { container } = render(
+      <Vergleich anbieter={withLink} produktName="x" generatedAt="x" />,
+    )
+
+    // besonderheit-Spalte enthält einen echten <a>
+    const link = container.querySelector('a[href="/wissen/unfalltod"]')
+    expect(link).not.toBeNull()
+    expect(link?.textContent).toBe('Unfalltod')
+
+    // wartezeit-Spalte ebenfalls
+    const link2 = container.querySelector('a[href="/wissen/sterbegeld-wartezeit-sofortschutz"]')
+    expect(link2).not.toBeNull()
+
+    // Literal-MD-Syntax darf NICHT im DOM sein
+    expect(container.textContent).not.toContain('[Unfalltod](/wissen')
+  })
 })

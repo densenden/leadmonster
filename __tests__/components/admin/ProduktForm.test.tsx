@@ -208,10 +208,13 @@ describe('ProduktForm — edit mode', () => {
     domain: null,
     accent_color: null,
     convexa_form_token: null,
+    style_reference_url: null,
+    style_description: null,
     hero_image_url: null,
     hero_image_alt: null,
     og_image_url: null,
     short_pitch: null,
+    standard_autor_id: null,
     created_at: '2026-04-01T00:00:00Z',
     updated_at: '2026-04-01T00:00:00Z',
     produkt_config: {

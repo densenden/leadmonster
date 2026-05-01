@@ -84,6 +84,117 @@ describe('ContentPreview — layout', () => {
   })
 })
 
+describe('ContentPreview — Multi-Line + Array-Editing', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    vi.clearAllMocks()
+  })
+
+  it('rendert lange Strings als <textarea>', async () => {
+    const { ContentPreview } = await import('../ContentPreview')
+    const longText = 'A'.repeat(120)
+    render(
+      React.createElement(ContentPreview, {
+        row: makeRow({
+          content: { sections: [{ type: 'body', heading: 'H', text: longText }] },
+        }),
+        produktId: 'prod-1',
+      }),
+    )
+    // <details> aufklappen
+    fireEvent.click(screen.getByText(/^body$/))
+    const textarea = screen.getByDisplayValue(longText)
+    expect(textarea.tagName).toBe('TEXTAREA')
+  })
+
+  it('rendert kurze Strings ohne bekannte Long-Form-Keys als <input>', async () => {
+    const { ContentPreview } = await import('../ContentPreview')
+    render(
+      React.createElement(ContentPreview, {
+        row: makeRow({
+          content: { sections: [{ type: 'hero', headline: 'Kurzer Titel', cta_text: 'Jetzt' }] },
+        }),
+        produktId: 'prod-1',
+      }),
+    )
+    fireEvent.click(screen.getByText(/^hero$/))
+    const input = screen.getByDisplayValue('Kurzer Titel')
+    expect(input.tagName).toBe('INPUT')
+  })
+
+  it('rendert string-Arrays als Liste editierbarer Textareas mit Hinzufügen-Button', async () => {
+    const { ContentPreview } = await import('../ContentPreview')
+    render(
+      React.createElement(ContentPreview, {
+        row: makeRow({
+          content: {
+            sections: [
+              {
+                type: 'body',
+                heading: 'Section',
+                paragraphs: ['Erster Absatz', 'Zweiter Absatz'],
+              },
+            ],
+          },
+        }),
+        produktId: 'prod-1',
+      }),
+    )
+    fireEvent.click(screen.getByText(/^body$/))
+
+    expect(screen.getByDisplayValue('Erster Absatz')).toBeDefined()
+    expect(screen.getByDisplayValue('Zweiter Absatz')).toBeDefined()
+    expect(screen.getByText(/paragraphs \(2\)/)).toBeDefined()
+    expect(screen.getByText(/Eintrag hinzufügen/)).toBeDefined()
+  })
+
+  it('Klick auf "Eintrag hinzufügen" fügt eine leere Zeile hinzu', async () => {
+    const { ContentPreview } = await import('../ContentPreview')
+    render(
+      React.createElement(ContentPreview, {
+        row: makeRow({
+          content: {
+            sections: [{ type: 'body', heading: 'S', paragraphs: ['Eins'] }],
+          },
+        }),
+        produktId: 'prod-1',
+      }),
+    )
+    fireEvent.click(screen.getByText(/^body$/))
+    expect(screen.getByText(/paragraphs \(1\)/)).toBeDefined()
+
+    fireEvent.click(screen.getByText(/Eintrag hinzufügen/))
+    expect(screen.getByText(/paragraphs \(2\)/)).toBeDefined()
+  })
+
+  it('rendert Listen von Objekten (steps.items) als verschachtelte Editoren', async () => {
+    const { ContentPreview } = await import('../ContentPreview')
+    render(
+      React.createElement(ContentPreview, {
+        row: makeRow({
+          content: {
+            sections: [
+              {
+                type: 'steps',
+                heading: 'Schritte',
+                items: [
+                  { number: 1, title: 'Antrag', description: 'Antrag stellen' },
+                ],
+              },
+            ],
+          },
+        }),
+        produktId: 'prod-1',
+      }),
+    )
+    fireEvent.click(screen.getByText(/^steps$/))
+
+    expect(screen.getByDisplayValue('Antrag')).toBeDefined()
+    expect(screen.getByDisplayValue('Antrag stellen')).toBeDefined()
+    expect(screen.getByText(/Eintrag 1/)).toBeDefined()
+  })
+})
+
 describe('ContentPreview — meta_title character counter', () => {
   beforeEach(() => {
     vi.resetModules()

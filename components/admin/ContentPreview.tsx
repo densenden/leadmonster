@@ -14,6 +14,15 @@ import type { BadgeVariant } from '@/components/ui/Badge'
 interface ContentPreviewProps {
   row: GenerierterContent
   produktId: string
+  /** Produkt-Kontext für den Auto-Prompt im SectionImagePanel — wenn nicht
+   *  gesetzt, fällt der Panel auf "sterbegeld"-Defaults zurück. */
+  produktTyp?: string
+  produktName?: string
+  zielgruppe?: string[] | null
+  fokus?: string | null
+  argumente?: Record<string, string> | null
+  /** Aus dem Style-Reference-Upload abgeleitete Stil-Direktive. */
+  styleDescription?: string | null
 }
 
 // A content section as stored in the JSONB content.sections array.
@@ -58,7 +67,16 @@ const STATUS_BADGE: Record<GenerierterContent['status'], BadgeVariant> = {
 // Main component
 // ---------------------------------------------------------------------------
 
-export function ContentPreview({ row, produktId }: ContentPreviewProps) {
+export function ContentPreview({
+  row,
+  produktId,
+  produktTyp,
+  produktName,
+  zielgruppe,
+  fokus,
+  argumente,
+  styleDescription,
+}: ContentPreviewProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -181,6 +199,78 @@ export function ContentPreview({ row, produktId }: ContentPreviewProps) {
     const newSections = [...sections]
     newSections[sectionIndex] = { ...newSections[sectionIndex], [key]: value }
     setContent({ ...content, sections: newSections })
+  }
+
+  // Updates a single string entry inside an array-field of a section.
+  // Used for `body.paragraphs[i]` and similar string[] fields.
+  function updateSectionArrayItem(
+    sectionIndex: number,
+    key: string,
+    itemIndex: number,
+    value: string,
+  ) {
+    const newSections = [...sections]
+    const section = { ...newSections[sectionIndex] }
+    const arr = Array.isArray(section[key]) ? [...(section[key] as unknown[])] : []
+    arr[itemIndex] = value
+    section[key] = arr
+    newSections[sectionIndex] = section
+    setContent({ ...content, sections: newSections })
+  }
+
+  // Adds a new empty string at the end of an array-field.
+  function addSectionArrayItem(sectionIndex: number, key: string) {
+    const newSections = [...sections]
+    const section = { ...newSections[sectionIndex] }
+    const arr = Array.isArray(section[key]) ? [...(section[key] as unknown[])] : []
+    arr.push('')
+    section[key] = arr
+    newSections[sectionIndex] = section
+    setContent({ ...content, sections: newSections })
+  }
+
+  // Removes a single entry from an array-field.
+  function removeSectionArrayItem(sectionIndex: number, key: string, itemIndex: number) {
+    const newSections = [...sections]
+    const section = { ...newSections[sectionIndex] }
+    const arr = Array.isArray(section[key]) ? [...(section[key] as unknown[])] : []
+    arr.splice(itemIndex, 1)
+    section[key] = arr
+    newSections[sectionIndex] = section
+    setContent({ ...content, sections: newSections })
+  }
+
+  // Updates a single string field inside an object that lives inside an
+  // array-field of a section. Used for `steps.items[i].title` etc.
+  function updateSectionArrayObjectField(
+    sectionIndex: number,
+    key: string,
+    itemIndex: number,
+    objKey: string,
+    value: string,
+  ) {
+    const newSections = [...sections]
+    const section = { ...newSections[sectionIndex] }
+    const arr = Array.isArray(section[key]) ? [...(section[key] as unknown[])] : []
+    const obj = { ...((arr[itemIndex] as Record<string, unknown>) ?? {}) }
+    obj[objKey] = value
+    arr[itemIndex] = obj
+    section[key] = arr
+    newSections[sectionIndex] = section
+    setContent({ ...content, sections: newSections })
+  }
+
+  // Heuristik: welche Felder sollten als Multi-Line-Textarea gerendert werden?
+  // Faustregel: bekannte Long-Form-Keys, Auto-Linker-Output, oder Strings > 80 Zeichen.
+  const LONG_TEXT_KEYS = new Set([
+    'text', 'subline', 'antwort', 'description', 'besonderheit', 'intro',
+    'paragraphs', 'body', 'cta_text', 'disclaimer',
+  ])
+  function isLongTextField(key: string, value: string): boolean {
+    if (LONG_TEXT_KEYS.has(key)) return true
+    if (value.length > 80) return true
+    if (value.includes('\n')) return true
+    return false
   }
 
   // Sets image_url + image_alt on a section (used by SectionImagePanel).
@@ -340,18 +430,135 @@ export function ContentPreview({ row, produktId }: ContentPreviewProps) {
                 </summary>
                 <div className="space-y-2 px-3 py-2">
                   {Object.entries(section)
-                    .filter(([key]) => key !== 'type' && typeof section[key] === 'string')
-                    .map(([key, value]) => (
-                      <div key={key}>
-                        <label className="block text-xs text-gray-500 mb-0.5">{key}</label>
-                        <input
-                          type="text"
-                          value={String(value)}
-                          onChange={(e) => updateSectionField(i, key, e.target.value)}
-                          className="w-full border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#abd5f4] rounded-none"
-                        />
-                      </div>
-                    ))}
+                    .filter(([key]) =>
+                      key !== 'type' &&
+                      key !== 'image_url' &&
+                      key !== 'image_alt' &&
+                      (typeof section[key] === 'string' || Array.isArray(section[key])),
+                    )
+                    .map(([key, value]) => {
+                      // 1) String-Felder — Input oder Textarea je nach Länge.
+                      if (typeof value === 'string') {
+                        const longForm = isLongTextField(key, value)
+                        return (
+                          <div key={key}>
+                            <label className="block text-xs text-gray-500 mb-0.5">{key}</label>
+                            {longForm ? (
+                              <textarea
+                                value={value}
+                                onChange={(e) => updateSectionField(i, key, e.target.value)}
+                                rows={Math.min(8, Math.max(3, Math.ceil(value.length / 80)))}
+                                className="w-full border border-gray-300 px-2 py-1.5 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#abd5f4] rounded-none resize-y"
+                              />
+                            ) : (
+                              <input
+                                type="text"
+                                value={value}
+                                onChange={(e) => updateSectionField(i, key, e.target.value)}
+                                className="w-full border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#abd5f4] rounded-none"
+                              />
+                            )}
+                            <p className="text-[10px] text-gray-400 mt-0.5">
+                              Markdown-Links erlaubt: <code className="font-mono">[Text](/wissen/slug)</code>
+                            </p>
+                          </div>
+                        )
+                      }
+
+                      // 2) Array-Felder — String-Listen oder Listen von Objekten.
+                      const arr = value as unknown[]
+                      const allStrings = arr.every(v => typeof v === 'string')
+                      const allObjects = arr.length > 0 && arr.every(v => typeof v === 'object' && v !== null && !Array.isArray(v))
+
+                      if (allStrings) {
+                        return (
+                          <div key={key}>
+                            <div className="mb-1 flex items-center justify-between">
+                              <label className="block text-xs text-gray-500">{key} ({arr.length})</label>
+                              <button
+                                type="button"
+                                onClick={() => addSectionArrayItem(i, key)}
+                                className="text-[11px] text-[#1a3252] hover:underline"
+                              >
+                                + Eintrag hinzufügen
+                              </button>
+                            </div>
+                            <div className="space-y-1.5">
+                              {(arr as string[]).map((item, idx) => (
+                                <div key={idx} className="flex gap-1.5 items-start">
+                                  <span className="text-[10px] text-gray-400 mt-1.5 w-5 text-right shrink-0">
+                                    {idx + 1}.
+                                  </span>
+                                  <textarea
+                                    value={item}
+                                    onChange={(e) => updateSectionArrayItem(i, key, idx, e.target.value)}
+                                    rows={Math.min(6, Math.max(2, Math.ceil(item.length / 80)))}
+                                    className="flex-1 border border-gray-300 px-2 py-1.5 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#abd5f4] rounded-none resize-y"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeSectionArrayItem(i, key, idx)}
+                                    aria-label={`Eintrag ${idx + 1} entfernen`}
+                                    className="text-red-500 hover:text-red-700 text-sm px-1 mt-1"
+                                    title="Eintrag entfernen"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      }
+
+                      if (allObjects) {
+                        return (
+                          <div key={key}>
+                            <label className="block text-xs text-gray-500 mb-1">{key} ({arr.length})</label>
+                            <div className="space-y-2">
+                              {(arr as Array<Record<string, unknown>>).map((obj, idx) => (
+                                <div key={idx} className="border border-gray-200 bg-gray-50 p-2 space-y-1.5">
+                                  <p className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">
+                                    Eintrag {idx + 1}
+                                  </p>
+                                  {Object.entries(obj)
+                                    .filter(([, v]) => typeof v === 'string')
+                                    .map(([objKey, objVal]) => {
+                                      const longForm = isLongTextField(objKey, String(objVal))
+                                      return (
+                                        <div key={objKey}>
+                                          <label className="block text-[10px] text-gray-500 mb-0.5">{objKey}</label>
+                                          {longForm ? (
+                                            <textarea
+                                              value={String(objVal)}
+                                              onChange={(e) =>
+                                                updateSectionArrayObjectField(i, key, idx, objKey, e.target.value)
+                                              }
+                                              rows={Math.min(5, Math.max(2, Math.ceil(String(objVal).length / 80)))}
+                                              className="w-full border border-gray-300 px-2 py-1.5 text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#abd5f4] rounded-none resize-y"
+                                            />
+                                          ) : (
+                                            <input
+                                              type="text"
+                                              value={String(objVal)}
+                                              onChange={(e) =>
+                                                updateSectionArrayObjectField(i, key, idx, objKey, e.target.value)
+                                              }
+                                              className="w-full border border-gray-300 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#abd5f4] rounded-none"
+                                            />
+                                          )}
+                                        </div>
+                                      )
+                                    })}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      }
+
+                      return null
+                    })}
 
                   <SectionImagePanel
                     produktId={produktId}
@@ -361,6 +568,19 @@ export function ContentPreview({ row, produktId }: ContentPreviewProps) {
                     currentUrl={typeof section.image_url === 'string' ? section.image_url : undefined}
                     currentAlt={typeof section.image_alt === 'string' ? section.image_alt : undefined}
                     onSet={(url, alt) => updateSectionImage(i, url, alt)}
+                    produktTyp={produktTyp}
+                    produktName={produktName}
+                    zielgruppe={zielgruppe}
+                    fokus={fokus}
+                    argumente={argumente}
+                    styleDescription={styleDescription}
+                    contextHint={
+                      typeof section.headline === 'string'
+                        ? section.headline
+                        : typeof section.heading === 'string'
+                          ? section.heading
+                          : undefined
+                    }
                   />
                 </div>
               </details>

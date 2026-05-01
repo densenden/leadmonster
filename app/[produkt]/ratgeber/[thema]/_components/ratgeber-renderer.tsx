@@ -3,7 +3,10 @@
 // Unknown section types return null — no crash, no render.
 // This is a Server Component — no 'use client' directive needed.
 import { LeadForm } from '@/components/sections/LeadForm'
+import { InlineMarkdown } from '@/components/util/InlineMarkdown'
 import type { RatgeberSection } from '@/lib/types/ratgeber'
+
+const LINK_CLS = 'text-[#02a9e6] hover:underline'
 
 // ---------------------------------------------------------------------------
 // Intent tag derivation
@@ -49,7 +52,7 @@ function renderIntro(section: Extract<RatgeberSection, { type: 'intro' }>, key: 
       key={key}
       className="text-lg font-light leading-relaxed text-[#333333] mb-8 max-w-3xl"
     >
-      {section.text}
+      <InlineMarkdown linkClassName={LINK_CLS}>{section.text}</InlineMarkdown>
     </p>
   )
 }
@@ -63,7 +66,7 @@ function renderBody(section: Extract<RatgeberSection, { type: 'body' }>, key: nu
       <div className="space-y-4">
         {section.paragraphs.map((paragraph, i) => (
           <p key={i} className="text-base font-light leading-relaxed text-[#333333]">
-            {paragraph}
+            <InlineMarkdown linkClassName={LINK_CLS}>{paragraph}</InlineMarkdown>
           </p>
         ))}
       </div>
@@ -89,7 +92,7 @@ function renderSteps(section: Extract<RatgeberSection, { type: 'steps' }>, key: 
             <div>
               <p className="font-semibold text-[#1a365d] mb-1">{item.title}</p>
               <p className="text-base font-light leading-relaxed text-[#333333]">
-                {item.description}
+                <InlineMarkdown linkClassName={LINK_CLS}>{item.description}</InlineMarkdown>
               </p>
             </div>
           </li>

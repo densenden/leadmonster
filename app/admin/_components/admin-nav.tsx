@@ -12,6 +12,8 @@ const navItems = [
   { href: '/admin/produkte', label: 'Produkte' },
   { href: '/admin/bilder', label: 'Bilder' },
   { href: '/admin/wissensfundus', label: 'Wissensfundus' },
+  { href: '/admin/redaktion', label: 'Redaktion' },
+  { href: '/admin/trust', label: 'Trust' },
   { href: '/admin/scraper', label: 'Scraper' },
   { href: '/admin/leads', label: 'Leads' },
   { href: '/admin/einstellungen', label: 'Einstellungen' },

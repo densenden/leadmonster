@@ -16,6 +16,9 @@ import { TrustBar } from '@/components/sections/TrustBar'
 import { FAQ } from '@/components/sections/FAQ'
 import { LeadForm } from '@/components/sections/LeadForm'
 import { VergleichsRechner } from '@/components/sections/VergleichsRechner'
+import { AuthorByline } from '@/components/sections/AuthorByline'
+import { TrustBarSticky } from '@/components/sections/trust/TrustBarSticky'
+import { TrustBlock } from '@/components/sections/trust/TrustBlock'
 import type {
   ContentSection,
   HeroSection,
@@ -154,7 +157,7 @@ export default async function ProduktPage({ params }: { params: { produkt: strin
   const [{ data: row }, { data: produkt }] = await Promise.all([
     supabase
       .from('generierter_content')
-      .select('content, title, slug, status, produkt_id, produkte!inner(id, slug, name, typ)')
+      .select('content, title, slug, status, produkt_id, autor_id, reviewed_by, reviewed_at, updated_at, produkte!inner(id, slug, name, typ)')
       .eq('page_type', 'hauptseite')
       .eq('status', 'publiziert')
       .eq('produkte.slug', params.produkt)
@@ -239,13 +242,47 @@ export default async function ProduktPage({ params }: { params: { produkt: strin
 
   const ctx = { produktId, produktTyp, produktName, zielgruppeTag, intentTag }
 
+  // Hero ist immer Section[0]; AuthorByline + TrustBar kommen direkt danach.
+  // Trust-Block wird vor dem ersten lead_form (oder am Ende) eingeschoben.
+  const heroSection = sections[0]
+  const restSections = sections.slice(1)
+  const leadFormIndex = restSections.findIndex(s => s.type === 'lead_form')
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: combinedSchema }}
       />
-      <main>{sections.map((section, i) => renderSection(section, i, ctx))}</main>
+      <main>
+        {heroSection && renderSection(heroSection, 0, ctx)}
+        {/* Sticky Trust-Bar: max. 6 Logos / Kacheln */}
+        <TrustBarSticky produktId={produktId} />
+        <div className="max-w-4xl mx-auto px-6 mt-6">
+          <AuthorByline
+            autorId={(row as { autor_id?: string | null }).autor_id ?? null}
+            reviewerId={(row as { reviewed_by?: string | null }).reviewed_by ?? null}
+            reviewedAt={(row as { reviewed_at?: string | null }).reviewed_at ?? null}
+            produktId={produktId}
+            standDate={(row as { updated_at?: string | null }).updated_at ?? null}
+            variant="card"
+          />
+        </div>
+        {restSections.map((section, i) => {
+          // Trust-Block VOR lead_form einschieben
+          if (leadFormIndex >= 0 && i === leadFormIndex) {
+            return (
+              <div key={`trust-${i}`}>
+                <TrustBlock produktId={produktId} produktName={produktName} />
+                {renderSection(section, i + 1, ctx)}
+              </div>
+            )
+          }
+          return renderSection(section, i + 1, ctx)
+        })}
+        {/* Wenn keine lead_form-Section vorhanden ist, Trust-Block am Ende */}
+        {leadFormIndex < 0 && <TrustBlock produktId={produktId} produktName={produktName} />}
+      </main>
     </>
   )
 }

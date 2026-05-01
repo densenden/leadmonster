@@ -94,7 +94,7 @@ export async function fetchRatgeberBySlug(
   const { data, error } = await supabase
     .from('generierter_content')
     .select(
-      'id, slug, title, meta_title, meta_desc, content, schema_markup, status, generated_at, published_at, produkt_id, page_type, produkte!inner(slug, status)',
+      'id, slug, title, meta_title, meta_desc, content, schema_markup, status, generated_at, published_at, produkt_id, page_type, autor_id, reviewed_by, reviewed_at, next_review_at, produkte!inner(slug, status)',
     )
     .eq('page_type', 'ratgeber')
     .eq('slug', thema)
@@ -120,6 +120,10 @@ export async function fetchRatgeberBySlug(
     status: data.status as GenerierterContentRow['status'],
     generated_at: data.generated_at,
     published_at: data.published_at,
+    autor_id: data.autor_id,
+    reviewed_by: data.reviewed_by,
+    reviewed_at: data.reviewed_at,
+    next_review_at: data.next_review_at,
   }
 }
 

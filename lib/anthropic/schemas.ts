@@ -83,6 +83,39 @@ export const VergleichsrechnerSectionSchema = z.object({
   anbieter_count_hint: z.number().int().optional(),
 })
 
+// `besonderheiten_faq` — atomare Q&A-Snippets pro besonderheiten-Property eines
+// Anbieters. Direkt FAQPage-Schema-fähig, AEO-Goldader für Perplexity/ChatGPT.
+export const BesonderheitenFaqSectionSchema = z.object({
+  type: z.literal('besonderheiten_faq'),
+  headline: z.string().default('Antworten auf häufige Detailfragen'),
+  items: z.array(z.object({
+    frage: z.string(),
+    antwort: z.string(),
+    /** Welcher Anbieter wird angesprochen? */
+    anbieter: z.string().optional(),
+    /** Welche besonderheiten-Property steht im Fokus? */
+    eigenschaft: z.string().optional(),
+  })).min(3).max(20),
+})
+
+// `praxis_snippet` — „In unserer Beratungspraxis sehen wir am häufigsten …"
+// Bricht KI-Default-Mittelwert-Sprache, signalisiert E-E-A-T (Erfahrung).
+export const PraxisSnippetSectionSchema = z.object({
+  type: z.literal('praxis_snippet'),
+  headline: z.string(),
+  body: z.string().min(80),
+  /** z. B. ablehnungs-fall, gesundheitspruefung, leistungsfall */
+  fall_typ: z.string().optional(),
+})
+
+// `besonderheiten_table` — programmatisch aus DB für Anbieter-Landingpages,
+// LLM erzeugt sie nicht selbst.
+export const BesonderheitenTableSectionSchema = z.object({
+  type: z.literal('besonderheiten_table'),
+  anbieter_slug: z.string(),
+  headline: z.string(),
+})
+
 // Discriminated union of all section types — used to validate individual sections
 // within any page response.
 export const SectionUnionSchema = z.discriminatedUnion('type', [
@@ -94,6 +127,9 @@ export const SectionUnionSchema = z.discriminatedUnion('type', [
   RatgeberSectionSchema,
   TarifSectionSchema,
   VergleichsrechnerSectionSchema,
+  BesonderheitenFaqSectionSchema,
+  PraxisSnippetSectionSchema,
+  BesonderheitenTableSectionSchema,
 ])
 
 // TypeScript type derived from the union schema — use this in application code

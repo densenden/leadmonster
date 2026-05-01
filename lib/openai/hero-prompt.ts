@@ -1,5 +1,15 @@
-// Pure prompt-building helpers for the product hero image.
+// Pure prompt-building helpers for product hero AND section images.
 // Safe to import from both Server and Client Components — no Node/Supabase deps.
+//
+// Storytelling-Update 2026-04-30:
+//   - Mehr narrative Szenen statt Stock-Photography
+//   - Strikte No-Faces-Regel (Hände, Objekte, Symbolik statt Porträts)
+//   - Pro Produkttyp ein konsistenter Brand-Look (Farb-Palette + Lichtstimmung)
+//   - Section-Variationen (Feature-Detail, Inline-Storytelling) leiten ab
+//
+// Diese Datei ist die Single Source of Truth für alle Prompt-Bausteine —
+// section-prompt.ts importiert von hier, image-generator.ts kombiniert
+// das Ergebnis mit STYLE_GUARD beim API-Call.
 
 export type HeroPromptZielgruppe =
   | 'senioren_50plus'
@@ -15,45 +25,105 @@ export interface HeroPromptOptions {
   fokus?: string | null
   anbieter?: string[] | null
   argumente?: Record<string, string> | null
+  /** Optionale, vom Style-Reference-Upload abgeleitete Stil-Direktive
+   *  ("warm coloring, watercolor illustration"). Wird vom Caller per
+   *  GPT-Vision aus dem Referenzbild extrahiert und hier reingereicht. */
+  styleDescription?: string | null
 }
 
-const TYP_SCENES: Record<string, string> = {
+// ---------------------------------------------------------------------------
+// Brand-Looks pro Produkttyp — die Farb-Palette / Bildstimmung, die alle
+// Bilder eines Produkts gemeinsam haben sollen. Ohne Style-Reference greift
+// dieser Default. Pro Sektion variiert nur das Motiv, nicht der Look.
+// ---------------------------------------------------------------------------
+
+interface BrandLook {
+  /** Atmosphäre + Farbpalette */
+  palette: string
+  /** Lichtstimmung */
+  lighting: string
+  /** Symbolische Bildelemente, die das Produkt-Thema ankern */
+  motifs: string
+}
+
+const BRAND_LOOKS: Record<string, BrandLook> = {
+  sterbegeld: {
+    palette: 'soft sage green, warm cream, dusty beige',
+    lighting: 'late golden afternoon light filtering through windows',
+    motifs: 'open hands resting on letters, a single candle, an unfinished cup of tea, family photo frames seen from behind',
+  },
+  pflege: {
+    palette: 'warm amber, terracotta, soft cream',
+    lighting: 'morning sunlight in a sunlit kitchen or living room',
+    motifs: 'helping hands placing a teacup, a freshly folded blanket, walking-aid silhouette near a window, plants on a windowsill',
+  },
+  leben: {
+    palette: 'deep navy, soft sand, brushed gold accents',
+    lighting: 'late summer sunset over a quiet residential street',
+    motifs: 'an empty bicycle in front of a house, two coffee cups on a porch table, family keys in a wooden bowl, seedlings in a small pot',
+  },
+  bu: {
+    palette: 'cool industrial blue-grey, warm tool-belt brown',
+    lighting: 'overcast workshop daylight or focused desk lamp',
+    motifs: 'callused hands holding a clipboard, an idle workbench with carefully laid-out tools, an empty office chair seen from above, a thermos and notebook',
+  },
+  unfall: {
+    palette: 'soft sky blue, neutral grey, accent orange',
+    lighting: 'crisp morning light after rain',
+    motifs: 'children\'s bicycles on a quiet sidewalk, a helmet on a bench, hiking boots by an open door, a bandaged hand reaching for a coffee cup',
+  },
+}
+
+// ---------------------------------------------------------------------------
+// Sub-Mappings — bewusst zurückhaltend, gewinnen erst durch Storytelling
+// ---------------------------------------------------------------------------
+
+export const TYP_SCENES: Record<string, string> = {
   sterbegeld:
-    'a calm outdoor park bench scene in golden German afternoon light, dignified end-of-life planning context',
+    'an intimate domestic German interior at golden hour — a kitchen table with an open envelope, soft sunlight on wooden surfaces — symbolic of dignified end-of-life planning',
   pflege:
-    'a bright modern German home with a caring nurse helping a senior, warm hopeful atmosphere',
+    'a sunlit German home — a hand carefully placing a folded blanket on an armchair, an empty walking aid waiting nearby — symbolic of attentive care',
   leben:
-    'a young German family in front of their house, sunset light, protective composition',
+    'a quiet German residential street at sunset — a family bicycle leaning against a hedge, glowing windows in the background — symbolic of protective love',
   bu:
-    'a focused craftsperson or office worker in a German workplace, soft window light, sense of resilience and competence',
+    'a focused German workshop or office at end-of-day — a clipboard and tools resting on a clean workbench, single window light — symbolic of professional resilience',
   unfall:
-    'a safe German residential street with a family on bicycles, calm protective atmosphere, soft daylight',
+    'a German residential courtyard after rain — bicycles, scooters, a fallen scarf on a bench — symbolic of safe everyday life',
 }
 
-const ZIELGRUPPE_PHRASES: Record<string, string> = {
-  senioren_50plus: 'Germans aged 50 and above',
-  familien: 'a German family with children',
-  alleinstehende: 'a single German adult',
-  paare: 'a German couple',
-  berufstaetige: 'working-age German professionals',
+export const ZIELGRUPPE_PHRASES: Record<string, string> = {
+  senioren_50plus: 'people aged 50 and above (shown as hands, silhouettes or back-views, never frontal portraits)',
+  familien: 'a German family (shown via objects, clothing details or back-views, never frontal portraits)',
+  alleinstehende: 'a single adult (shown via hands, possessions or environment, never frontal portraits)',
+  paare: 'a couple (shown via two coffee cups, two pairs of shoes, two hands, never frontal portraits)',
+  berufstaetige: 'a working-age professional (shown via tools, workspace, hands at work, never frontal portraits)',
 }
 
-const FOKUS_MOOD: Record<string, string> = {
-  sicherheit: 'reassuring, dignified and trustworthy mood',
-  preis: 'approachable, friendly and accessible mood',
-  sofortschutz: 'decisive, energetic mood with a sense of immediate protection',
+export const FOKUS_MOOD: Record<string, string> = {
+  sicherheit: 'reassuring, dignified and trustworthy mood — quiet confidence',
+  preis: 'approachable, friendly and accessible mood — warmth without luxury',
+  sofortschutz: 'decisive but calm mood — readiness, not urgency',
 }
 
-function joinList(items: string[]): string {
+export function joinList(items: string[]): string {
   if (items.length === 0) return ''
   if (items.length === 1) return items[0]
   if (items.length === 2) return `${items[0]} and ${items[1]}`
   return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
 }
 
+export function getBrandLook(produktTyp: string): BrandLook {
+  return BRAND_LOOKS[produktTyp] ?? BRAND_LOOKS.sterbegeld
+}
+
+// ---------------------------------------------------------------------------
+// Hero-Prompt
+// ---------------------------------------------------------------------------
+
 export function defaultHeroPrompt(produktTyp: string): string {
   const scene = TYP_SCENES[produktTyp] ?? TYP_SCENES.sterbegeld
-  return `Photographic editorial scene: ${scene}. No clearly visible faces, no text overlays.`
+  const look = getBrandLook(produktTyp)
+  return `Editorial storytelling photography: ${scene}. Color palette: ${look.palette}. Lighting: ${look.lighting}. No visible faces, no text overlays.`
 }
 
 export function buildHeroPrompt(
@@ -61,6 +131,7 @@ export function buildHeroPrompt(
   opts: HeroPromptOptions = {},
 ): string {
   const scene = TYP_SCENES[produktTyp] ?? TYP_SCENES.sterbegeld
+  const look = getBrandLook(produktTyp)
 
   const subjectPhrases = (opts.zielgruppe ?? [])
     .map(z => ZIELGRUPPE_PHRASES[z])
@@ -70,19 +141,28 @@ export function buildHeroPrompt(
   const mood = opts.fokus ? FOKUS_MOOD[opts.fokus] : null
 
   const parts: string[] = [
-    `Photographic editorial scene: ${scene}.`,
+    `Editorial storytelling photography: ${scene}.`,
+    `Color palette: ${look.palette}.`,
+    `Lighting: ${look.lighting}.`,
+    `Symbolic objects (choose one or two, never all): ${look.motifs}.`,
   ]
-  if (subject) parts.push(`Main subject: ${subject}.`)
-  if (mood) parts.push(`Tone: ${mood}.`)
+  if (subject) parts.push(`Implied subject: ${subject}.`)
+  if (mood) parts.push(`Mood: ${mood}.`)
 
   const argKeys = Object.keys(opts.argumente ?? {}).slice(0, 3)
   if (argKeys.length > 0) {
-    parts.push(`Visual cues for: ${argKeys.join(', ')}.`)
+    parts.push(`Story should evoke: ${argKeys.join(', ')}.`)
   }
 
   // Note: anbieter (Allianz, DELA, etc.) deliberately NOT added to the prompt —
   // brand logos in AI imagery cause licensing and visual-quality issues.
 
-  parts.push('No clearly visible faces, no text overlays, no brand logos.')
+  if (opts.styleDescription && opts.styleDescription.trim().length > 0) {
+    parts.push(`Visual style direction: ${opts.styleDescription.trim()}.`)
+  }
+
+  parts.push(
+    'Strict rules: no clearly visible human faces, no front-facing portraits, no text overlays, no brand logos, no UI mockups. Show humans only via hands, silhouettes, back-views or symbolic absence.',
+  )
   return parts.join(' ')
 }

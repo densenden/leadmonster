@@ -2,6 +2,7 @@
 // Renders a horizontally scrollable accessible table with checkmark / dash icons.
 // Each ROW is one insurer; each COLUMN is one criterion.
 // Design tokens: Navy #1a365d header, Gold #d4af37 for checkmarks.
+import { InlineMarkdown } from '@/components/util/InlineMarkdown'
 
 export interface AnbieterOffer {
   name: string
@@ -91,7 +92,11 @@ export function Vergleich({ anbieter, produktName, generatedAt }: VergleichProps
                     {typeof value === 'boolean' ? (
                       value ? <CheckIcon /> : <MinusIcon />
                     ) : (
-                      <span className="text-sm text-[#666666]">{value}</span>
+                      <span className="text-sm text-[#666666]">
+                        <InlineMarkdown linkClassName="text-[#02a9e6] hover:underline">
+                          {typeof value === 'string' ? value : String(value ?? '')}
+                        </InlineMarkdown>
+                      </span>
                     )}
                   </td>
                 )

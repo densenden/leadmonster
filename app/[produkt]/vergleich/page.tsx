@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/server'
 import { Vergleich } from '@/components/sections/Vergleich'
 import { LeadForm } from '@/components/sections/LeadForm'
+import { InlineMarkdown } from '@/components/util/InlineMarkdown'
 
 // Re-render at most once per hour — consistent with other public product pages.
 export const revalidate = 3600
@@ -212,9 +213,15 @@ export default async function VergleichPage({ params }: PageProps) {
           {produkt.name} — Anbieter im Vergleich
         </h1>
 
-        {/* Intro paragraph from vergleich content section — AEO entity naming */}
+        {/* Intro paragraph from vergleich content section — AEO entity naming.
+            The auto-cross-linker (lib/linker/auto-link.ts) injects markdown
+            links to /wissen/<slug>; InlineMarkdown turns them into real <a>. */}
         {vergleichSection?.intro && (
-          <p className="mt-4 mb-8 text-lg text-gray-700 font-body">{vergleichSection.intro}</p>
+          <p className="mt-4 mb-8 text-lg text-gray-700 font-body">
+            <InlineMarkdown linkClassName="text-[#02a9e6] hover:underline">
+              {vergleichSection.intro}
+            </InlineMarkdown>
+          </p>
         )}
 
         {/* Comparison table — horizontal scroll on mobile */}

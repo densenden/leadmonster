@@ -4,6 +4,7 @@
 import type { MetadataRoute } from 'next'
 import { createAdminClient } from '@/lib/supabase/server'
 import { buildCanonicalUrl } from '@/lib/seo/metadata'
+import { loadAnbieterForProdukt, slugifyAnbieter } from '@/lib/anbieter/load'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fail fast — sitemap cannot be built without a base URL.
@@ -64,6 +65,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.85,
     })
+    // Anbieter-Landingpages
+    const anbieter = await loadAnbieterForProdukt(produkt.id)
+    for (const a of anbieter) {
+      entries.push({
+        url: buildCanonicalUrl(`/${produkt.slug}/anbieter/${slugifyAnbieter(a.anbieter_name)}`),
+        lastModified,
+        changeFrequency: 'monthly',
+        priority: 0.7,
+      })
+    }
   }
 
   // Published ratgeber content — joined with produkte to get the product slug.
@@ -84,6 +95,75 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.6,
       })
     }
+  }
+
+  // Wissensfundus — nur Einträge ≥800 Wörter (Spec §4 SEO-Strategie).
+  const { data: wissen } = await supabase
+    .from('wissensfundus')
+    .select('slug, updated_at, wortzahl')
+    .eq('published', true)
+    .not('slug', 'is', null)
+    .gte('wortzahl', 800)
+  for (const w of wissen ?? []) {
+    if (!w.slug) continue
+    entries.push({
+      url: buildCanonicalUrl(`/wissen/${w.slug}`),
+      lastModified: w.updated_at ?? undefined,
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    })
+  }
+
+  // /wissen-Übersicht
+  entries.push({
+    url: buildCanonicalUrl('/wissen'),
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.6,
+  })
+
+  // Blog-Posts
+  const { data: posts } = await supabase
+    .from('blog_posts')
+    .select('slug, updated_at')
+    .eq('status', 'publiziert')
+  for (const p of posts ?? []) {
+    entries.push({
+      url: buildCanonicalUrl(`/blog/${p.slug}`),
+      lastModified: p.updated_at ?? undefined,
+      changeFrequency: 'monthly',
+      priority: 0.55,
+    })
+  }
+  if (posts && posts.length > 0) {
+    entries.push({
+      url: buildCanonicalUrl('/blog'),
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    })
+  }
+
+  // Redaktions-Profile (E-E-A-T)
+  const { data: autoren } = await supabase
+    .from('redaktion')
+    .select('slug, updated_at')
+    .eq('public', true)
+  for (const a of autoren ?? []) {
+    entries.push({
+      url: buildCanonicalUrl(`/redaktion/${a.slug}`),
+      lastModified: a.updated_at ?? undefined,
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    })
+  }
+  if (autoren && autoren.length > 0) {
+    entries.push({
+      url: buildCanonicalUrl('/redaktion'),
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.4,
+    })
   }
 
   return entries

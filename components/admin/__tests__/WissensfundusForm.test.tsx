@@ -68,6 +68,12 @@ describe('WissensfundusForm — field rendering', () => {
       published: false,
       created_at: '2026-04-01T00:00:00Z',
       updated_at: '2026-04-01T00:00:00Z',
+      autor_id: null,
+      reviewed_by: null,
+      reviewed_at: null,
+      next_review_at: null,
+      wortzahl: null,
+      freshness_score: null,
     }
 
     render(

@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import type { Wissensfundus } from '@/lib/supabase/types'
 import { WissensfundusForm } from '@/components/admin/WissensfundusForm'
 import { updateArtikel } from '@/app/admin/wissensfundus/actions'
+import { ArticleAuthorPanel } from '@/components/admin/ArticleAuthorPanel'
 
 interface PageProps {
   params: { id: string }
@@ -43,6 +44,13 @@ export default async function ArtikelBearbeitenPage({ params }: PageProps) {
   // Bind the article id into the server action so the form only needs to pass formData.
   const updateWithId = updateArtikel.bind(null, params.id)
 
+  const { data: autorenRows } = await supabase
+    .from('redaktion')
+    .select('id, vorname, nachname, rolle')
+    .eq('public', true)
+    .order('nachname', { ascending: true })
+  const autoren = autorenRows ?? []
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
       {/* Breadcrumb */}
@@ -57,6 +65,21 @@ export default async function ArtikelBearbeitenPage({ params }: PageProps) {
       <h1 className="mb-8 font-heading text-3xl font-bold text-[#333333]">
         Artikel bearbeiten
       </h1>
+
+      <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[#999]">
+          Autorenschaft & Review
+        </h2>
+        <ArticleAuthorPanel
+          table="wissensfundus"
+          rowId={params.id}
+          autoren={autoren}
+          initialAutorId={row.autor_id}
+          initialReviewedBy={row.reviewed_by}
+          initialReviewedAt={row.reviewed_at}
+          fallbackHint="ohne expliziten Autor erscheint der Standard-Autor des verlinkten Produkts"
+        />
+      </div>
 
       <div className="rounded-xl border border-gray-200 bg-white p-6">
         <WissensfundusForm artikel={artikel} action={updateWithId} />

@@ -2,10 +2,15 @@
 // These map directly to the rendering components in RatgeberRenderer.
 // The `type` field is the discriminant across all five variants.
 
-/** Opening paragraph — AEO-optimised lead text giving a direct answer in the first sentence. */
+/** Opening paragraph — AEO-optimised lead text giving a direct answer in the first sentence.
+ *  Optional cover image is rendered prominently above the article body. */
 export interface IntroSection {
   type: 'intro'
   text: string
+  /** Hero-Cover-Bild des Ratgebers — automatisch nach Generierung angelegt
+   *  (siehe POST /api/admin/produkte/[id]/ratgeber/[slug]/cover-image). */
+  image_url?: string | null
+  image_alt?: string | null
 }
 
 /** H2 section with one or more body paragraphs. Paragraphs may include H3 sub-headings. */
@@ -71,4 +76,8 @@ export interface GenerierterContentRow {
   status: 'entwurf' | 'review' | 'publiziert'
   generated_at: string
   published_at: string | null
+  autor_id: string | null
+  reviewed_by: string | null
+  reviewed_at: string | null
+  next_review_at: string | null
 }

@@ -46,13 +46,18 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   const supabase = createAdminClient()
   const { data: produkt } = await supabase
     .from('produkte')
-    .select('id, name, typ')
+    .select('id, name, typ, style_description')
     .eq('id', params.id)
     .single()
 
   if (!produkt) {
     return Response.json({ data: null, error: { code: 'NOT_FOUND' } }, { status: 404 })
   }
+
+  // style_description vom Style-Reference-Upload — wird IMMER an den Prompt
+  // angehängt (auch wenn der User einen eigenen prompt liefert), damit alle
+  // Produkt-Bilder denselben Look haben.
+  const styleDescription = (produkt as { style_description?: string | null }).style_description ?? null
 
   let prompt = parsed.data.prompt
   if (!prompt) {
@@ -71,7 +76,13 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         !Array.isArray(configRow.argumente)
           ? (configRow.argumente as Record<string, string>)
           : null,
+      styleDescription,
     })
+  } else if (styleDescription) {
+    // User-Prompt — Style-Direktive nicht doppelt einbauen, falls schon enthalten.
+    if (!prompt.toLowerCase().includes('visual style direction')) {
+      prompt = `${prompt} Visual style direction: ${styleDescription}.`
+    }
   }
   const altText = parsed.data.altText ?? `Hauptbild ${produkt.name}`
 
