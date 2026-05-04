@@ -1,10 +1,11 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { lookupRedirect } from '@/lib/redirects/lookup'
 
-// Session refresh middleware.
-// Runs on every non-static request to keep the Supabase session cookie
-// alive across navigations. Redirect logic is intentionally NOT here —
-// auth guards live in app/admin/(protected)/layout.tsx.
+// Middleware Aufgaben:
+// 1. Redirect-Tabelle abfragen — Vertriebs-pflegbare 301/302 vor jedem Request.
+// 2. Supabase-Session-Cookie auffrischen, damit Auth-State über Navigationen
+//    erhalten bleibt. Auth-Guards selbst leben in app/admin/(protected)/layout.tsx.
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: {
@@ -42,6 +43,28 @@ export async function middleware(request: NextRequest) {
       },
     },
   )
+
+  // ─── Redirect-Lookup ──────────────────────────────────────────────────
+  // Nur für GET/HEAD-Requests an öffentliche Pfade. /admin und /api werden
+  // ausgenommen, damit interne Routen nicht aus Versehen umgeleitet werden.
+  const { pathname } = request.nextUrl
+  const isPublic = !pathname.startsWith('/admin') && !pathname.startsWith('/api')
+  const isReadable = request.method === 'GET' || request.method === 'HEAD'
+  if (isPublic && isReadable) {
+    try {
+      const hit = await lookupRedirect(supabase, pathname)
+      if (hit) {
+        const target = new URL(hit.target, request.url)
+        // Query-String und Hash der Anfrage übernehmen, damit UTM-Parameter
+        // bei Redirects nicht verloren gehen.
+        target.search = request.nextUrl.search
+        return NextResponse.redirect(target, hit.status)
+      }
+    } catch (err) {
+      // Bei DB-Fehler: keine Redirect-Logik anwenden, Request normal durchreichen.
+      console.error('redirect lookup failed', err)
+    }
+  }
 
   // IMPORTANT: use getUser() not getSession() — getSession() is not safe server-side
   // as it reads from the cookie without re-validating with the Supabase auth server.

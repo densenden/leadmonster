@@ -16,6 +16,7 @@ const navItems = [
   { href: '/admin/trust', label: 'Trust' },
   { href: '/admin/scraper', label: 'Scraper' },
   { href: '/admin/leads', label: 'Leads' },
+  { href: '/admin/redirects', label: 'Redirects' },
   { href: '/admin/einstellungen', label: 'Einstellungen' },
 ]
 

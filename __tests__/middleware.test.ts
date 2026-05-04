@@ -16,10 +16,15 @@ vi.mock('@supabase/ssr', () => ({
 }))
 
 // Minimal NextRequest mock to simulate an incoming request.
+// Erweitert für Phase 3 (Redirect-Lookup) — die Middleware liest nextUrl.pathname,
+// nextUrl.search und method.
 function makeMockRequest(pathname: string) {
   const url = `https://leadmonster.de${pathname}`
+  const nextUrl = new URL(url) as URL & { pathname: string; search: string }
   return {
     url,
+    method: 'GET',
+    nextUrl,
     headers: new Headers(),
     cookies: {
       get: vi.fn().mockReturnValue(undefined),

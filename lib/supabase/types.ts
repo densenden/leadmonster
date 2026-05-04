@@ -780,6 +780,33 @@ export type Database = {
           },
         ]
       }
+      redirects: {
+        Row: {
+          legacy_path: string
+          target_path: string
+          status: number
+          notiz: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          legacy_path: string
+          target_path: string
+          status?: number
+          notiz?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          legacy_path?: string
+          target_path?: string
+          status?: number
+          notiz?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       tarife_besonderheiten_aggregiert: {
@@ -974,6 +1001,9 @@ export type TrustBausteinTyp =
   | 'auszeichnung'
   | 'verband'
 export type BlogPost = Database['public']['Tables']['blog_posts']['Row']
+export type Redirect = Database['public']['Tables']['redirects']['Row']
+export type RedirectInsert = Database['public']['Tables']['redirects']['Insert']
+export type RedirectUpdate = Database['public']['Tables']['redirects']['Update']
 
 export interface ActionResult<T = null> {
   success: boolean
