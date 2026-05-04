@@ -57,6 +57,70 @@ describe('buildProduktMetadata', () => {
     expect(og.type).toBe('website')
     expect(og.url).toBe('https://leadmonster.de/sterbegeld24plus')
   })
+
+  // ===== Phase 4: Title-Suffix =====
+
+  it('appends titleSuffix to the title when provided', () => {
+    const result = buildProduktMetadata({
+      slug: 'bu',
+      meta_title: 'BU für Handwerker',
+      meta_desc: 'desc',
+      titleSuffix: 'Christian Wimmer Versicherungsmakler',
+    })
+    expect(result.title).toEqual({
+      absolute: 'BU für Handwerker | Christian Wimmer Versicherungsmakler',
+    })
+  })
+
+  it('omits the titleSuffix when null/undefined/empty', () => {
+    const expectations: Array<string | null | undefined> = [null, undefined, '', '   ']
+    for (const suffix of expectations) {
+      const result = buildProduktMetadata({
+        slug: 'sterbegeld24plus',
+        meta_title: 'Sterbegeld24Plus',
+        meta_desc: 'desc',
+        titleSuffix: suffix as string | null,
+      })
+      expect(result.title).toEqual({ absolute: 'Sterbegeld24Plus' })
+    }
+  })
+
+  it('drops the titleSuffix when combined length exceeds 60 chars', () => {
+    // 50 chars + " | " + 30 chars = 83 chars → suffix wird weggelassen.
+    const longTitle = 'A'.repeat(50)
+    const result = buildProduktMetadata({
+      slug: 'bu',
+      meta_title: longTitle,
+      meta_desc: 'desc',
+      titleSuffix: 'Christian Wimmer Versicherungsmakler',
+    })
+    expect(result.title).toEqual({ absolute: longTitle })
+  })
+
+  it('truncates the base title when even base alone exceeds 60 chars', () => {
+    // 70 chars base, 0 suffix → base wird auf 60 gekürzt.
+    const veryLong = 'B'.repeat(70)
+    const result = buildProduktMetadata({
+      slug: 'bu',
+      meta_title: veryLong,
+      meta_desc: 'desc',
+      titleSuffix: 'Suffix',
+    })
+    const title = (result.title as { absolute: string }).absolute
+    expect(title.length).toBeLessThanOrEqual(60)
+    expect(title.startsWith('B')).toBe(true)
+  })
+
+  it('uses the suffixed title for openGraph.title (consistency)', () => {
+    const result = buildProduktMetadata({
+      slug: 'bu',
+      meta_title: 'BU Handwerker',
+      meta_desc: 'desc',
+      titleSuffix: 'Christian Wimmer',
+    })
+    const og = result.openGraph as Record<string, unknown>
+    expect(og.title).toBe('BU Handwerker | Christian Wimmer')
+  })
 })
 
 describe('buildInsuranceAgencySchema', () => {
