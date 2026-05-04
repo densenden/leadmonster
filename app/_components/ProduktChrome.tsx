@@ -4,6 +4,7 @@
 // `homePath` und `legalPathPrefix` als Props variabel.
 import Link from 'next/link'
 import { MonsterLogo } from '@/components/MonsterLogo'
+import { LEGAL_NAME } from '@/lib/seo/organization'
 
 export interface ProduktChromeProps {
   /** URL-Slug des Produkts. Wird für Sub-Routen-Links verwendet. */
@@ -20,6 +21,11 @@ export interface ProduktChromeProps {
    * '' für Root-Produkt — Legal-Pages liegen top-level (z. B. '/impressum').
    */
   legalPathPrefix?: string
+  /**
+   * Optionale Sub-Brand-Zeile rechts vom Logo (z. B. „handwerker.bu" auf /bu).
+   * Aus produkte.brand_subline. Phase 4 § 8 Mitigation 1.
+   */
+  brandSubline?: string | null
   children: React.ReactNode
 }
 
@@ -29,6 +35,7 @@ export function ProduktChrome({
   accentColor,
   homePath,
   legalPathPrefix,
+  brandSubline,
   children,
 }: ProduktChromeProps) {
   const home = homePath ?? `/${slug}`
@@ -39,8 +46,13 @@ export function ProduktChrome({
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-[#e2e8f0]">
         <div className="max-w-[1200px] mx-auto px-6 py-3 flex items-center justify-between">
-          <Link href={home}>
+          <Link href={home} className="flex items-baseline gap-2">
             <MonsterLogo color={accentColor} showText text={name} size={38} />
+            {brandSubline && (
+              <span className="hidden sm:inline text-xs font-mono text-[#718096] -ml-1">
+                · {brandSubline}
+              </span>
+            )}
           </Link>
 
           <nav className="hidden md:flex items-center gap-5 text-sm font-semibold text-[#4a5568]">
@@ -98,9 +110,17 @@ export function ProduktChrome({
                 {label}
               </Link>
             ))}
+            <a
+              href="https://finanzteam26.de"
+              target="_blank"
+              rel="noopener"
+              className="hover:text-white transition-colors"
+            >
+              Unternehmen
+            </a>
           </div>
           <p className="text-center text-xs text-white/40">
-            © {new Date().getFullYear()} {name} — Alle Rechte vorbehalten
+            © {new Date().getFullYear()} {name} by {LEGAL_NAME} — Alle Rechte vorbehalten
           </p>
         </div>
       </footer>

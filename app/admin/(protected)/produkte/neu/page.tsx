@@ -2,8 +2,12 @@
 // Renders ProduktForm in create mode. Redirect on save is handled inside the form.
 // Auth guard is inherited from app/admin/(protected)/layout.tsx.
 import { ProduktForm } from '@/components/admin/ProduktForm'
+import { listActiveProduktTypen } from '@/lib/tarife/produkt-config-db'
 
-export default function NeuesProduktPage() {
+export default async function NeuesProduktPage() {
+  const typen = await listActiveProduktTypen()
+  const typOptions = typen.map(t => ({ value: t.slug, label: t.name }))
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
       <div className="mb-8">
@@ -15,7 +19,7 @@ export default function NeuesProduktPage() {
         </p>
       </div>
 
-      <ProduktForm mode="create" />
+      <ProduktForm mode="create" typOptions={typOptions} />
     </div>
   )
 }

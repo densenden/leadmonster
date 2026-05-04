@@ -3,8 +3,14 @@
 import Link from 'next/link'
 import { WissensfundusForm } from '@/components/admin/WissensfundusForm'
 import { createArtikel } from '@/app/admin/wissensfundus/actions'
+import { listActiveProduktTypen } from '@/lib/tarife/produkt-config-db'
 
-export default function NeuenArtikelAnlegenPage() {
+export default async function NeuenArtikelAnlegenPage() {
+  const typen = await listActiveProduktTypen()
+  const kategorieOptions = [
+    ...typen.map(t => ({ value: t.slug, label: t.name })),
+    { value: 'allgemein', label: 'Allgemein' },
+  ]
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
       {/* Breadcrumb */}
@@ -21,7 +27,7 @@ export default function NeuenArtikelAnlegenPage() {
       </h1>
 
       <div className="rounded-xl border border-gray-200 bg-white p-6">
-        <WissensfundusForm action={createArtikel} />
+        <WissensfundusForm action={createArtikel} kategorieOptions={kategorieOptions} />
       </div>
     </div>
   )

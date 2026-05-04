@@ -18,6 +18,9 @@ vi.mock('@/lib/supabase/server', () => ({
 
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
+  // unstable_cache wird transitiv durch lib/tarife/produkt-config-db geladen.
+  unstable_cache: <T extends (...args: unknown[]) => unknown>(fn: T) => fn,
+  revalidateTag: vi.fn(),
 }))
 
 // ---------------------------------------------------------------------------

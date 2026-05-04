@@ -21,7 +21,7 @@ macht den Mapping zur tatsächlichen Slug-Variante:
 ## Spalten
 
 ```
-anbieter_name,tarif_name,besonderheiten_json,geburtsjahr,summe_eur,beitrag_eur,einheit
+anbieter_name,tarif_name,besonderheiten_json,geburtsjahr,summe_eur,beitrag_eur,einheit[,berufsklasse]
 ```
 
 | Spalte | Pflicht | Beschreibung |
@@ -33,6 +33,7 @@ anbieter_name,tarif_name,besonderheiten_json,geburtsjahr,summe_eur,beitrag_eur,e
 | `summe_eur` | ✓ | Versicherungssumme in EUR (sterbegeld/leben/unfall) **oder** Monatsrente (pflege/bu). |
 | `beitrag_eur` | ✓ | Monatlicher Beitrag in EUR. `beitrag_low = beitrag_high = beitrag_eur` (exakter Wert, keine Spanne). |
 | `einheit` | – | `eur_summe` (Default) oder `eur_monat`. Pflege/BU brauchen `eur_monat`. |
+| `berufsklasse` | – | Nur für BU relevant — `A` (Akademisch / Büro), `B` (Leichte körperliche Arbeit), `C` (Mittelschwer), `D` (Schwer). Spalte fehlt bei anderen Produkttypen → wird als NULL gespeichert. Seit Migration 20260504000000 Bestandteil des UNIQUE-Constraints, d. h. derselbe Anbieter+Alter+Summe kann pro Berufsklasse einen eigenen Beitrag haben. |
 
 ## `besonderheiten_json` pro Produkttyp
 

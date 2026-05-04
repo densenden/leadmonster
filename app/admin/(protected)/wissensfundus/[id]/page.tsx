@@ -7,6 +7,7 @@ import type { Wissensfundus } from '@/lib/supabase/types'
 import { WissensfundusForm } from '@/components/admin/WissensfundusForm'
 import { updateArtikel } from '@/app/admin/wissensfundus/actions'
 import { ArticleAuthorPanel } from '@/components/admin/ArticleAuthorPanel'
+import { listActiveProduktTypen } from '@/lib/tarife/produkt-config-db'
 
 interface PageProps {
   params: { id: string }
@@ -51,6 +52,12 @@ export default async function ArtikelBearbeitenPage({ params }: PageProps) {
     .order('nachname', { ascending: true })
   const autoren = autorenRows ?? []
 
+  const typen = await listActiveProduktTypen()
+  const kategorieOptions = [
+    ...typen.map(t => ({ value: t.slug, label: t.name })),
+    { value: 'allgemein', label: 'Allgemein' },
+  ]
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
       {/* Breadcrumb */}
@@ -82,7 +89,11 @@ export default async function ArtikelBearbeitenPage({ params }: PageProps) {
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white p-6">
-        <WissensfundusForm artikel={artikel} action={updateWithId} />
+        <WissensfundusForm
+          artikel={artikel}
+          action={updateWithId}
+          kategorieOptions={kategorieOptions}
+        />
       </div>
     </div>
   )

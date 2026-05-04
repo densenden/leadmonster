@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { resolveAccentColor } from '@/lib/utils/accent'
 import { ProduktChrome } from '@/app/_components/ProduktChrome'
+import { TrustStoryLine } from '@/components/sections/TrustStoryLine'
 
 export default async function ProduktLayout({
   children,
@@ -11,23 +12,34 @@ export default async function ProduktLayout({
 }) {
   let produktName = params.produkt
   let accentColor = '#02a9e6'
+  let produktTyp = 'sterbegeld'
+  let brandSubline: string | null = null
   try {
     const supabase = createAdminClient()
     const { data } = await supabase
       .from('produkte')
-      .select('name, typ, accent_color')
+      .select('name, typ, accent_color, brand_display_name, brand_subline')
       .eq('slug', params.produkt)
       .maybeSingle()
     if (data) {
-      produktName = data.name
+      // Display-Name: brand_display_name übersteuert den Produktnamen.
+      produktName = data.brand_display_name ?? data.name
       accentColor = resolveAccentColor(data.typ, data.accent_color)
+      produktTyp = data.typ
+      brandSubline = data.brand_subline
     }
   } catch {
     // Keep defaults
   }
 
   return (
-    <ProduktChrome slug={params.produkt} name={produktName} accentColor={accentColor}>
+    <ProduktChrome
+      slug={params.produkt}
+      name={produktName}
+      accentColor={accentColor}
+      brandSubline={brandSubline}
+    >
+      {produktTyp !== 'sterbegeld' && <TrustStoryLine />}
       {children}
     </ProduktChrome>
   )

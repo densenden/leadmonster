@@ -8,14 +8,15 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { wissensfundusSchema } from '@/lib/validation/wissensfundus'
 import type { ActionResult, Wissensfundus } from '@/lib/supabase/types'
+import { PRODUKT_VERGLEICH_CONFIG } from '@/lib/tarife/produkt-config'
 
-type KategorieOption = 'sterbegeld' | 'pflege' | 'leben' | 'unfall' | 'allgemein'
-
-const KATEGORIE_OPTIONS: { value: KategorieOption; label: string }[] = [
-  { value: 'sterbegeld', label: 'Sterbegeld' },
-  { value: 'pflege', label: 'Pflege' },
-  { value: 'leben', label: 'Lebensversicherung' },
-  { value: 'unfall', label: 'Unfall' },
+// Fallback aus Code-Defaults — wird verwendet, wenn der Aufrufer keine
+// `kategorieOptions` aus der DB durchreicht (Tests, Storybook).
+const FALLBACK_KATEGORIE_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
+  ...Object.entries(PRODUKT_VERGLEICH_CONFIG).map(([slug, cfg]) => ({
+    value: slug,
+    label: cfg.produkt_label,
+  })),
   { value: 'allgemein', label: 'Allgemein' },
 ]
 
@@ -24,15 +25,20 @@ interface WissensfundusFormProps {
   artikel?: Wissensfundus
   // Receives either createArtikel or updateArtikel (bound with id) from the page.
   action: (formData: FormData) => Promise<ActionResult>
+  /** Verfügbare Kategorien aus produkt_typen (active=true) + 'allgemein'.
+   *  Wenn nicht gesetzt, fällt die Form auf die Code-Defaults zurück. */
+  kategorieOptions?: ReadonlyArray<{ value: string; label: string }>
 }
 
-export function WissensfundusForm({ artikel, action }: WissensfundusFormProps) {
+export function WissensfundusForm({ artikel, action, kategorieOptions }: WissensfundusFormProps) {
+  const KATEGORIE_OPTIONS =
+    kategorieOptions && kategorieOptions.length > 0 ? kategorieOptions : FALLBACK_KATEGORIE_OPTIONS
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   // Controlled field state — initialized from existing article in edit mode.
-  const [kategorie, setKategorie] = useState<KategorieOption>(
-    (artikel?.kategorie as KategorieOption) ?? 'allgemein'
+  const [kategorie, setKategorie] = useState<string>(
+    artikel?.kategorie ?? 'allgemein'
   )
   const [thema, setThema] = useState(artikel?.thema ?? '')
   const [inhalt, setInhalt] = useState(artikel?.inhalt ?? '')
@@ -113,7 +119,7 @@ export function WissensfundusForm({ artikel, action }: WissensfundusFormProps) {
           id="kategorie"
           name="kategorie"
           value={kategorie}
-          onChange={(e) => setKategorie(e.target.value as KategorieOption)}
+          onChange={(e) => setKategorie(e.target.value)}
           className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#333333] focus:border-[#1a365d] focus:outline-none focus:ring-2 focus:ring-[#1a365d]/20"
         >
           {KATEGORIE_OPTIONS.map((opt) => (

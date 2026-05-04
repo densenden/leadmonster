@@ -31,6 +31,11 @@ export interface ConvexaLeadPayload {
   Zielgruppe?: string
   Intent?: string                  // sicherheit | preis | sofortschutz
   GewuenschterAnbieter?: string
+  // VergleichsRechner-Filter (Migration 20260504000000)
+  AkzeptierteWartezeitMonate?: string
+  Berufsklasse?: string
+  /** JSON-serialisierte Restfelder aus filter_kontext (jsonb). */
+  FilterKontext?: string
   SourceUrl?: string
   UtmSource?: string
   UtmMedium?: string

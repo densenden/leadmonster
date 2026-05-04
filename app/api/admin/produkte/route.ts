@@ -71,8 +71,12 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createAdminClient()
-  const { name, slug, typ, status, accent_color, convexa_form_token, zielgruppe, fokus, anbieter, argumente } =
-    parsed.data
+  const {
+    name, slug, typ, status, accent_color, convexa_form_token,
+    zielgruppe, fokus, anbieter, argumente,
+    brand_display_name, brand_subline, title_suffix_override,
+  } = parsed.data
+  const trimNull = (v?: string | null) => (v && v.trim() ? v.trim() : null)
 
   // Check slug uniqueness before inserting.
   const { data: existing } = await supabase
@@ -98,6 +102,9 @@ export async function POST(request: NextRequest) {
       status: status ?? 'entwurf',
       accent_color: accent_color ?? null,
       convexa_form_token: convexa_form_token?.trim() ? convexa_form_token.trim() : null,
+      brand_display_name:    trimNull(brand_display_name),
+      brand_subline:         trimNull(brand_subline),
+      title_suffix_override: trimNull(title_suffix_override),
     })
     .select('id')
     .single()
@@ -174,8 +181,12 @@ export async function PATCH(request: NextRequest) {
   }
 
   const supabase = createAdminClient()
-  const { id, name, slug, typ, status, accent_color, convexa_form_token, zielgruppe, fokus, anbieter, argumente } =
-    parsed.data
+  const {
+    id, name, slug, typ, status, accent_color, convexa_form_token,
+    zielgruppe, fokus, anbieter, argumente,
+    brand_display_name, brand_subline, title_suffix_override,
+  } = parsed.data
+  const trimNull = (v?: string | null) => (v && v.trim() ? v.trim() : null)
 
   // Update the produkte row first.
   const { error: produktError } = await supabase
@@ -187,6 +198,9 @@ export async function PATCH(request: NextRequest) {
       status,
       accent_color: accent_color ?? null,
       convexa_form_token: convexa_form_token?.trim() ? convexa_form_token.trim() : null,
+      brand_display_name:    trimNull(brand_display_name),
+      brand_subline:         trimNull(brand_subline),
+      title_suffix_override: trimNull(title_suffix_override),
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)

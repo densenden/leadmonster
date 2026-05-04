@@ -10,18 +10,19 @@ import { useRouter } from 'next/navigation'
 import type { ProduktWithConfig, ProduktStatus } from '@/lib/supabase/types'
 import { MonsterLogo } from '@/components/MonsterLogo'
 import { resolveAccentColor, ACCENT_DEFAULTS } from '@/lib/utils/accent'
+import { PRODUKT_VERGLEICH_CONFIG } from '@/lib/tarife/produkt-config'
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const TYP_OPTIONS = [
-  { value: 'sterbegeld', label: 'Sterbegeldversicherung' },
-  { value: 'pflege', label: 'Pflegeversicherung' },
-  { value: 'leben', label: 'Lebensversicherung' },
-  { value: 'unfall', label: 'Unfallversicherung' },
-  { value: 'bu', label: 'Berufsunfähigkeitsversicherung' },
-] as const
+// Fallback-Optionen aus den Code-Defaults — werden nur verwendet, wenn der
+// Aufrufer keine `typOptions` aus der DB durchreicht (Tests, Storybook).
+const FALLBACK_TYP_OPTIONS: ReadonlyArray<{ value: string; label: string }> =
+  Object.entries(PRODUKT_VERGLEICH_CONFIG).map(([slug, cfg]) => ({
+    value: slug,
+    label: cfg.produkt_label,
+  }))
 
 const ZIELGRUPPE_OPTIONS = [
   { value: 'senioren_50plus', label: 'Senioren 50+' },
@@ -66,6 +67,9 @@ interface ArgumenteRow {
 interface ProduktFormProps {
   mode: 'create' | 'edit'
   initialData?: ProduktWithConfig
+  /** Verfügbare Versicherungsarten aus produkt_typen (active=true).
+   *  Wenn nicht gesetzt, fällt die Form auf die Code-Defaults zurück. */
+  typOptions?: ReadonlyArray<{ value: string; label: string }>
 }
 
 // Shared Tailwind classes for form inputs — border-radius 0px per design token.
@@ -80,8 +84,9 @@ const ERROR_CLASS = 'mt-1 text-sm text-red-600'
 // Component
 // ---------------------------------------------------------------------------
 
-export function ProduktForm({ mode, initialData }: ProduktFormProps) {
+export function ProduktForm({ mode, initialData, typOptions }: ProduktFormProps) {
   const router = useRouter()
+  const TYP_OPTIONS = typOptions && typOptions.length > 0 ? typOptions : FALLBACK_TYP_OPTIONS
 
   // Core product fields.
   const [name, setName] = useState(initialData?.name ?? '')
@@ -95,6 +100,19 @@ export function ProduktForm({ mode, initialData }: ProduktFormProps) {
   // einstellungen.convexa_form_token bzw. process.env.CONVEXA_FORM_TOKEN.
   const [convexaFormToken, setConvexaFormToken] = useState(
     initialData?.convexa_form_token ?? '',
+  )
+
+  // Phase 4 § 8 Mitigation — Sub-Brand-Display + Title-Suffix-Override.
+  // Nur relevant für Produkte unter sterbegeld24plus.de, die NICHT
+  // Sterbegeld sind (z. B. /bu, /pflege, /unfall).
+  const [brandDisplayName, setBrandDisplayName] = useState(
+    initialData?.brand_display_name ?? '',
+  )
+  const [brandSubline, setBrandSubline] = useState(
+    initialData?.brand_subline ?? '',
+  )
+  const [titleSuffixOverride, setTitleSuffixOverride] = useState(
+    initialData?.title_suffix_override ?? '',
   )
 
   // Slug pristine flag — when true, slug auto-updates from name.
@@ -200,6 +218,12 @@ export function ProduktForm({ mode, initialData }: ProduktFormProps) {
 
     const tokenTrimmed = convexaFormToken.trim()
 
+    const brandFields = {
+      brand_display_name: brandDisplayName.trim(),
+      brand_subline: brandSubline.trim(),
+      title_suffix_override: titleSuffixOverride.trim(),
+    }
+
     const payload =
       mode === 'edit'
         ? {
@@ -214,6 +238,7 @@ export function ProduktForm({ mode, initialData }: ProduktFormProps) {
             fokus: fokus || undefined,
             anbieter,
             argumente: Object.keys(argumenteRecord).length > 0 ? argumenteRecord : undefined,
+            ...brandFields,
           }
         : {
             name,
@@ -225,6 +250,7 @@ export function ProduktForm({ mode, initialData }: ProduktFormProps) {
             fokus: fokus || undefined,
             anbieter,
             argumente: Object.keys(argumenteRecord).length > 0 ? argumenteRecord : undefined,
+            ...brandFields,
           }
 
     setIsLoading(true)
@@ -412,6 +438,55 @@ export function ProduktForm({ mode, initialData }: ProduktFormProps) {
           Default. Endpunkt: <span className="font-mono">https://api.convexa.app/submissions/&lt;token&gt;</span>
         </p>
       </div>
+
+      {/* Brand-Display (für Sub-Brands unter sterbegeld24plus.de) */}
+      <fieldset className="border border-gray-200 p-4">
+        <legend className="px-2 text-sm font-semibold text-[#333333]">Brand-Display (optional)</legend>
+        <p className="mb-3 text-xs text-[#666666]">
+          Für Sub-Brands unter sterbegeld24plus.de (z. B. <em>BU24Plus</em> auf
+          <code className="mx-1">/bu</code>). Leer = Produktname wird als
+          Wordmark verwendet.
+        </p>
+        <div className="space-y-3">
+          <div>
+            <label htmlFor="brand_display_name" className={LABEL_CLASS}>Brand-Wordmark</label>
+            <input
+              id="brand_display_name"
+              type="text"
+              value={brandDisplayName}
+              onChange={(e) => setBrandDisplayName(e.target.value)}
+              placeholder="z. B. BU24Plus (überschreibt Produktnamen im Logo)"
+              className={INPUT_CLASS}
+            />
+          </div>
+          <div>
+            <label htmlFor="brand_subline" className={LABEL_CLASS}>Brand-Subline</label>
+            <input
+              id="brand_subline"
+              type="text"
+              value={brandSubline}
+              onChange={(e) => setBrandSubline(e.target.value)}
+              placeholder="z. B. handwerker.bu (kleine Zusatzzeile neben dem Logo)"
+              className={INPUT_CLASS}
+            />
+          </div>
+          <div>
+            <label htmlFor="title_suffix_override" className={LABEL_CLASS}>Title-Suffix Override</label>
+            <input
+              id="title_suffix_override"
+              type="text"
+              value={titleSuffixOverride}
+              onChange={(e) => setTitleSuffixOverride(e.target.value)}
+              placeholder="leer = globalen Default verwenden (Christian Wimmer Versicherungsmakler)"
+              className={INPUT_CLASS}
+            />
+            <p className="mt-1 text-xs text-[#999999]">
+              Wird an den Title-Tag angehängt (<code>… | &lt;Suffix&gt;</code>).
+              Sterbegeld-Produkte ignorieren diesen Wert standardmäßig.
+            </p>
+          </div>
+        </div>
+      </fieldset>
 
       {/* Zielgruppe */}
       <fieldset>

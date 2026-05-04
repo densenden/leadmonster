@@ -8,7 +8,9 @@
  * Nutzung im TarifRechner-Component (Server-Wrapper) oder im Generator.
  */
 import { createAdminClient } from '@/lib/supabase/server'
+import { untyped } from '@/lib/supabase/untyped'
 import { getAgeBracket as legacyGetBracket, type ProduktTyp } from '@/lib/tarif-data'
+import type { FilterAxis, FilterAxisValue } from './filter-config-schema'
 
 export interface TarifBracketDb {
   alter_von: number
@@ -103,25 +105,71 @@ interface RawAnbieterRow {
  * Liefert leeren Array, wenn keine passenden Tarife vorhanden sind. Aufrufer
  * sollen das Footer-Disclaimer-UI entsprechend rendern.
  */
+export interface VergleichFilterArgs {
+  /** Bereits geladene Achsen-Config (wenn der Aufrufer sie schon hat). */
+  axes?: FilterAxis[]
+  /** Bereits typed Werte (passend zu axes). */
+  values?: Record<string, FilterAxisValue>
+  /** Roh-URL-Werte; lookupVergleichTarife lädt dann die Achsen selbst über
+   *  produkt.typ → produkt_typen.filter_axes und parst die Werte gegen die
+   *  Optionen. */
+  rawValues?: Record<string, string>
+}
+
 export async function lookupVergleichTarife(
   produktId: string,
   age: number,
   summe: number,
+  filters?: VergleichFilterArgs,
 ): Promise<AnbieterTarif[]> {
-  const supabase = createAdminClient()
-  const { data, error } = await supabase
+  // `berufsklasse` ist seit Migration 20260504000000 vorhanden, aber noch
+  // nicht im generierten Supabase-Type — `untyped()` umgeht den Type-Mismatch.
+  const supabase = untyped(createAdminClient())
+
+  // Filter-Achsen + Werte auflösen, falls nur rawValues geliefert wurden.
+  const { axes, values } = await resolveFilterArgs(produktId, filters)
+
+  let query = supabase
     .from('tarife')
-    .select('anbieter_name, tarif_name, beitrag_low, besonderheiten')
+    .select('anbieter_name, tarif_name, beitrag_low, besonderheiten, berufsklasse')
     .eq('produkt_id', produktId)
     .eq('summe', summe)
     .lte('alter_von', age)
     .gte('alter_bis', age)
     .not('anbieter_name', 'is', null)
-    .order('beitrag_low', { ascending: true })
+
+  // Filter-Achsen aus produkt_typen.filter_axes anwenden.
+  // null = „Egal" → kein Filter.
+  for (const axis of axes) {
+    const v = values[axis.key]
+    if (v === null || v === undefined) continue
+    if (axis.source === 'column') {
+      if (axis.type === 'enum_exact') {
+        query = query.eq(axis.key, v as string | number)
+      } else if (axis.type === 'enum_max') {
+        query = query.lte(axis.key, v as number)
+      } else if (axis.type === 'enum_min') {
+        query = query.gte(axis.key, v as number)
+      }
+    } else {
+      // source = 'besonderheiten' (jsonb) — PostgREST: ->key liest jsonb,
+      // Vergleichsoperatoren funktionieren auf der gecasteten Form.
+      const path = `besonderheiten->${axis.key}`
+      if (axis.type === 'enum_exact') {
+        query = query.eq(path, v as string | number)
+      } else if (axis.type === 'enum_max') {
+        query = query.lte(path, v as number)
+      } else if (axis.type === 'enum_min') {
+        query = query.gte(path, v as number)
+      }
+    }
+  }
+
+  const { data, error } = await query.order('beitrag_low', { ascending: true })
 
   if (error || !data || data.length === 0) return []
 
-  const normalized: AnbieterTarif[] = (data as RawAnbieterRow[]).map(row => ({
+  const normalized: AnbieterTarif[] = (data as unknown as RawAnbieterRow[]).map(row => ({
     anbieter_name: row.anbieter_name,
     tarif_name: row.tarif_name,
     beitrag_eur: Number(row.beitrag_low),
@@ -172,4 +220,56 @@ export function assignBadges(tarife: AnbieterTarif[]): AnbieterTarif[] {
 function scoreSchutz(t: AnbieterTarif): number {
   const b = t.besonderheiten
   return (b.rueckholung ? 1 : 0) + (b.doppelte_unfall ? 1 : 0) + (b.lebenslang ? 1 : 0)
+}
+
+/**
+ * Wenn `filters.rawValues` (URL-Strings) übergeben wurden, lädt diese Funktion
+ * die Achsen-Config für das Produkt aus `produkt_typen` und parst die Strings
+ * in die typisierten Werte (number / string / null), die dann auf die Query
+ * angewendet werden.
+ */
+async function resolveFilterArgs(
+  produktId: string,
+  filters?: VergleichFilterArgs,
+): Promise<{ axes: FilterAxis[]; values: Record<string, FilterAxisValue> }> {
+  if (filters?.axes && filters.values) {
+    return { axes: filters.axes, values: filters.values }
+  }
+
+  if (!filters?.rawValues || Object.keys(filters.rawValues).length === 0) {
+    return { axes: [], values: {} }
+  }
+
+  // Produkt-Typ holen, dann Achsen-Config aus produkt_typen.
+  try {
+    const supabase = untyped(createAdminClient())
+    const { data: produkt } = await supabase
+      .from('produkte')
+      .select('typ')
+      .eq('id', produktId)
+      .maybeSingle()
+    if (!produkt?.typ) return { axes: [], values: {} }
+
+    const { getProduktConfigFromDb } = await import('./produkt-config-db')
+    const config = await getProduktConfigFromDb(produkt.typ as string)
+    const axes = config.filter_axes ?? []
+
+    const values: Record<string, FilterAxisValue> = {}
+    for (const axis of axes) {
+      const raw = filters.rawValues[axis.key]
+      if (raw === undefined || raw === null || raw === '') continue
+      // Versuche Match gegen die definierten Optionen — sicherste Quelle der Type-Info.
+      const opt = axis.options.find(o => String(o.value ?? '') === raw)
+      if (opt) {
+        values[axis.key] = opt.value
+      } else {
+        // Fallback: numerisch parsen
+        const num = Number(raw)
+        values[axis.key] = !Number.isNaN(num) && raw.trim() !== '' ? num : raw
+      }
+    }
+    return { axes, values }
+  } catch {
+    return { axes: [], values: {} }
+  }
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import type { AnbieterTarif, AnbieterBadge } from '@/lib/tarife/lookup'
 import { getProduktConfig } from '@/lib/tarife/produkt-config'
+import type { FilterAxis, FilterAxisValue } from '@/lib/tarife/filter-config-schema'
 import { LeadForm } from '@/components/sections/LeadForm'
 
 // ---------------------------------------------------------------------------
@@ -26,6 +27,10 @@ export interface VergleichsRechnerProps {
   anbieterCountHint?: number
   /** SSR-vorgerenderte Daten für ersten Render ohne Spinner. */
   initialData?: AnbieterTarif[]
+  /** Optional: produkt_typen.filter_axes vom Server-Wrapper. Wenn nicht
+   *  gesetzt, fällt die Komponente auf die Code-Defaults aus `getProduktConfig`
+   *  zurück. */
+  filterAxes?: FilterAxis[]
 }
 
 // ---------------------------------------------------------------------------
@@ -63,6 +68,27 @@ function formatBeitrag(value: number): string {
 
 function formatSumme(value: number): string {
   return value.toLocaleString('de-DE')
+}
+
+/** Mappt aktuelle Filter-Werte auf das LeadForm-Hidden-Field-Format.
+ *  Schlüssel mit `lead_field` werden direkt unter dem Lead-Feld-Namen
+ *  abgelegt (z. B. akzeptierte_wartezeit_monate, berufsklasse). Alle anderen
+ *  Werte landen im `filter_kontext`-Sub-Objekt. */
+function buildLeadFormFilterContext(
+  axes: FilterAxis[],
+  values: Record<string, FilterAxisValue>,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const axis of axes) {
+    const v = values[axis.key]
+    if (v === null || v === undefined) continue
+    if (axis.lead_field) {
+      out[axis.lead_field] = v
+    } else {
+      out[axis.key] = v
+    }
+  }
+  return out
 }
 
 /** Baut den vorbefüllten Interesse-Text für die LeadForm. */
@@ -112,11 +138,24 @@ export function VergleichsRechner({
   inputHint,
   ctaLabel = 'Beratung anfordern',
   initialData,
+  filterAxes,
 }: VergleichsRechnerProps) {
   const config = useMemo(() => getProduktConfig(produktTyp), [produktTyp])
+  // Filter-Achsen vom Server-Wrapper haben Vorrang vor den Code-Defaults.
+  const axes = useMemo<FilterAxis[]>(
+    () => filterAxes ?? config.filter_axes ?? [],
+    [filterAxes, config.filter_axes],
+  )
 
   const [geburtsjahr, setGeburtsjahr] = useState(CURRENT_YEAR - config.default_age)
   const [summe, setSumme] = useState<number>(config.default_summe)
+  const [filterValues, setFilterValues] = useState<Record<string, FilterAxisValue>>(() => {
+    const initial: Record<string, FilterAxisValue> = {}
+    for (const a of axes) {
+      initial[a.key] = a.default_value ?? null
+    }
+    return initial
+  })
   const [results, setResults] = useState<AnbieterTarif[]>(initialData ?? [])
   const [loading, setLoading] = useState(false)
   const [activeAnbieter, setActiveAnbieter] = useState<string | null>(null)
@@ -138,10 +177,22 @@ export function VergleichsRechner({
   }, [config.min_age, config.max_age])
 
   // Fetch on input change.
+  // Filter-Werte werden serialisiert in die URL gehängt — null = nicht senden.
+  const filterQuery = useMemo(() => {
+    const params: string[] = []
+    for (const a of axes) {
+      const v = filterValues[a.key]
+      if (v === null || v === undefined) continue
+      params.push(`${encodeURIComponent(a.key)}=${encodeURIComponent(String(v))}`)
+    }
+    return params.join('&')
+  }, [axes, filterValues])
+
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    const url = `/api/vergleich-tarife?produktId=${encodeURIComponent(produktId)}&age=${age}&summe=${summe}`
+    const base = `/api/vergleich-tarife?produktId=${encodeURIComponent(produktId)}&age=${age}&summe=${summe}`
+    const url = filterQuery ? `${base}&${filterQuery}` : base
     fetch(url)
       .then(r => (r.ok ? r.json() : { data: [] }))
       .then(json => {
@@ -159,7 +210,7 @@ export function VergleichsRechner({
     return () => {
       cancelled = true
     }
-  }, [produktId, age, summe])
+  }, [produktId, age, summe, filterQuery])
 
   // Scroll to LeadForm when revealed.
   useEffect(() => {
@@ -202,7 +253,10 @@ export function VergleichsRechner({
           {inputHint && (
             <p className="font-body text-sm text-brand-neutral-base mb-4">{inputHint}</p>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div
+            className="grid gap-6"
+            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}
+          >
             <div>
               <label
                 htmlFor="vr-geburtsjahr"
@@ -245,6 +299,43 @@ export function VergleichsRechner({
                 ))}
               </select>
             </div>
+            {axes.map(axis => {
+              const currentRaw = filterValues[axis.key]
+              // value als String fürs <select> serialisieren — null wird zu "" gemappt
+              const currentStr = currentRaw === null || currentRaw === undefined ? '' : String(currentRaw)
+              return (
+                <div key={axis.key}>
+                  <label
+                    htmlFor={`vr-axis-${axis.key}`}
+                    className="block text-sm font-body font-light text-brand-neutral-base mb-2"
+                  >
+                    {axis.label}
+                  </label>
+                  <select
+                    id={`vr-axis-${axis.key}`}
+                    aria-label={axis.label}
+                    value={currentStr}
+                    onChange={e => {
+                      const raw = e.target.value
+                      // Re-decode: leere Option → null, sonst Originaltyp aus axis.options finden
+                      const opt = axis.options.find(o => String(o.value ?? '') === raw)
+                      setFilterValues(prev => ({
+                        ...prev,
+                        [axis.key]: opt ? opt.value : null,
+                      }))
+                    }}
+                    data-testid={`vr-axis-${axis.key}`}
+                    className="w-full border border-[#e5e5e5] rounded-none px-3 py-2 text-sm font-body font-light text-[#333333] focus:outline-none focus:ring-2 focus:ring-brand-link min-h-[44px] bg-white cursor-pointer"
+                  >
+                    {axis.options.map(o => (
+                      <option key={String(o.value ?? '_null')} value={o.value === null ? '' : String(o.value)}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )
+            })}
           </div>
         </div>
 
@@ -275,6 +366,17 @@ export function VergleichsRechner({
                     <th scope="col" className="px-4 py-3 text-right text-sm font-medium whitespace-nowrap">
                       {config.beitrag_label}
                     </th>
+                    {axes
+                      .filter(a => a.show_as_column)
+                      .map(a => (
+                        <th
+                          key={a.key}
+                          scope="col"
+                          className="px-4 py-3 text-left text-sm font-medium whitespace-nowrap"
+                        >
+                          {a.label}
+                        </th>
+                      ))}
                     <th scope="col" className="px-4 py-3 text-left text-sm font-medium">
                       Auszeichnungen
                     </th>
@@ -304,6 +406,25 @@ export function VergleichsRechner({
                         <td className="px-4 py-3 text-right text-base font-bold text-brand-orange whitespace-nowrap">
                           {formatBeitrag(tarif.beitrag_eur)} &euro;
                         </td>
+                        {axes
+                          .filter(a => a.show_as_column)
+                          .map(a => {
+                            const raw =
+                              a.source === 'besonderheiten'
+                                ? (tarif.besonderheiten as Record<string, unknown>)[a.key]
+                                : (tarif as unknown as Record<string, unknown>)[a.key]
+                            return (
+                              <td
+                                key={a.key}
+                                className="px-4 py-3 text-sm text-[#666] whitespace-nowrap"
+                                data-testid={`vr-cell-${slug}-${a.key}`}
+                              >
+                                {raw === undefined || raw === null
+                                  ? '—'
+                                  : String(raw)}
+                              </td>
+                            )
+                          })}
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1.5">
                             {tarif.badges.map(badge => (
@@ -378,6 +499,7 @@ export function VergleichsRechner({
               intentTag={intentTag}
               gewuenschterAnbieter={activeAnbieter || undefined}
               defaultInteresse={defaultInteresse}
+              filterContext={buildLeadFormFilterContext(axes, filterValues)}
             />
           )}
         </div>

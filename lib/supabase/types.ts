@@ -283,6 +283,8 @@ export type Database = {
       produkte: {
         Row: {
           accent_color: string | null
+          brand_display_name: string | null
+          brand_subline: string | null
           convexa_form_token: string | null
           created_at: string
           domain: string | null
@@ -297,11 +299,14 @@ export type Database = {
           status: string
           style_description: string | null
           style_reference_url: string | null
+          title_suffix_override: string | null
           typ: string
           updated_at: string
         }
         Insert: {
           accent_color?: string | null
+          brand_display_name?: string | null
+          brand_subline?: string | null
           convexa_form_token?: string | null
           created_at?: string
           domain?: string | null
@@ -316,11 +321,14 @@ export type Database = {
           status?: string
           style_description?: string | null
           style_reference_url?: string | null
+          title_suffix_override?: string | null
           typ: string
           updated_at?: string
         }
         Update: {
           accent_color?: string | null
+          brand_display_name?: string | null
+          brand_subline?: string | null
           convexa_form_token?: string | null
           created_at?: string
           domain?: string | null
@@ -335,6 +343,7 @@ export type Database = {
           status?: string
           style_description?: string | null
           style_reference_url?: string | null
+          title_suffix_override?: string | null
           typ?: string
           updated_at?: string
         }

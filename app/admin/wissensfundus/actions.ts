@@ -7,6 +7,20 @@ import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server'
 import type { ActionResult } from '@/lib/supabase/types'
 import { wissensfundusSchema } from '@/lib/validation/wissensfundus'
+import { PRODUKT_VERGLEICH_CONFIG } from '@/lib/tarife/produkt-config'
+import { listActiveProduktTypen } from '@/lib/tarife/produkt-config-db'
+
+/** Welche Slugs sind für `wissensfundus.kategorie` zulässig? Aktive
+ *  Versicherungsarten + 'allgemein'. Bei DB-Fehlern fällt die Liste auf die
+ *  Code-Defaults zurück. */
+async function getValidKategorien(): Promise<Set<string>> {
+  try {
+    const typen = await listActiveProduktTypen()
+    return new Set([...typen.map(t => t.slug), 'allgemein'])
+  } catch {
+    return new Set([...Object.keys(PRODUKT_VERGLEICH_CONFIG), 'allgemein'])
+  }
+}
 
 // Verify the calling user is authenticated via a server-side session check.
 // Returns the user object or null if no valid session exists.
@@ -45,6 +59,16 @@ export async function createArtikel(formData: FormData): Promise<ActionResult> {
     return { success: false, fieldErrors: parsed.error.flatten().fieldErrors }
   }
 
+  const validKategorien = await getValidKategorien()
+  if (!validKategorien.has(parsed.data.kategorie)) {
+    return {
+      success: false,
+      fieldErrors: {
+        kategorie: ['Ungültige Kategorie. Wähle eine aktive Versicherungsart oder „allgemein".'],
+      },
+    }
+  }
+
   const supabase = createAdminClient()
   const { error } = await supabase.from('wissensfundus').insert(parsed.data)
   if (error) return { success: false, error: 'Datenbankfehler beim Erstellen' }
@@ -73,6 +97,16 @@ export async function updateArtikel(id: string, formData: FormData): Promise<Act
 
   if (!parsed.success) {
     return { success: false, fieldErrors: parsed.error.flatten().fieldErrors }
+  }
+
+  const validKategorien = await getValidKategorien()
+  if (!validKategorien.has(parsed.data.kategorie)) {
+    return {
+      success: false,
+      fieldErrors: {
+        kategorie: ['Ungültige Kategorie. Wähle eine aktive Versicherungsart oder „allgemein".'],
+      },
+    }
   }
 
   const wortzahl = parsed.data.inhalt

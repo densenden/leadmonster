@@ -215,6 +215,9 @@ describe('ProduktForm — edit mode', () => {
     og_image_url: null,
     short_pitch: null,
     standard_autor_id: null,
+    brand_display_name: null,
+    brand_subline: null,
+    title_suffix_override: null,
     created_at: '2026-04-01T00:00:00Z',
     updated_at: '2026-04-01T00:00:00Z',
     produkt_config: {

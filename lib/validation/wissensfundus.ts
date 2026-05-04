@@ -4,8 +4,10 @@
 import { z } from 'zod'
 
 export const wissensfundusSchema = z.object({
-  // Restricted to the five supported insurance knowledge categories.
-  kategorie: z.enum(['sterbegeld', 'pflege', 'leben', 'unfall', 'allgemein']),
+  // Free slug-string — soll mit produkt_typen.slug oder dem Sentinel
+  // 'allgemein' übereinstimmen. Existenzprüfung erfolgt in der Server-Action
+  // gegen die produkt_typen-Tabelle (Migration 20260504000000).
+  kategorie: z.string().min(1).max(50).regex(/^[a-z0-9_-]+$/),
 
   // Short descriptive label; enforces a meaningful, non-trivial title.
   thema: z.string().min(3, 'Thema muss mindestens 3 Zeichen lang sein.').max(120, 'Thema darf maximal 120 Zeichen lang sein.'),

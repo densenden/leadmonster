@@ -8,6 +8,7 @@ import { ProduktForm } from '@/components/admin/ProduktForm'
 import { HeroImagePanel } from './_components/HeroImagePanel'
 import { StyleReferencePanel } from './_components/StyleReferencePanel'
 import { StandardAutorPanel } from './_components/StandardAutorPanel'
+import { listActiveProduktTypen } from '@/lib/tarife/produkt-config-db'
 import type { ProduktWithConfig, Produkt, ProduktConfig } from '@/lib/supabase/types'
 
 // Always re-fetch — admin product edit page must show fresh DB state.
@@ -46,6 +47,10 @@ export default async function ProduktBearbeitenPage({ params }: PageProps) {
     .order('nachname', { ascending: true })
   const autoren = autorenRows ?? []
 
+  // Verfügbare Versicherungsarten für Typ-Dropdown.
+  const typen = await listActiveProduktTypen()
+  const typOptions = typen.map(t => ({ value: t.slug, label: t.name }))
+
   // Compose into the ProduktWithConfig shape.
   const initialData: ProduktWithConfig = {
     ...(produktRow as Produkt),
@@ -82,7 +87,12 @@ export default async function ProduktBearbeitenPage({ params }: PageProps) {
 
       {/* key forces remount when product changes so useState-captured initialData
           doesn't leak across products (avoids "old names reappearing" bug) */}
-      <ProduktForm key={initialData.id} mode="edit" initialData={initialData} />
+      <ProduktForm
+        key={initialData.id}
+        mode="edit"
+        initialData={initialData}
+        typOptions={typOptions}
+      />
 
       <div className="mt-10 space-y-8">
         <StandardAutorPanel

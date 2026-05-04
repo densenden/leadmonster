@@ -150,6 +150,9 @@ async function main() {
     if (einheit !== 'eur_summe' && einheit !== 'eur_monat') {
       throw new Error(`Ungültige einheit "${einheit}" — erwartet eur_summe | eur_monat`)
     }
+    // Optionale Berufsklasse (Migration 20260504000000) — relevant für BU,
+    // bei anderen Produkten typischerweise leer/NULL.
+    const berufsklasse = r.berufsklasse && r.berufsklasse.trim() ? r.berufsklasse.trim() : null
     return {
       produkt_id: produkt.id,
       anbieter_name: r.anbieter_name,
@@ -161,16 +164,19 @@ async function main() {
       beitrag_low: beitrag,
       beitrag_high: beitrag,
       einheit,
+      berufsklasse,
     }
   })
 
-  // Chunked upsert: PostgREST hat ein Limit, daher in 200er-Chunks
+  // Chunked upsert: PostgREST hat ein Limit, daher in 200er-Chunks.
+  // UNIQUE-Constraint berücksichtigt seit Migration 20260504000000 die
+  // Berufsklasse als Bestandteil des Schlüssels.
   const CHUNK_SIZE = 200
   let inserted = 0
   for (let i = 0; i < upserts.length; i += CHUNK_SIZE) {
     const chunk = upserts.slice(i, i + CHUNK_SIZE)
     const { error } = await supabase.from('tarife').upsert(chunk, {
-      onConflict: 'produkt_id,anbieter_name,alter_von,summe',
+      onConflict: 'produkt_id,anbieter_name,alter_von,summe,berufsklasse',
     })
     if (error) {
       console.error(`Upsert-Fehler bei Chunk ${i / CHUNK_SIZE + 1}:`, error.message)

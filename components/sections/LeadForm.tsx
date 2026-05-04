@@ -24,10 +24,14 @@ export interface LeadFormProps {
    *  als Konversationsstart in die Anfrage zu schreiben. Der User kann den Text
    *  überschreiben. */
   defaultInteresse?: string
+  /** Filter-Werte aus dem VergleichsRechner — werden als Hidden-Inputs an
+   *  /api/leads gesendet und dort in leads.<lead_field> + leads.filter_kontext
+   *  persistiert (für Convexa-Push). */
+  filterContext?: Record<string, unknown>
 }
 
 /** Named export — no default export per project convention. */
-export function LeadForm({ produktId, zielgruppeTag, intentTag, gewuenschterAnbieter, defaultInteresse }: LeadFormProps) {
+export function LeadForm({ produktId, zielgruppeTag, intentTag, gewuenschterAnbieter, defaultInteresse, filterContext }: LeadFormProps) {
   // Four-state status machine: all conditional rendering derives from this single variable.
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
 
@@ -80,6 +84,7 @@ export function LeadForm({ produktId, zielgruppeTag, intentTag, gewuenschterAnbi
           telefon,
           interesse,
           website: honeypot,
+          filterContext: filterContext && Object.keys(filterContext).length > 0 ? filterContext : undefined,
         }),
       })
 

@@ -269,15 +269,31 @@ export async function generateContent(
           validated.sections = validated.sections.filter(s => s.type !== 'vergleichsrechner')
 
           if (distinctCount >= 2) {
+            // Filter-Achsen aus produkt_typen lesen — wenn vorhanden, Wording
+            // anreichern (z. B. "auch nach Wartezeit filterbar").
+            const { getProduktConfigFromDb } = await import('@/lib/tarife/produkt-config-db')
+            const cfg = await getProduktConfigFromDb(produkt.typ as string)
+            const axes = cfg.filter_axes ?? []
+            const inputHintParts = ['Geburtsjahr & Wunschsumme']
+            const introExtras: string[] = []
+            for (const a of axes) {
+              inputHintParts.push(a.label)
+              introExtras.push(a.label.toLowerCase())
+            }
+            const introExtra = introExtras.length > 0
+              ? ` Zusätzlich filterbar nach ${introExtras.join(' und ')}.`
+              : ''
+
             const featuresIdx = validated.sections.findIndex(s => s.type === 'features')
             const insertIdx = featuresIdx >= 0 ? featuresIdx + 1 : 1
             validated.sections.splice(insertIdx, 0, {
               type: 'vergleichsrechner',
               headline: `${produkt.name} im Anbieter-Vergleich`,
-              intro: `Geburtsjahr und Wunschsumme wählen — wir zeigen die Tarife von ${distinctCount} Top-Anbietern in Echtzeit, sortiert nach Beitrag.`,
-              input_hint: 'Geburtsjahr & Wunschsumme wählen',
+              intro: `Geburtsjahr und Wunschsumme wählen — wir zeigen die Tarife von ${distinctCount} Top-Anbietern in Echtzeit, sortiert nach Beitrag.${introExtra}`,
+              input_hint: inputHintParts.join(' & ') + ' wählen',
               cta_label: 'Beratung anfordern',
               anbieter_count_hint: distinctCount,
+              available_filters: axes.map(a => a.key),
             })
           }
         }

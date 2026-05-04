@@ -13,8 +13,20 @@ const mockNotFound = vi.fn(() => {
 })
 vi.mock('next/navigation', () => ({ notFound: mockNotFound }))
 
-// Mock next/cache
-vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
+// Mock next/cache — unstable_cache wird von lib/tarife/produkt-config genutzt
+// (nachgezogen aus paralleler Arbeit am Produktart-Konfigurator).
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
+  unstable_cache: <T extends (...args: unknown[]) => unknown>(fn: T) => fn,
+  revalidateTag: vi.fn(),
+}))
+
+// Mock React.cache — wird von lib/einstellungen/load.ts genutzt (Phase 4
+// Title-Suffix). React.cache ist nur in Server-Component-Runtime verfügbar.
+vi.mock('react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react')>()
+  return { ...actual, cache: <T extends (...args: unknown[]) => unknown>(fn: T) => fn }
+})
 
 // Mock next/headers for the supabase server client
 vi.mock('next/headers', () => ({
@@ -112,9 +124,14 @@ describe('generateMetadata', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('returns a Metadata object with title and canonical from the fetched row', async () => {
+    // Phase 4: generateMetadata macht jetzt drei Queries — die generierter_content
+    // .single(), die produkte .maybeSingle() (für title_suffix_override), und
+    // einstellungen .select() (loadAllEinstellungen). Mock muss alle drei
+    // tolerieren. Sterbegeld-Produkte ignorieren den Suffix sowieso, daher
+    // reicht ein nichts-tuende-Stub für .maybeSingle und .select.
     const chain = {
       from: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
+      select: vi.fn().mockResolvedValue({ data: [], error: null }),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({
         data: {
@@ -124,7 +141,12 @@ describe('generateMetadata', () => {
         },
         error: null,
       }),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: { typ: 'sterbegeld', title_suffix_override: null },
+        error: null,
+      }),
     }
+    chain.select.mockReturnValue(chain) // chain für nach select().eq().single()
     mockAdminFrom.mockReturnValue(chain)
 
     const { generateMetadata } = await import('../page')
@@ -141,6 +163,7 @@ describe('generateMetadata', () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     }
     mockAdminFrom.mockReturnValue(chain)
 

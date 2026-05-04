@@ -35,6 +35,13 @@ export interface HeroPromptOptions {
 // Brand-Looks pro Produkttyp — die Farb-Palette / Bildstimmung, die alle
 // Bilder eines Produkts gemeinsam haben sollen. Ohne Style-Reference greift
 // dieser Default. Pro Sektion variiert nur das Motiv, nicht der Look.
+//
+// Diese Konstanten dienen als **Hard-Fallback**. Seit Migration 20260504000000
+// liegen Brand-Look + Scenes auch in `produkt_typen.image_brand_look` /
+// `image_typ_scenes` und können vom Admin pro Versicherungsart editiert
+// werden. Ein DB-getriebener Reader für hero-prompt ist für eine Folge-
+// Iteration vorgesehen — bis dahin werden neue Versicherungsarten ohne
+// Code-Eintrag automatisch auf Sterbegeld zurückfallen.
 // ---------------------------------------------------------------------------
 
 interface BrandLook {

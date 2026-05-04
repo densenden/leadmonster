@@ -17,17 +17,27 @@ describe('wissensfundusSchema — kategorie field', () => {
     }
   })
 
-  it('rejects an invalid kategorie value', () => {
+  it('accepts a slug-shaped kategorie value (DB-based validation in Server Action)', () => {
+    // Seit Migration 20260504000000 ist kategorie kein Enum mehr — beliebige
+    // slug-konforme Strings sind erlaubt; die Existenz wird in der
+    // Server-Action gegen produkt_typen validiert.
     const result = wissensfundusSchema.safeParse({
-      kategorie: 'invalid_kategorie',
+      kategorie: 'zahnzusatz',
+      thema: 'Test Thema',
+      inhalt: 'Ein ausreichend langer Inhalt für den Test.',
+      tags: [],
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects a kategorie value with invalid characters', () => {
+    const result = wissensfundusSchema.safeParse({
+      kategorie: 'Invalid Kategorie!',
       thema: 'Test Thema',
       inhalt: 'Ein ausreichend langer Inhalt für den Test.',
       tags: [],
     })
     expect(result.success).toBe(false)
-    if (!result.success) {
-      expect(result.error.flatten().fieldErrors.kategorie).toBeDefined()
-    }
   })
 
   it('rejects an empty kategorie string', () => {

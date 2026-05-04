@@ -115,9 +115,25 @@ export function buildPayload(
 
   // gewuenschter_anbieter ist eine optionale Spalte — Lead-Type kennt sie evtl.
   // noch nicht je nach Migrationsstand, daher cast über generic record.
-  const leadAny = lead as unknown as Record<string, string | null | undefined>
-  if (leadAny.gewuenschter_anbieter) {
-    payload.GewuenschterAnbieter = String(leadAny.gewuenschter_anbieter)
+  const leadAny = lead as unknown as Record<string, unknown>
+  if (typeof leadAny.gewuenschter_anbieter === 'string' && leadAny.gewuenschter_anbieter) {
+    payload.GewuenschterAnbieter = leadAny.gewuenschter_anbieter
+  }
+
+  // Filter-Werte aus VergleichsRechner (Migration 20260504000000).
+  if (leadAny.akzeptierte_wartezeit_monate !== null && leadAny.akzeptierte_wartezeit_monate !== undefined) {
+    payload.AkzeptierteWartezeitMonate = String(leadAny.akzeptierte_wartezeit_monate)
+  }
+  if (typeof leadAny.berufsklasse === 'string' && leadAny.berufsklasse) {
+    payload.Berufsklasse = leadAny.berufsklasse
+  }
+  if (
+    leadAny.filter_kontext &&
+    typeof leadAny.filter_kontext === 'object' &&
+    !Array.isArray(leadAny.filter_kontext) &&
+    Object.keys(leadAny.filter_kontext as Record<string, unknown>).length > 0
+  ) {
+    payload.FilterKontext = JSON.stringify(leadAny.filter_kontext)
   }
 
   if (lead.source_url) payload.SourceUrl = lead.source_url

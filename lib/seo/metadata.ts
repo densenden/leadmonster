@@ -15,6 +15,13 @@ export interface ProduktMetadataInput {
   produktName?: string
   /** Optional custom domain — falls back to NEXT_PUBLIC_BASE_URL env var, then sterbegeld24plus.de. */
   domain?: string
+  /**
+   * Optionaler Title-Suffix (z. B. „Christian Wimmer Versicherungsmakler")
+   * für Nicht-Sterbegeld-Produkte — vermeidet, dass die Sterbegeld-Domain
+   * als verwirrender Kontext im Title-Tag erscheint. Siehe § 8 Mitigation.
+   * Leer / undefined = kein Suffix.
+   */
+  titleSuffix?: string | null
 }
 
 // Build a Next.js Metadata object for a public product page.
@@ -25,23 +32,42 @@ export function buildProduktMetadata({
   meta_desc,
   produktName,
   domain,
+  titleSuffix,
 }: ProduktMetadataInput): Metadata {
   const baseUrl = resolveBaseUrl(domain)
   const canonical = `${baseUrl}/${slug}`
 
+  // Title-Suffix anhängen (max 60 chars-Limit beachten — Suffix wird notfalls
+  // weggelassen, statt den Haupt-Title zu beschneiden).
+  const title = titleSuffix && titleSuffix.trim().length > 0
+    ? truncateWithSuffix(meta_title, titleSuffix.trim(), 60)
+    : meta_title
+
   return {
-    title: { absolute: meta_title },
+    title: { absolute: title },
     description: meta_desc,
     robots: { index: true, follow: true },
     alternates: { canonical },
     openGraph: {
-      title: meta_title,
+      title,
       description: meta_desc,
       type: 'website',
       url: canonical,
       siteName: produktName,
     },
   }
+}
+
+/**
+ * Hängt `<base> | <suffix>` an, solange das Ergebnis ≤ maxChars ist.
+ * Wenn der base-Title selbst zu lang ist, wird er ohne Suffix zurückgegeben
+ * (statt das Branding kaputt zu kürzen).
+ */
+function truncateWithSuffix(base: string, suffix: string, maxChars: number): string {
+  const combined = `${base} | ${suffix}`
+  if (combined.length <= maxChars) return combined
+  if (base.length <= maxChars) return base
+  return base.slice(0, maxChars)
 }
 
 // ===== FAQ page metadata builder =====

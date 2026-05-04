@@ -35,7 +35,19 @@ const leadSchema = z.object({
   telefon: z.string().max(30).optional(),
   interesse: z.string().max(1000).optional(),
   website: z.string().optional(), // honeypot — any non-empty value triggers silent rejection
+  // Filter-Werte aus dem VergleichsRechner (Wartezeit, Berufsklasse, etc.).
+  // Bekannte Lead-Felder (akzeptierte_wartezeit_monate, berufsklasse) werden in
+  // eigene Spalten geschrieben, alles andere landet im filter_kontext-jsonb.
+  filterContext: z.record(z.string(), z.unknown()).optional(),
 })
+
+// Welche filterContext-Schlüssel landen direkt in eigenen Spalten?
+// (Seit Migration 20260504000000, im generierten Supabase-Type evtl. noch nicht
+// enthalten — daher als string-Liste statt typed Keyset.)
+const KNOWN_LEAD_FIELDS: ReadonlyArray<string> = [
+  'akzeptierte_wartezeit_monate',
+  'berufsklasse',
+]
 
 export async function POST(request: NextRequest) {
   // 1. CSRF check — must run first, before rate limiting and validation.
@@ -115,6 +127,23 @@ export async function POST(request: NextRequest) {
   // Only include gewuenschter_anbieter when set — keeps the payload narrow.
   if (parsed.data.gewuenschterAnbieter) {
     insertPayload.gewuenschter_anbieter = parsed.data.gewuenschterAnbieter
+  }
+
+  // Filter-Kontext: bekannte Schlüssel in eigene Spalten extrahieren,
+  // alles übrige landet im filter_kontext-jsonb für Convexa-Push.
+  if (parsed.data.filterContext) {
+    const restContext: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(parsed.data.filterContext)) {
+      if (v === null || v === undefined) continue
+      if ((KNOWN_LEAD_FIELDS as readonly string[]).includes(k)) {
+        ;(insertPayload as Record<string, unknown>)[k] = v
+      } else {
+        restContext[k] = v
+      }
+    }
+    if (Object.keys(restContext).length > 0) {
+      ;(insertPayload as Record<string, unknown>).filter_kontext = restContext
+    }
   }
 
   const { data: lead, error: insertError } = await supabase
