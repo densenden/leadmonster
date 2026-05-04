@@ -81,7 +81,7 @@ describe('sitemap', () => {
     return sitemapFn()
   }
 
-  it('homepage is always included with priority 0.9 and changeFrequency weekly', async () => {
+  it('static homepage fallback is emitted with priority 0.9 when no root product is published', async () => {
     const result = await getSitemap({ produkte: [], ratgeber: [] })
     const homepage = result.find((e) => e.url === 'https://leadmonster.de/')
     expect(homepage).toBeDefined()
@@ -89,20 +89,37 @@ describe('sitemap', () => {
     expect(homepage?.changeFrequency).toBe('weekly')
   })
 
-  it('a published product generates exactly 5 sub-routes', async () => {
+  it('root product (sterbegeld24plus) emits its main page under `/` with priority 1.0', async () => {
     const result = await getSitemap({
       produkte: [{ id: 'abc', slug: 'sterbegeld24plus', updated_at: '2026-04-01T00:00:00Z' }],
       ratgeber: [],
     })
-    const produktRoutes = result.filter((e) => e.url.includes('/sterbegeld24plus'))
-    // /sterbegeld24plus, /faq, /vergleich, /tarife, /vergleichsrechner
+    const homepages = result.filter((e) => new URL(e.url).pathname === '/')
+    // Exactly one `/` entry — kein doppelter statischer Fallback.
+    expect(homepages).toHaveLength(1)
+    expect(homepages[0].priority).toBe(1.0)
+    // Sub-routes bleiben unter /sterbegeld24plus/...
+    const paths = result.map((e) => new URL(e.url).pathname)
+    expect(paths).toContain('/sterbegeld24plus/faq')
+    expect(paths).toContain('/sterbegeld24plus/vergleichsrechner')
+    // Aber NICHT `/sterbegeld24plus` als bare Hauptseite (canonical liegt unter `/`).
+    expect(paths).not.toContain('/sterbegeld24plus')
+  })
+
+  it('a published non-root product generates exactly 5 sub-routes', async () => {
+    const result = await getSitemap({
+      produkte: [{ id: 'abc', slug: 'testprodukt', updated_at: '2026-04-01T00:00:00Z' }],
+      ratgeber: [],
+    })
+    const produktRoutes = result.filter((e) => e.url.includes('/testprodukt'))
+    // /testprodukt, /faq, /vergleich, /tarife, /vergleichsrechner
     expect(produktRoutes).toHaveLength(5)
     const paths = produktRoutes.map((e) => new URL(e.url).pathname)
-    expect(paths).toContain('/sterbegeld24plus')
-    expect(paths).toContain('/sterbegeld24plus/faq')
-    expect(paths).toContain('/sterbegeld24plus/vergleich')
-    expect(paths).toContain('/sterbegeld24plus/tarife')
-    expect(paths).toContain('/sterbegeld24plus/vergleichsrechner')
+    expect(paths).toContain('/testprodukt')
+    expect(paths).toContain('/testprodukt/faq')
+    expect(paths).toContain('/testprodukt/vergleich')
+    expect(paths).toContain('/testprodukt/tarife')
+    expect(paths).toContain('/testprodukt/vergleichsrechner')
   })
 
   it('assigns correct priority and changeFrequency per route type', async () => {

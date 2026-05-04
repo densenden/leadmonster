@@ -12,6 +12,12 @@ export const LEGAL_NAME = 'finanzteam26 GmbH & Co. KG'
 export const CORPORATE_URL = 'https://finanzteam26.de'
 export const DEFAULT_BASE_URL = 'https://www.sterbegeld24plus.de'
 
+// Root-Produkt: das Produkt, dessen Hauptseite unter `/` (nicht `/<slug>`) lebt.
+// Siehe docs/content-strategie-nischen-anbieter.md § 8 — Single-Domain-Strategie.
+// Wird in app/page.tsx, app/sitemap.ts, next.config.mjs (Redirect) und der
+// Schema-Canonical-Logik referenziert.
+export const ROOT_PRODUKT_SLUG = 'sterbegeld24plus'
+
 // Resolve a canonical https-Origin from an optional `domain` field, the
 // `NEXT_PUBLIC_BASE_URL` env var, or a hard-coded fallback. Robust against:
 //   - `domain`-Spalte ohne https-Prefix (z. B. 'sterbegeld24plus.de')

@@ -4,6 +4,7 @@
 import type { MetadataRoute } from 'next'
 import { createAdminClient } from '@/lib/supabase/server'
 import { buildCanonicalUrl } from '@/lib/seo/metadata'
+import { ROOT_PRODUKT_SLUG } from '@/lib/seo/organization'
 import { loadAnbieterForProdukt, slugifyAnbieter } from '@/lib/anbieter/load'
 import { MARKTDATEN_THEMEN } from '@/lib/marktdaten/queries'
 
@@ -19,25 +20,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createAdminClient()
   const entries: MetadataRoute.Sitemap = []
 
-  // Homepage — always included as a static entry.
-  entries.push({
-    url: buildCanonicalUrl('/'),
-    lastModified: new Date(),
-    changeFrequency: 'weekly',
-    priority: 0.9,
-  })
-
-  // Published products — four fixed sub-routes per product.
+  // Published products — fixed sub-routes per product.
   const { data: produkte } = await supabase
     .from('produkte')
     .select('id, slug, updated_at')
     .eq('status', 'publiziert')
 
+  // Root-Produkt belegt `/` mit priority 1.0; alle anderen Produkte liegen
+  // unter `/<slug>`. Wenn kein Root-Produkt veröffentlicht ist, wird ein
+  // statischer `/`-Fallback-Eintrag emittiert.
+  const hasRootProdukt = (produkte ?? []).some(p => p.slug === ROOT_PRODUKT_SLUG)
+  if (!hasRootProdukt) {
+    entries.push({
+      url: buildCanonicalUrl('/'),
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    })
+  }
+
   for (const produkt of produkte ?? []) {
     const lastModified = produkt.updated_at
+    const isRoot = produkt.slug === ROOT_PRODUKT_SLUG
 
     entries.push({
-      url: buildCanonicalUrl(`/${produkt.slug}`),
+      url: buildCanonicalUrl(isRoot ? '/' : `/${produkt.slug}`),
       lastModified,
       changeFrequency: 'weekly',
       priority: 1.0,
