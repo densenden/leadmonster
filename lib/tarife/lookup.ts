@@ -143,7 +143,10 @@ export async function lookupVergleichTarife(
   for (const axis of axes) {
     const v = values[axis.key]
     if (v === null || v === undefined) continue
+
     if (axis.source === 'column') {
+      // Echte Spalte → direkte PostgREST-Operatoren funktionieren mit
+      // korrektem Spaltentyp.
       if (axis.type === 'enum_exact') {
         query = query.eq(axis.key, v as string | number)
       } else if (axis.type === 'enum_max') {
@@ -152,15 +155,28 @@ export async function lookupVergleichTarife(
         query = query.gte(axis.key, v as number)
       }
     } else {
-      // source = 'besonderheiten' (jsonb) — PostgREST: ->key liest jsonb,
-      // Vergleichsoperatoren funktionieren auf der gecasteten Form.
-      const path = `besonderheiten->${axis.key}`
-      if (axis.type === 'enum_exact') {
-        query = query.eq(path, v as string | number)
-      } else if (axis.type === 'enum_max') {
-        query = query.lte(path, v as number)
-      } else if (axis.type === 'enum_min') {
-        query = query.gte(path, v as number)
+      // source = 'besonderheiten' (jsonb).
+      // PostgREST-Quirk: numerische Vergleiche auf `jsonb->key` sind
+      // unzuverlässig (JSONB-Vergleich vs. erwarteter Zahlvergleich).
+      // Robuster Weg: aus den vorab bekannten Optionen die zulässigen
+      // Werte berechnen und mit `.in()` über den Text-Cast `->>` filtern.
+      const path = `besonderheiten->>${axis.key}`
+      const allowed = axis.options
+        .map(o => o.value)
+        .filter((o): o is string | number => o !== null)
+        .filter(o => {
+          if (axis.type === 'enum_exact') return o === v
+          if (axis.type === 'enum_max') return Number(o) <= Number(v)
+          if (axis.type === 'enum_min') return Number(o) >= Number(v)
+          return false
+        })
+
+      if (allowed.length === 0) {
+        // Kein erlaubter Wert → leere Resultmenge erzwingen.
+        query = query.eq('id', '00000000-0000-0000-0000-000000000000')
+      } else {
+        // PostgREST `.in()` mit text-Cast braucht String-Werte.
+        query = query.in(path, allowed.map(String))
       }
     }
   }
