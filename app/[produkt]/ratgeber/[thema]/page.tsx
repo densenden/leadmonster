@@ -178,13 +178,14 @@ export default async function RatgeberArticlePage({ params }: PageProps) {
           </ol>
         </nav>
 
-        {/* Hero — Cover-Bild aus erster intro-Section, falls vorhanden, plus
-            Article-Header. Wenn kein Cover gesetzt ist, fällt nur der
-            Header-Block zurück. */}
+        {/* Hero — Cover-Bild bevorzugt aus content.cover_image_url (vom
+            Image-Generator gesetzt), sonst aus der intro-Section. Wenn beide
+            fehlen, rendert nur der Header-Block. */}
         {(() => {
           const intro = sections.find((s): s is IntroSection => s.type === 'intro')
-          const cover = intro?.image_url
-          const coverAlt = intro?.image_alt ?? articleTitle
+          const contentObj = row.content as { cover_image_url?: string; cover_image_alt?: string } | null
+          const cover = contentObj?.cover_image_url ?? intro?.image_url
+          const coverAlt = contentObj?.cover_image_alt ?? intro?.image_alt ?? articleTitle
           if (cover) {
             return (
               <section className="mb-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-end">

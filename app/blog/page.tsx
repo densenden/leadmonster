@@ -78,7 +78,11 @@ export default async function BlogIndexPage() {
     slug: string | null
     title: string | null
     meta_desc: string | null
-    content: { sections?: Array<{ headline?: string; subline?: string; intro?: string }> } | null
+    content: {
+      sections?: Array<{ headline?: string; subline?: string; intro?: string }>
+      cover_image_url?: string
+      cover_image_alt?: string
+    } | null
     generated_at: string | null
     produkte: { slug: string; hero_image_url: string | null; hero_image_alt: string | null } | null
   }>) {
@@ -87,12 +91,15 @@ export default async function BlogIndexPage() {
     const firstSection = r.content?.sections?.[0]
     const excerpt =
       r.meta_desc ?? firstSection?.subline ?? firstSection?.intro ?? null
+    // Eigenes Cover-Bild des Ratgebers bevorzugt, sonst Produkt-Hero-Bild.
+    const cover_image_url = r.content?.cover_image_url ?? r.produkte.hero_image_url
+    const cover_image_alt = r.content?.cover_image_alt ?? r.produkte.hero_image_alt
     entries.push({
       href: `/${r.produkte.slug}/ratgeber/${r.slug}`,
       title: r.title ?? '(ohne Titel)',
       excerpt,
-      cover_image_url: r.produkte.hero_image_url,
-      cover_image_alt: r.produkte.hero_image_alt,
+      cover_image_url,
+      cover_image_alt,
       published_at: r.generated_at,
       reading_time: null,
       kategorien: null,
