@@ -433,44 +433,74 @@ Re-Generation: Im Admin gibt es „Bild neu erzeugen"-Button pro Slot.
 
 ---
 
-## Entwicklungs-Phasen (aktualisiert 2026-04-29)
+## Entwicklungs-Phasen (aktualisiert 2026-05-13)
 
 ### Phase 1 — Fundament ✅
 - [x] Next.js, Supabase-Schema, Auth, Design-Tokens
 
-### Phase 2 — Content Engine (Texte ✅, Bilder/Auto-Link 🚧)
+### Phase 2 — Content Engine ✅
 - [x] Claude-Generator für hauptseite/faq/vergleich/tarif/ratgeber
-- [ ] **Auto-Cross-Linking** (`lib/linker/auto-link.ts`)
-- [ ] **Bild-Pipeline** (OpenAI gpt-image-1)
+- [x] **Auto-Cross-Linking** ([lib/linker/auto-link.ts](lib/linker/auto-link.ts))
+- [x] **Bild-Pipeline** ([lib/openai/image-generator.ts](lib/openai/image-generator.ts), hero-/section-Prompt-Builder)
 
-### Phase 3 — Public Pages
+### Phase 3 — Public Pages ✅
 - [x] Produktseiten + Sitemap + robots.txt + llms.txt
-- [ ] **Blog-Routen** (`/blog`, `/blog/[slug]`)
-- [ ] **Wissens-Routen** (`/wissen`, `/wissen/[slug]`)
+- [x] **Blog-Routen** ([app/blog/page.tsx](app/blog/page.tsx), [app/blog/[slug]/page.tsx](app/blog/[slug]/page.tsx) — Hero-Overlay + Related-Posts)
+- [x] **Wissens-Routen** ([app/wissen/page.tsx](app/wissen/page.tsx), [app/wissen/[slug]/page.tsx](app/wissen/[slug]/page.tsx))
 
-### Phase 4 — Lead-Flow (Migration zu Convexa)
+### Phase 4 — Lead-Flow (Convexa) ✅
 - [x] Lead-Form + Resend
-- [ ] **Convexa-Adapter** (`lib/convexa/client.ts`)
+- [x] **Convexa-Adapter** ([lib/convexa/client.ts](lib/convexa/client.ts) — live, PascalCase, Token-URL-Auth)
 - [x] Confluence-Code vollständig entfernt (2026-04-30)
 
-### Phase 5 — Wissensfundus
-- [ ] **Markdown-Seeds** für 5 Produkttypen
-- [ ] **Blog-Import** alte finanzteam26-Inhalte
-- [ ] Admin-MD-Editor
+### Phase 5 — Wissensfundus ✅
+- [x] **Markdown-Seeds** für 5 Produkttypen ([wissensfundus-seeds/](wissensfundus-seeds/))
+- [x] **Blog-Import** alte finanzteam26-Inhalte ([scripts/import-finanzteam26-blog.ts](scripts/import-finanzteam26-blog.ts)) — 10/10 importiert 2026-05-13, Status `entwurf`, Review durch Christian ausstehend
+- [x] Admin-MD-Editor ([app/admin/(protected)/wissensfundus/](app/admin/(protected)/wissensfundus/))
 
 ### Phase 6 — Tarife in DB + VergleichsRechner ✅
-- [ ] **Tarif-Migration** statisches `lib/tarif-data.ts` → DB (anbieter_name = NULL)  *— ausstehend, Marktkorridore noch statisch*
+- [x] **Tarif-Migration** statisches `lib/tarif-data.ts` → DB (anbieter_name = NULL) — Marktkorridor für Sterbegeld24Plus + Sterbegeld25 in DB ([scripts/seed-marktkorridor.ts](scripts/seed-marktkorridor.ts), 50 Rows). `lib/tarif-data.ts` bleibt als Legacy-Fallback in [lib/tarife/lookup.ts](lib/tarife/lookup.ts). TarifRechner-Client-Component-Refactor auf DB-Lookup ist eigenständige Folge-Iteration.
 - [x] **Schema-Erweiterung** `tarife`: `anbieter_name`, `tarif_name`, `besonderheiten` jsonb (Migration `20260430000002_vergleichsrechner_anbieter.sql`)
-- [x] **CSV-Seeds**: `sterbegeld.csv` (echte Daten, 348 Zeilen), `pflege.csv` / `leben.csv` / `bu.csv` / `unfall.csv` (Markt-Templates)
+- [x] **CSV-Seeds**: `sterbegeld.csv` (echte Daten, 348 Zeilen), `pflege.csv` / `leben.csv` / `bu.csv` / `unfall.csv` (Markt-Templates ~225 Zeilen)
 - [x] **Seed-Scripts**: `scripts/seed-vergleich-tarife.ts` (einzeln) + `scripts/seed-all-vergleich-tarife.ts` (alle)
 - [x] **`VergleichsRechner.tsx`** (Daten-Eingabe → Anbietertabelle mit Sortierung + Badges → Lead-Form mit Prefill)
 - [x] **Produkt-Typ-Konfig** in `lib/tarife/produkt-config.ts` — pro Typ Summen, Labels, Default-Alter
 - [x] **Eigene Route** `app/[produkt]/vergleichsrechner/page.tsx` + Einbettung auf Hauptseite + Sitemap-Eintrag
 - [x] **Generator-Integration**: programmatische `vergleichsrechner`-Section nach `features`, sobald ≥2 Anbieter in DB
-- [ ] Admin-UI zur Pflege beider Modi (Marktkorridor + Anbietertarif) *— Folge-Iteration*
+- [x] Admin-UI zur Pflege beider Modi ([app/admin/(protected)/tarife/](app/admin/(protected)/tarife/) mit `[slug]` + `_components`)
 
-### Phase 7 — Roll-out 4 weitere Produkte
-- [ ] Pflege, Leben, BU, Unfall mit jeweils vollem Content + Bildern + echten Anbieterdaten in den CSVs
+### Phase 7 — Roll-out 4 weitere Produkte 🚧
+- [x] Pflege, Leben, BU, Unfall: Wissensbasis, CSV-Templates (~225 Zeilen pro Produkt), DNA
+- [ ] **Echte Anbieterdaten** für Pflege/Leben/BU/Unfall — Input-Pflege durch Vertrieb (Admin-UI Tarife oder CSV-Reseed)
+- [ ] Pro Produkt: vollständige Hauptseite + Ratgeber + Bilder (analog Sterbegeld24Plus-Pilot)
+
+### Phase 8 — Page-Templates & Visual Variety ✅ (2026-05-13)
+Erweiterte Section-Typen für Hauptseite + Ratgeber + Blog, damit Seiten visuell abwechslungsreicher sind als die alte finanzteam26-Seite.
+
+**Hauptseite-Sections** ([lib/types/content.ts](lib/types/content.ts) + [app/_components/ProduktHauptseite.tsx](app/_components/ProduktHauptseite.tsx)):
+- [x] `image_text_split` ([components/sections/ImageTextSplit.tsx](components/sections/ImageTextSplit.tsx)) — Bild + Text, alternierend, optional Navy-Background
+- [x] `quote_callout` ([components/sections/QuoteCallout.tsx](components/sections/QuoteCallout.tsx)) — Pull-Quote mit optional Autorenbild
+- [x] `stats_block` ([components/sections/StatsBlock.tsx](components/sections/StatsBlock.tsx)) — große Zahlen mit Detail (umfangreicher als TrustBar)
+- [x] `process_steps` ([components/sections/ProcessSteps.tsx](components/sections/ProcessSteps.tsx)) — nummerierte Schritte mit Connector
+- [x] `info_box` ([components/sections/InfoBox.tsx](components/sections/InfoBox.tsx)) — Info-/Warn-/Tipp-Callout mit Wissensfundus-CTA
+
+**Ratgeber-Sections** ([lib/types/ratgeber.ts](lib/types/ratgeber.ts) + Renderer):
+- [x] `image_text` — Bild + Text inline, alternierend (image_side)
+- [x] `quote` — Pull-Quote im Artikel
+- [x] `info_box` — Inline-Info-Kasten (`asSection=false`)
+
+**Blog-Detail** ([app/blog/[slug]/page.tsx](app/blog/[slug]/page.tsx)):
+- [x] Hero mit Cover-Bild + Gradient-Overlay + Headline darüber
+- [x] Related-Posts-Footer (3 Cards, gleiches Produkt oder gleiche Kategorie)
+
+**Markdown-Renderer** ([lib/markdown/render.ts](lib/markdown/render.ts)):
+- [x] `![alt](url)` Inline + Stand-alone Bilder (als `<figure>` mit Caption)
+
+**Pilot-Content angereichert** (Sterbegeld24Plus, 2026-05-13):
+- [x] Hauptseite: 9 → 12 Sections (image_text_split + process_steps + stats_block + quote_callout + info_box + zusätzliches lead_form)
+- [x] 3 Ratgeber: je 7-8 → 10-11 Sections (Cover-Bild auf intro + image_text + quote + info_box)
+- [x] 5 Bilder via Unsplash-CDN (lizenzfrei) — OpenAI-Key war 401, Stock-Fallback via `USE_STOCK=1` in [scripts/enrich-sterbegeld24plus.ts](scripts/enrich-sterbegeld24plus.ts)
+- [ ] OpenAI-Bilder erzeugen, sobald gültiger API-Key vorliegt (gleiche Prompt-Specs im Script vorhanden)
 
 ---
 
