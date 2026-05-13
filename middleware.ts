@@ -54,11 +54,17 @@ export async function middleware(request: NextRequest) {
     try {
       const hit = await lookupRedirect(supabase, pathname)
       if (hit) {
-        const target = new URL(hit.target, request.url)
-        // Query-String und Hash der Anfrage übernehmen, damit UTM-Parameter
-        // bei Redirects nicht verloren gehen.
-        target.search = request.nextUrl.search
-        return NextResponse.redirect(target, hit.status)
+        // Self-Redirect-Guard: wenn `target` (modulo Trailing-Slash) gleich
+        // dem aktuellen Pfad ist, würde Next.js auto-trailing-slash-normalisation
+        // eine Endlosschleife auslösen. Lieber stillschweigend durchreichen.
+        const stripped = (p: string) => (p.length > 1 && p.endsWith('/') ? p.slice(0, -1) : p)
+        if (stripped(hit.target) !== stripped(pathname)) {
+          const target = new URL(hit.target, request.url)
+          // Query-String und Hash der Anfrage übernehmen, damit UTM-Parameter
+          // bei Redirects nicht verloren gehen.
+          target.search = request.nextUrl.search
+          return NextResponse.redirect(target, hit.status)
+        }
       }
     } catch (err) {
       // Bei DB-Fehler: keine Redirect-Logik anwenden, Request normal durchreichen.

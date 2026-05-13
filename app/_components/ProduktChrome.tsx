@@ -59,7 +59,7 @@ export function ProduktChrome({
             <Link href={`/${slug}/tarife`} className="hover:text-[#02a9e6] transition-colors">Tarifrechner</Link>
             <Link href={`/${slug}/vergleich`} className="hover:text-[#02a9e6] transition-colors">Vergleich</Link>
             <Link href={`/${slug}/faq`} className="hover:text-[#02a9e6] transition-colors">FAQ</Link>
-            <Link href={`/${slug}/ratgeber`} className="hover:text-[#02a9e6] transition-colors">Ratgeber</Link>
+            <Link href="/blog" className="hover:text-[#02a9e6] transition-colors">Blog</Link>
             <Link
               href="#formular"
               className="inline-flex items-center px-5 py-2 rounded-md text-sm font-semibold border-[1.5px] transition-all duration-200"

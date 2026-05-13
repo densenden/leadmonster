@@ -134,7 +134,7 @@ export default async function RedaktionDetailPage({ params }: PageProps) {
                   alt={autor.foto_alt ?? fullName}
                   width={180}
                   height={180}
-                  className="h-44 w-44 rounded-full object-cover border-4 border-white/20 shrink-0"
+                  className="h-44 w-44 rounded-full object-cover object-[center_25%] border-4 border-white/20 shrink-0"
                 />
               : <div className="h-44 w-44 rounded-full bg-white/10 border-4 border-white/20 flex items-center justify-center text-3xl shrink-0">
                   {autor.vorname[0]}{autor.nachname[0]}

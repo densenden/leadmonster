@@ -4,6 +4,8 @@
 // This is a Server Component — no 'use client' directive needed.
 import { LeadForm } from '@/components/sections/LeadForm'
 import { InlineMarkdown } from '@/components/util/InlineMarkdown'
+import { InfoBox } from '@/components/sections/InfoBox'
+import { renderMarkdown } from '@/lib/markdown/render'
 import type { RatgeberSection } from '@/lib/types/ratgeber'
 
 const LINK_CLS = 'text-[#02a9e6] hover:underline'
@@ -127,6 +129,77 @@ function renderCta(
   )
 }
 
+function renderImageText(
+  section: Extract<RatgeberSection, { type: 'image_text' }>,
+  key: number,
+) {
+  const imageOnRight = section.image_side === 'right'
+  return (
+    <section key={key} className="mb-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+      <div className={`md:col-span-5 ${imageOnRight ? 'md:order-2' : ''}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={section.image_url}
+          alt={section.image_alt}
+          className="w-full aspect-[4/3] object-cover rounded-xl shadow-md"
+          loading="lazy"
+        />
+      </div>
+      <div className={`md:col-span-7 ${imageOnRight ? 'md:order-1' : ''}`}>
+        {section.heading && (
+          <h2 className="text-xl md:text-2xl font-semibold text-[#1a365d] mb-3 font-heading">
+            {section.heading}
+          </h2>
+        )}
+        <div className="prose max-w-none text-[#333333] font-light leading-relaxed">
+          {renderMarkdown(section.body)}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function renderQuote(
+  section: Extract<RatgeberSection, { type: 'quote' }>,
+  key: number,
+) {
+  return (
+    <figure
+      key={key}
+      className="mb-10 border-l-4 border-[#d4af37] bg-[#f8f8f8] pl-6 pr-4 py-5 rounded-r-lg"
+    >
+      <blockquote className="text-lg font-heading text-[#1a365d] leading-snug italic">
+        <InlineMarkdown linkClassName={LINK_CLS}>{`„${section.quote}"`}</InlineMarkdown>
+      </blockquote>
+      {(section.author || section.author_role) && (
+        <figcaption className="mt-3 text-sm text-[#666]">
+          {section.author && <span className="font-semibold text-[#1a365d]">{section.author}</span>}
+          {section.author && section.author_role && <span className="mx-1.5">·</span>}
+          {section.author_role && <span>{section.author_role}</span>}
+        </figcaption>
+      )}
+    </figure>
+  )
+}
+
+function renderInfoBox(
+  section: Extract<RatgeberSection, { type: 'info_box' }>,
+  key: number,
+) {
+  return (
+    <div key={key} className="mb-10">
+      <InfoBox
+        variant={section.variant}
+        headline={section.heading}
+        body={section.body}
+        cta_label={section.cta_label}
+        cta_href={section.cta_href}
+        asSection={false}
+      />
+    </div>
+  )
+}
+
 function renderRelated(
   section: Extract<RatgeberSection, { type: 'related' }>,
   key: number,
@@ -184,6 +257,12 @@ export function RatgeberRenderer({
             return renderCta(section, index, articleSlug, produktId, zielgruppeTag)
           case 'related':
             return renderRelated(section, index, produktSlug)
+          case 'image_text':
+            return renderImageText(section, index)
+          case 'quote':
+            return renderQuote(section, index)
+          case 'info_box':
+            return renderInfoBox(section, index)
           default:
             // TypeScript exhaustiveness — unknown variants return null
             return null

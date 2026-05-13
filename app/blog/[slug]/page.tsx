@@ -93,26 +93,80 @@ export default async function BlogDetailPage({ params }: PageProps) {
     },
   )
 
+  // Verwandte Posts (gleiches Produkt oder gleiche erste Kategorie)
+  const firstCat = Array.isArray(post.kategorien) ? post.kategorien[0] : null
+  let related: Array<{ slug: string; title: string; excerpt: string | null; cover_image_url: string | null }> = []
+  if (post.produkt_id || firstCat) {
+    const q = supabase
+      .from('blog_posts')
+      .select('slug, title, excerpt, cover_image_url')
+      .eq('status', 'publiziert')
+      .neq('slug', post.slug)
+      .limit(3)
+    if (post.produkt_id) q.eq('produkt_id', post.produkt_id)
+    else if (firstCat) q.contains('kategorien', [firstCat])
+    const { data } = await q
+    related = data ?? []
+  }
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: articleSchema }}
       />
-      <main className="max-w-3xl mx-auto px-6 py-12">
-        <Link href="/blog" className="text-sm text-[#02a9e6] hover:underline">&larr; Zurück zum Blog</Link>
 
-        {post.cover_image_url && (
+      {/* Hero — Cover-Bild mit Overlay-Headline, falls vorhanden */}
+      {post.cover_image_url ? (
+        <header className="relative w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={post.cover_image_url}
             alt={post.cover_image_alt ?? post.title}
-            className="w-full h-72 object-cover rounded-lg my-6"
+            className="w-full h-[360px] md:h-[480px] object-cover"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#1a365d]/90 via-[#1a365d]/40 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0">
+            <div className="max-w-3xl mx-auto px-6 pb-10">
+              <Link
+                href="/blog"
+                className="inline-block text-sm text-white/80 hover:text-white mb-3"
+              >
+                &larr; Zurück zum Blog
+              </Link>
+              {firstCat && (
+                <p className="text-xs uppercase tracking-widest text-[#d4af37] font-semibold mb-2">
+                  {firstCat}
+                </p>
+              )}
+              <h1 className="text-3xl md:text-4xl font-bold text-white font-heading leading-tight">
+                {post.title}
+              </h1>
+            </div>
+          </div>
+        </header>
+      ) : (
+        <header className="max-w-3xl mx-auto px-6 pt-12 pb-6">
+          <Link href="/blog" className="text-sm text-[#02a9e6] hover:underline">
+            &larr; Zurück zum Blog
+          </Link>
+          {firstCat && (
+            <p className="text-xs uppercase tracking-widest text-[#02a9e6] font-semibold mt-4 mb-2">
+              {firstCat}
+            </p>
+          )}
+          <h1 className="text-3xl md:text-4xl font-bold text-[#1a365d] font-heading leading-tight">
+            {post.title}
+          </h1>
+        </header>
+      )}
+
+      <main className="max-w-3xl mx-auto px-6 py-10">
+        {post.excerpt && (
+          <p className="text-lg text-gray-600 font-light leading-relaxed mb-6 max-w-prose">
+            {post.excerpt}
+          </p>
         )}
-
-        <h1 className="text-4xl font-bold text-[#1a365d] mb-3">{post.title}</h1>
-
-        {post.excerpt && <p className="text-lg text-gray-600 mb-6">{post.excerpt}</p>}
 
         <AuthorByline
           autorId={post.autor_id}
@@ -123,7 +177,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
           variant="card"
         />
 
-        <div className="text-sm text-gray-400 mb-8">
+        <div className="text-sm text-gray-400 mt-3 mb-8">
           {post.published_at && (
             <span>{new Date(post.published_at).toLocaleDateString('de-DE')}</span>
           )}
@@ -138,6 +192,38 @@ export default async function BlogDetailPage({ params }: PageProps) {
         <article className="prose prose-lg max-w-none text-gray-800">
           {renderMarkdown(linkedMd)}
         </article>
+
+        {related.length > 0 && (
+          <section className="mt-16 pt-10 border-t border-gray-200">
+            <h2 className="text-xl font-bold text-[#1a365d] font-heading mb-6">
+              Das könnte Sie auch interessieren
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              {related.map(r => (
+                <Link
+                  key={r.slug}
+                  href={`/blog/${r.slug}`}
+                  className="block group rounded-xl overflow-hidden border border-gray-200 hover:shadow-md transition-shadow bg-white"
+                >
+                  {r.cover_image_url && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={r.cover_image_url}
+                      alt={r.title}
+                      className="w-full aspect-[4/3] object-cover"
+                      loading="lazy"
+                    />
+                  )}
+                  <div className="p-4">
+                    <p className="font-semibold text-[#1a365d] text-sm leading-snug group-hover:text-[#02a9e6]">
+                      {r.title}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
     </>
   )

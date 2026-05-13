@@ -18,6 +18,12 @@ import { FAQ } from '@/components/sections/FAQ'
 import { LeadForm } from '@/components/sections/LeadForm'
 import { VergleichsRechner } from '@/components/sections/VergleichsRechner'
 import { AuthorByline } from '@/components/sections/AuthorByline'
+import { BlogPreview } from '@/components/sections/BlogPreview'
+import { ImageTextSplit } from '@/components/sections/ImageTextSplit'
+import { QuoteCallout } from '@/components/sections/QuoteCallout'
+import { StatsBlock } from '@/components/sections/StatsBlock'
+import { ProcessSteps } from '@/components/sections/ProcessSteps'
+import { InfoBox } from '@/components/sections/InfoBox'
 import { TrustBarSticky } from '@/components/sections/trust/TrustBarSticky'
 import { TrustBlock } from '@/components/sections/trust/TrustBlock'
 import type {
@@ -28,12 +34,19 @@ import type {
   FaqSection,
   LeadFormSection,
   VergleichsrechnerSection,
+  BlogPreviewSection,
+  ImageTextSplitSection,
+  QuoteCalloutSection,
+  StatsBlockSection,
+  ProcessStepsSection,
+  InfoBoxSection,
 } from '@/lib/types/content'
 
 interface RenderCtx {
   produktId: string
   produktTyp: string
   produktName: string
+  produktSlug: string
   zielgruppeTag: string
   intentTag: string
 }
@@ -88,6 +101,85 @@ function renderSection(section: ContentSection, index: number, ctx: RenderCtx) {
           inputHint={s.input_hint}
           ctaLabel={s.cta_label}
           anbieterCountHint={s.anbieter_count_hint}
+        />
+      )
+    }
+    case 'blog_preview': {
+      const s = section as BlogPreviewSection
+      return (
+        <BlogPreview
+          key={index}
+          produktSlug={ctx.produktSlug}
+          headline={s.headline}
+          subline={s.subline}
+          cta_href={s.cta_href}
+          cta_label={s.cta_label}
+          limit={s.limit ?? 3}
+        />
+      )
+    }
+    case 'image_text_split': {
+      const s = section as ImageTextSplitSection
+      return (
+        <ImageTextSplit
+          key={index}
+          image_url={s.image_url}
+          image_alt={s.image_alt}
+          image_side={s.image_side}
+          eyebrow={s.eyebrow}
+          headline={s.headline}
+          body={s.body}
+          cta_label={s.cta_label}
+          cta_href={s.cta_href}
+          background={s.background}
+        />
+      )
+    }
+    case 'quote_callout': {
+      const s = section as QuoteCalloutSection
+      return (
+        <QuoteCallout
+          key={index}
+          quote={s.quote}
+          author={s.author}
+          author_role={s.author_role}
+          author_image_url={s.author_image_url}
+        />
+      )
+    }
+    case 'stats_block': {
+      const s = section as StatsBlockSection
+      return (
+        <StatsBlock
+          key={index}
+          headline={s.headline}
+          subline={s.subline}
+          items={s.items}
+        />
+      )
+    }
+    case 'process_steps': {
+      const s = section as ProcessStepsSection
+      return (
+        <ProcessSteps
+          key={index}
+          headline={s.headline}
+          subline={s.subline}
+          items={s.items}
+        />
+      )
+    }
+    case 'info_box': {
+      const s = section as InfoBoxSection
+      return (
+        <InfoBox
+          key={index}
+          variant={s.variant}
+          headline={s.headline}
+          body={s.body}
+          cta_label={s.cta_label}
+          cta_href={s.cta_href}
+          asSection
         />
       )
     }
@@ -190,7 +282,7 @@ export async function ProduktHauptseite({ slug, isRoot = false }: ProduktHauptse
     buildBreadcrumbSchema(breadcrumb),
   )
 
-  const ctx: RenderCtx = { produktId, produktTyp, produktName, zielgruppeTag, intentTag }
+  const ctx: RenderCtx = { produktId, produktTyp, produktName, produktSlug: slug, zielgruppeTag, intentTag }
 
   const heroSection = sections[0]
   const restSections = sections.slice(1)

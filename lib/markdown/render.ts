@@ -23,16 +23,25 @@ interface InlineSegment {
   italic?: boolean
   code?: boolean
   href?: string
+  img?: { src: string; alt: string }
 }
 
 function parseInline(line: string): InlineSegment[] {
-  // Order: links → bold → italic → code → plain
+  // Order: images → links → bold → italic → code → plain
   const segments: InlineSegment[] = []
   let cursor = 0
 
   // Sehr einfacher sequentieller Tokenizer
   while (cursor < line.length) {
     const remaining = line.slice(cursor)
+
+    // Bild ![alt](url) — vor Link prüfen, weil `![…` sonst von Link-Regex teil-matched würde
+    const img = /^!\[([^\]]*)\]\(([^)]+)\)/.exec(remaining)
+    if (img) {
+      segments.push({ text: '', img: { alt: img[1], src: img[2] } })
+      cursor += img[0].length
+      continue
+    }
 
     // Link [text](url)
     const link = /^\[([^\]]+)\]\(([^)]+)\)/.exec(remaining)
@@ -63,7 +72,7 @@ function parseInline(line: string): InlineSegment[] {
       continue
     }
     // Plain bis zum nächsten Trigger
-    const next = remaining.search(/(\[|`|\*\*|\*)/)
+    const next = remaining.search(/(!\[|\[|`|\*\*|\*)/)
     const len = next === -1 ? remaining.length : Math.max(next, 1)
     segments.push({ text: remaining.slice(0, len) })
     cursor += len
@@ -74,6 +83,14 @@ function parseInline(line: string): InlineSegment[] {
 function renderInline(line: string, keyPrefix: string): React.ReactNode[] {
   return parseInline(line).map((seg, i) => {
     const key = `${keyPrefix}-${i}`
+    if (seg.img)
+      return React.createElement('img', {
+        key,
+        src: seg.img.src,
+        alt: seg.img.alt,
+        loading: 'lazy',
+        className: 'my-6 w-full max-h-[480px] object-cover rounded-xl shadow-md',
+      })
     if (seg.href) return React.createElement('a', { key, href: seg.href, className: 'text-[#02a9e6] hover:underline' }, seg.text)
     if (seg.bold) return React.createElement('strong', { key }, seg.text)
     if (seg.italic) return React.createElement('em', { key }, seg.text)
@@ -93,6 +110,34 @@ export function renderMarkdown(md: string): React.ReactNode[] {
 
     // Leerzeile überspringen
     if (line.trim() === '') {
+      i++
+      continue
+    }
+
+    // Stand-alone Bild — ganze Zeile ist nur ![alt](url). Als Figure rendern,
+    // damit es nicht in einen <p> eingewickelt wird (sonst invalides HTML).
+    const standaloneImg = /^!\[([^\]]*)\]\(([^)]+)\)\s*$/.exec(line.trim())
+    if (standaloneImg) {
+      const [, alt, src] = standaloneImg
+      blocks.push(
+        React.createElement(
+          'figure',
+          { key: blockKey++, className: 'my-8' },
+          React.createElement('img', {
+            src,
+            alt,
+            loading: 'lazy',
+            className: 'w-full max-h-[520px] object-cover rounded-xl shadow-md',
+          }),
+          alt
+            ? React.createElement(
+                'figcaption',
+                { className: 'text-xs text-gray-500 mt-2 text-center' },
+                alt,
+              )
+            : null,
+        ),
+      )
       i++
       continue
     }

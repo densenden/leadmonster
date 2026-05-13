@@ -44,7 +44,7 @@ export default async function RedaktionListPage() {
                     alt={a.foto_alt ?? `${a.vorname} ${a.nachname}`}
                     width={96}
                     height={96}
-                    className="h-24 w-24 rounded-full object-cover border border-gray-200 shrink-0"
+                    className="h-24 w-24 rounded-full object-cover object-[center_25%] border border-gray-200 shrink-0"
                   />
                 : <div className="h-24 w-24 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-lg text-gray-400 shrink-0">
                     {a.vorname[0]}{a.nachname[0]}

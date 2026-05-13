@@ -48,13 +48,46 @@ export interface RelatedSection {
   }>
 }
 
-/** Union of all five Ratgeber section variants — used as the array element type. */
+/** Bild + Text nebeneinander — bricht lange Textstrecken auf und gibt
+ *  visuelle Atempausen. image_side schaltet die Anordnung um. */
+export interface ImageTextSection {
+  type: 'image_text'
+  image_url: string
+  image_alt: string
+  image_side?: 'left' | 'right'
+  heading?: string
+  /** Markdown-Absätze (per renderMarkdown gerendert, [Link](/wissen/…) erlaubt). */
+  body: string
+}
+
+/** Pull-Quote für emotionale Verankerung im Artikel. */
+export interface QuoteSection {
+  type: 'quote'
+  quote: string
+  author?: string
+  author_role?: string
+}
+
+/** Info-/Warn-/Tipp-Kasten — verlinkt typischerweise zum Wissensfundus. */
+export interface InfoBoxSection {
+  type: 'info_box'
+  variant?: 'info' | 'warning' | 'tip'
+  heading: string
+  body: string
+  cta_label?: string
+  cta_href?: string
+}
+
+/** Union aller Ratgeber-Section-Varianten. */
 export type RatgeberSection =
   | IntroSection
   | BodySection
   | StepsSection
   | CtaSection
   | RelatedSection
+  | ImageTextSection
+  | QuoteSection
+  | InfoBoxSection
 
 /** Top-level content shape stored in generierter_content.content for ratgeber rows. */
 export interface RatgeberContent {
