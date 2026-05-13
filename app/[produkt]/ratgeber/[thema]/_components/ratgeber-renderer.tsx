@@ -63,7 +63,7 @@ function renderBody(section: Extract<RatgeberSection, { type: 'body' }>, key: nu
   return (
     <section key={key} className="mb-10">
       <h2 className="text-2xl font-semibold text-[#1a365d] mb-4 font-heading">
-        {section.heading}
+        <InlineMarkdown linkClassName={LINK_CLS}>{section.heading}</InlineMarkdown>
       </h2>
       <div className="space-y-4">
         {section.paragraphs.map((paragraph, i) => (
@@ -80,7 +80,7 @@ function renderSteps(section: Extract<RatgeberSection, { type: 'steps' }>, key: 
   return (
     <section key={key} className="mb-10">
       <h2 className="text-2xl font-semibold text-[#1a365d] mb-6 font-heading">
-        {section.heading}
+        <InlineMarkdown linkClassName={LINK_CLS}>{section.heading}</InlineMarkdown>
       </h2>
       <ol className="space-y-6">
         {section.items.map((item, i) => (
@@ -92,7 +92,9 @@ function renderSteps(section: Extract<RatgeberSection, { type: 'steps' }>, key: 
               {item.number}
             </span>
             <div>
-              <p className="font-semibold text-[#1a365d] mb-1">{item.title}</p>
+              <p className="font-semibold text-[#1a365d] mb-1">
+                <InlineMarkdown linkClassName={LINK_CLS}>{item.title}</InlineMarkdown>
+              </p>
               <p className="text-base font-light leading-relaxed text-[#333333]">
                 <InlineMarkdown linkClassName={LINK_CLS}>{item.description}</InlineMarkdown>
               </p>
@@ -117,7 +119,7 @@ function renderCta(
     <section key={key} className="mb-10">
       {section.headline && (
         <h2 className="text-2xl font-semibold text-[#1a365d] mb-6 font-heading">
-          {section.headline}
+          <InlineMarkdown linkClassName={LINK_CLS}>{section.headline}</InlineMarkdown>
         </h2>
       )}
       <LeadForm
@@ -148,7 +150,7 @@ function renderImageText(
       <div className={`md:col-span-7 ${imageOnRight ? 'md:order-1' : ''}`}>
         {section.heading && (
           <h2 className="text-xl md:text-2xl font-semibold text-[#1a365d] mb-3 font-heading">
-            {section.heading}
+            <InlineMarkdown linkClassName={LINK_CLS}>{section.heading}</InlineMarkdown>
           </h2>
         )}
         <div className="prose max-w-none text-[#333333] font-light leading-relaxed">
@@ -219,7 +221,9 @@ function renderRelated(
             href={`/${produktSlug}/ratgeber/${article.slug}`}
             className="block rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow duration-200"
           >
-            <p className="font-semibold text-[#1a365d] text-sm leading-snug">{article.title}</p>
+            <p className="font-semibold text-[#1a365d] text-sm leading-snug">
+              {article.title.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')}
+            </p>
             <span className="mt-2 inline-block text-xs text-[#abd5f4] font-medium">
               Ratgeber lesen →
             </span>

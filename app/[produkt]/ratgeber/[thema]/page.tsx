@@ -254,10 +254,15 @@ export default async function RatgeberArticlePage({ params }: PageProps) {
           <aside className="lg:col-span-4 hidden lg:block">
             <div className="sticky top-6 space-y-6">
               {(() => {
+                // MD-Link-Syntax aus dem Heading entfernen — der Auto-Cross-
+                // Linker injiziert [label](/wissen/…) in body.heading; im ToC
+                // wollen wir nur das nackte Label sehen, ohne interne Links.
+                const stripMd = (s: string) => s.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
                 const headings = sections
                   .filter((s): s is BodySection => s.type === 'body')
                   .map(s => s.heading)
                   .filter(Boolean)
+                  .map(stripMd)
                 if (headings.length < 2) return null
                 return (
                   <nav aria-label="Inhaltsverzeichnis" className="border-l-2 border-[#abd5f4] pl-4">
