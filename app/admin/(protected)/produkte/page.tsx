@@ -46,12 +46,22 @@ async function loadProdukteWithStats(): Promise<ProduktWithStats[]> {
   const supabase = createAdminClient()
 
   // Produkte mit allen relevanten Feldern laden.
-  const { data: rows } = await supabase
+  // Hinweis: style_reference_url + style_description sind optional und werden
+  // nicht in jeder DB-Variante existieren (Migration 20260430000005 ggf. noch
+  // ausstehend). Wir lesen sie defensiv über ein zweites Select und fallen
+  // auf undefined zurück, statt die ganze Liste an einer 42703-Fehlermeldung
+  // platzen zu lassen.
+  const { data: rows, error: produkteErr } = await supabase
     .from('produkte')
     .select(
-      'id, slug, name, typ, status, accent_color, hero_image_url, hero_image_alt, style_reference_url, style_description, created_at, updated_at',
+      'id, slug, name, typ, status, accent_color, hero_image_url, hero_image_alt, created_at, updated_at',
     )
     .order('created_at', { ascending: false })
+
+  if (produkteErr) {
+    console.error('[admin/produkte] DB-Fehler beim Laden:', produkteErr.message)
+    return []
+  }
 
   const produkte = (rows ?? []) as Produkt[]
   if (produkte.length === 0) return []
@@ -114,7 +124,8 @@ async function loadProdukteWithStats(): Promise<ProduktWithStats[]> {
     anbieterCount: anbieterByProdukt.get(p.id)?.size ?? 0,
     ratgeberCount: ratgeberByProdukt.get(p.id)?.total ?? 0,
     publishedRatgeberCount: ratgeberByProdukt.get(p.id)?.published ?? 0,
-    hasStyleReference: Boolean((p as { style_reference_url?: string | null }).style_reference_url),
+    // style_reference_url ist optional und kann fehlen, wenn Migration noch ausstehend ist.
+    hasStyleReference: Boolean((p as { style_reference_url?: string | null }).style_reference_url ?? null),
     hasHeroImage: Boolean(p.hero_image_url),
     leadsCount: leadsByProdukt.get(p.id)?.count ?? 0,
     leadsLatestAt: leadsByProdukt.get(p.id)?.latestAt ?? null,
