@@ -121,7 +121,11 @@ export function getAgeBracket(
   age: number,
   sum: number,
 ): PremiumRange | undefined {
+  // typ kann zur Laufzeit jeder string sein (FK auf produkt_typen.slug seit
+  // Migration 20260504000000); für unbekannte Slugs liefert TARIF_DATA[typ]
+  // undefined und der .find()-Aufruf würde crashen — defensiv abfangen.
   const brackets = TARIF_DATA[typ]
+  if (!brackets) return undefined
   const bracket = brackets.find(b => age >= b.minAge && age <= b.maxAge)
   if (!bracket) return undefined
   return bracket.sums[sum]
