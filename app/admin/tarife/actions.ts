@@ -101,3 +101,187 @@ function refresh(input: TarifInput, extra: { id?: string }): ActionResult & { id
   revalidatePath('/admin/tarife')
   return { success: true, ...extra }
 }
+
+// ---------------------------------------------------------------------------
+// CSV-Bulk-Import
+// Spiegelt scripts/seed-vergleich-tarife.ts. Admin lädt eine CSV mit Header
+//   anbieter_name,tarif_name,besonderheiten_json,geburtsjahr,summe_eur,beitrag_eur,einheit[,berufsklasse]
+// hoch; jede Zeile wird gegen das Schema validiert und in `tarife` upserted.
+// Idempotent über UNIQUE(produkt_id, anbieter_name, alter_von, summe, berufsklasse).
+// ---------------------------------------------------------------------------
+
+const CURRENT_YEAR = new Date().getFullYear()
+
+interface CsvImportResult {
+  success: boolean
+  data?: {
+    inserted: number
+    skipped: number
+    errors: Array<{ row: number; message: string }>
+  }
+  error?: string
+}
+
+function parseCsv(content: string): Record<string, string>[] {
+  const rows: string[][] = []
+  let row: string[] = []
+  let cell = ''
+  let inQuotes = false
+  for (let i = 0; i < content.length; i++) {
+    const c = content[i]
+    if (inQuotes) {
+      if (c === '"') {
+        if (content[i + 1] === '"') {
+          cell += '"'
+          i++
+        } else {
+          inQuotes = false
+        }
+      } else {
+        cell += c
+      }
+    } else {
+      if (c === '"') inQuotes = true
+      else if (c === ',') {
+        row.push(cell)
+        cell = ''
+      } else if (c === '\n') {
+        row.push(cell)
+        rows.push(row)
+        row = []
+        cell = ''
+      } else if (c !== '\r') {
+        cell += c
+      }
+    }
+  }
+  if (cell.length > 0 || row.length > 0) {
+    row.push(cell)
+    rows.push(row)
+  }
+  if (rows.length === 0) return []
+  const header = rows[0].map(h => h.trim())
+  return rows
+    .slice(1)
+    .filter(r => r.length > 1 || (r.length === 1 && r[0].trim().length > 0))
+    .map(r => {
+      const obj: Record<string, string> = {}
+      header.forEach((k, i) => {
+        obj[k] = (r[i] ?? '').trim()
+      })
+      return obj
+    })
+}
+
+export async function importTarifeCsv(
+  produktId: string,
+  formData: FormData,
+): Promise<CsvImportResult> {
+  const user = await requireAuth()
+  if (!user) return { success: false, error: 'Authentifizierung erforderlich.' }
+
+  if (!produktId) return { success: false, error: 'produktId fehlt.' }
+
+  const file = formData.get('csv')
+  if (!(file instanceof File)) return { success: false, error: 'Keine CSV-Datei übergeben.' }
+  if (file.size === 0) return { success: false, error: 'CSV-Datei ist leer.' }
+  if (file.size > 5 * 1024 * 1024) return { success: false, error: 'CSV-Datei zu groß (max 5 MB).' }
+
+  const text = await file.text()
+  const parsed = parseCsv(text)
+  if (parsed.length === 0) {
+    return { success: false, error: 'CSV enthält keine Datenzeilen.' }
+  }
+
+  const errors: Array<{ row: number; message: string }> = []
+  const validatedRows: Array<{
+    produkt_id: string
+    anbieter_name: string
+    tarif_name: string | null
+    besonderheiten: Record<string, unknown> | null
+    alter_von: number
+    alter_bis: number
+    summe: number
+    beitrag_low: number
+    beitrag_high: number
+    einheit: string
+    berufsklasse: string | null
+  }> = []
+
+  parsed.forEach((r, idx) => {
+    const rowNo = idx + 2 // Header = Zeile 1
+    try {
+      if (!r.anbieter_name || !r.summe_eur || !r.beitrag_eur || !r.geburtsjahr) {
+        throw new Error('Pflichtfelder fehlen (anbieter_name, geburtsjahr, summe_eur, beitrag_eur).')
+      }
+      const geburtsjahr = parseInt(r.geburtsjahr, 10)
+      if (Number.isNaN(geburtsjahr) || geburtsjahr < 1900 || geburtsjahr > CURRENT_YEAR) {
+        throw new Error(`Ungültiges geburtsjahr: ${r.geburtsjahr}`)
+      }
+      const summe = parseInt(r.summe_eur, 10)
+      if (Number.isNaN(summe) || summe <= 0) {
+        throw new Error(`Ungültige summe_eur: ${r.summe_eur}`)
+      }
+      const beitrag = parseFloat(r.beitrag_eur.replace(',', '.'))
+      if (Number.isNaN(beitrag) || beitrag <= 0) {
+        throw new Error(`Ungültiger beitrag_eur: ${r.beitrag_eur}`)
+      }
+      let besonderheiten: Record<string, unknown> | null = null
+      if (r.besonderheiten_json) {
+        try {
+          besonderheiten = JSON.parse(r.besonderheiten_json) as Record<string, unknown>
+        } catch {
+          throw new Error('besonderheiten_json ist kein valides JSON.')
+        }
+      }
+      const alter = CURRENT_YEAR - geburtsjahr
+      validatedRows.push({
+        produkt_id: produktId,
+        anbieter_name: r.anbieter_name,
+        tarif_name: r.tarif_name || null,
+        besonderheiten,
+        alter_von: alter,
+        alter_bis: alter,
+        summe,
+        beitrag_low: beitrag,
+        beitrag_high: beitrag,
+        einheit: r.einheit || 'eur_summe',
+        berufsklasse: r.berufsklasse || null,
+      })
+    } catch (err) {
+      errors.push({ row: rowNo, message: err instanceof Error ? err.message : String(err) })
+    }
+  })
+
+  if (validatedRows.length === 0) {
+    return { success: true, data: { inserted: 0, skipped: 0, errors } }
+  }
+
+  // Upsert in Batches via Admin-Client (Service-Role).
+  const supabase = untyped(createAdminClient())
+  let inserted = 0
+  let skipped = 0
+  const BATCH_SIZE = 50
+
+  for (let i = 0; i < validatedRows.length; i += BATCH_SIZE) {
+    const batch = validatedRows.slice(i, i + BATCH_SIZE)
+    const { error: upsertError } = await supabase
+      .from('tarife')
+      .upsert(batch, {
+        onConflict: 'produkt_id,anbieter_name,alter_von,summe,berufsklasse',
+      })
+
+    if (upsertError) {
+      errors.push({
+        row: i + 2,
+        message: `Batch-Upsert fehlgeschlagen: ${upsertError.message}`,
+      })
+      skipped += batch.length
+    } else {
+      inserted += batch.length
+    }
+  }
+
+  revalidatePath('/admin/tarife')
+  return { success: true, data: { inserted, skipped, errors } }
+}

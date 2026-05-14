@@ -72,33 +72,17 @@ export default async function ContentManagementPage({ params }: PageProps) {
 
   // Verify the product exists before fetching its content. Include the
   // fields the ContentPreview-/SectionImagePanel-chain needs for the
-  // auto-prompt and the style-reference suggestion. style_description ist
-  // optional (Migration 20260430000005 ggf. ausstehend) — defensiv via
-  // zweitem Lookup, sodass die ganze Page nicht an einer 42703 platzt.
+  // auto-prompt and the style-reference suggestion.
   const { data: produktRow } = await supabase
     .from('produkte')
     .select(
-      'id, name, typ, produkt_config(zielgruppe, fokus, argumente)',
+      'id, name, typ, style_description, produkt_config(zielgruppe, fokus, argumente)',
     )
     .eq('id', params.id)
     .maybeSingle()
 
   if (!produktRow) {
     notFound()
-  }
-
-  // style_description nur lesen, wenn Spalte existiert. Bei 42703 (column
-  // does not exist) bleibt der Wert null und der Generator nutzt Default-Prompts.
-  let styleDescription: string | null = null
-  try {
-    const { data: styleRow } = await supabase
-      .from('produkte')
-      .select('style_description')
-      .eq('id', params.id)
-      .maybeSingle()
-    styleDescription = (styleRow as { style_description?: string | null } | null)?.style_description ?? null
-  } catch {
-    /* Spalte fehlt → null */
   }
 
   // produkt_config kommt aus dem Join als Array — flatten auf das erste Element.
@@ -114,7 +98,7 @@ export default async function ContentManagementPage({ params }: PageProps) {
     zielgruppe: cfg?.zielgruppe ?? null,
     fokus: cfg?.fokus ?? null,
     argumente: cfg?.argumente ?? null,
-    styleDescription,
+    styleDescription: (produktRow as { style_description?: string | null }).style_description ?? null,
   }
 
   // Fetch all generierter_content rows for this product, most recent first.

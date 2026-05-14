@@ -113,7 +113,7 @@ export default async function RedaktionListPage({ searchParams }: PageProps) {
             <article key={a.id} className="rounded-xl border border-gray-200 bg-white p-5">
               <div className="flex items-start gap-4">
                 {a.foto_url
-                  ? <img src={a.foto_url} alt={a.foto_alt ?? `${a.vorname} ${a.nachname}`} className="h-20 w-20 rounded-full object-cover border border-gray-200" />
+                  ? <img src={a.foto_url} alt={a.foto_alt ?? `${a.vorname} ${a.nachname}`} className="h-20 w-20 rounded-full object-cover object-[center_25%] border border-gray-200" />
                   : <div className="h-20 w-20 rounded-full bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-sm text-gray-400">{a.vorname[0]}{a.nachname[0]}</div>
                 }
                 <div className="flex-1 min-w-0">

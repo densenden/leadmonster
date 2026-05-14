@@ -18,6 +18,7 @@
  * oder leeres Hero) verwendet wird.
  */
 import { createAdminClient } from '@/lib/supabase/server'
+import { getOpenAiRoute } from './gateway'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -82,17 +83,16 @@ interface OpenAiImageResponse {
 }
 
 async function callOpenAi(prompt: string, size: string): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) throw new Error('OPENAI_API_KEY fehlt')
+  const route = getOpenAiRoute()
 
-  const res = await fetch('https://api.openai.com/v1/images/generations', {
+  const res = await fetch(route.imagesUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${route.apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-image-1',
+      model: route.prefixModel('gpt-image-1'),
       prompt,
       size,
       n: 1,
@@ -102,7 +102,8 @@ async function callOpenAi(prompt: string, size: string): Promise<string> {
 
   if (!res.ok) {
     const txt = await res.text().catch(() => '')
-    throw new Error(`OpenAI Images API ${res.status}: ${txt.slice(0, 500)}`)
+    const label = route.viaGateway ? 'Vercel AI Gateway (images)' : 'OpenAI Images API'
+    throw new Error(`${label} ${res.status}: ${txt.slice(0, 500)}`)
   }
 
   const json = (await res.json()) as OpenAiImageResponse

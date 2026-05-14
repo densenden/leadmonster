@@ -130,6 +130,24 @@ describe('buildPayload', () => {
     expect(payload.Interest).toBeUndefined()
     expect(payload.GewuenschterAnbieter).toBeUndefined()
   })
+
+  it('mappt Kontakt-Felder für blinde Angebote (Migration 20260514000000)', async () => {
+    const withContact = {
+      ...SAMPLE_LEAD,
+      geburtsdatum: '1962-03-14',
+      strasse: 'Musterstraße 12',
+      plz: '80331',
+      ort: 'München',
+      sterbegeld_summe: 10000,
+    } as Lead & Record<string, unknown>
+    const { buildPayload } = await import('../client')
+    const payload = buildPayload(withContact, CONTEXT)
+    expect(payload.Birthdate).toBe('1962-03-14')
+    expect(payload.Street).toBe('Musterstraße 12')
+    expect(payload.Zip).toBe('80331')
+    expect(payload.City).toBe('München')
+    expect(payload.InsuredAmount).toBe('10000')
+  })
 })
 
 // ---------------------------------------------------------------------------

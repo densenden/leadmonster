@@ -9,6 +9,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { untyped } from '@/lib/supabase/untyped'
 import { getProduktConfigFromDb } from '@/lib/tarife/produkt-config-db'
 import { TarifTable } from '../_components/TarifTable'
+import { CsvImport } from '../_components/CsvImport'
 import type { FilterAxis } from '@/lib/tarife/filter-config-schema'
 
 export const dynamic = 'force-dynamic'
@@ -118,6 +119,8 @@ export default async function TarifeEditorPage({ params }: PageProps) {
         filterAxes={filterAxes}
         distinctAnbieter={distinctAnbieter}
       />
+
+      <CsvImport produktId={produkt.id as string} produktSlug={produkt.slug as string} />
     </div>
   )
 }

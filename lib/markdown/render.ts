@@ -92,8 +92,8 @@ function renderInline(line: string, keyPrefix: string): React.ReactNode[] {
         className: 'my-6 w-full max-h-[480px] object-cover rounded-xl shadow-md',
       })
     if (seg.href) return React.createElement('a', { key, href: seg.href, className: 'text-[#02a9e6] hover:underline' }, seg.text)
-    if (seg.bold) return React.createElement('strong', { key }, seg.text)
-    if (seg.italic) return React.createElement('em', { key }, seg.text)
+    if (seg.bold) return React.createElement('strong', { key, className: 'font-bold text-[#1a365d]' }, seg.text)
+    if (seg.italic) return React.createElement('em', { key, className: 'italic' }, seg.text)
     if (seg.code) return React.createElement('code', { key, className: 'bg-gray-100 px-1 rounded text-[0.95em]' }, seg.text)
     return React.createElement('span', { key }, seg.text)
   })

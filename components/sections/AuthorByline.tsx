@@ -69,7 +69,7 @@ export async function AuthorByline({
               alt={autor.foto_alt ?? fullName}
               width={36}
               height={36}
-              className="h-9 w-9 rounded-full object-cover object-[center_10%] border border-gray-200"
+              className="h-9 w-9 rounded-full object-cover object-[center_25%] border border-gray-200"
               loading="lazy"
             />
           )}
@@ -103,7 +103,7 @@ export async function AuthorByline({
             alt={autor.foto_alt ?? fullName}
             width={64}
             height={64}
-            className="h-16 w-16 rounded-full object-cover object-[center_10%] border border-gray-200 shrink-0"
+            className="h-16 w-16 rounded-full object-cover object-[center_25%] border border-gray-200 shrink-0"
             loading="lazy"
           />
         ) : (

@@ -9,6 +9,7 @@ import { MonsterLogo } from '@/components/MonsterLogo'
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', exact: true },
+  { href: '/admin/onboarding', label: 'Erste Schritte' },
   { href: '/admin/produkte', label: 'Produkte' },
   { href: '/admin/produkt-typen', label: 'Versicherungsarten' },
   { href: '/admin/tarife', label: 'Tarife' },

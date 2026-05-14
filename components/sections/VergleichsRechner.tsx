@@ -500,6 +500,7 @@ export function VergleichsRechner({
               gewuenschterAnbieter={activeAnbieter || undefined}
               defaultInteresse={defaultInteresse}
               filterContext={buildLeadFormFilterContext(axes, filterValues)}
+              defaultSumme={summe}
             />
           )}
         </div>

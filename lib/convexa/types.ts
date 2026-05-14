@@ -34,6 +34,13 @@ export interface ConvexaLeadPayload {
   // VergleichsRechner-Filter (Migration 20260504000000)
   AkzeptierteWartezeitMonate?: string
   Berufsklasse?: string
+  // Lead-Kontakt-Felder für „blinde" Angebotsversendung (Migration 20260514000000)
+  // O-Ton Christian: „Ich brauch Geburtsdatum, Adresse, Sterbegeldsumme und Wartezeit."
+  Birthdate?: string                // ISO-Datum YYYY-MM-DD
+  Street?: string
+  Zip?: string                       // DE 5-stellig
+  City?: string
+  InsuredAmount?: string             // Versicherungssumme in EUR (als String, Convexa-Convention)
   /** JSON-serialisierte Restfelder aus filter_kontext (jsonb). */
   FilterKontext?: string
   SourceUrl?: string

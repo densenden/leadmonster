@@ -13,6 +13,8 @@
  *   gleichbleibend kohärenten Look über alle Bilder eines Produkts.
  */
 
+import { getOpenAiRoute } from './gateway'
+
 const VISION_MODEL = process.env.OPENAI_VISION_MODEL ?? 'gpt-4o-mini'
 
 const VISION_SYSTEM_PROMPT = `You are a professional art director. Given a single image, describe its
@@ -41,17 +43,16 @@ interface OpenAiChatResponse {
  * englische Stil-Beschreibung zurück. Wirft bei Fehlern.
  */
 export async function describeImageStyle(imageUrl: string): Promise<VisionStyleResult> {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) throw new Error('OPENAI_API_KEY fehlt')
+  const route = getOpenAiRoute()
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+  const res = await fetch(route.chatUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${route.apiKey}`,
     },
     body: JSON.stringify({
-      model: VISION_MODEL,
+      model: route.prefixModel(VISION_MODEL),
       max_tokens: 180,
       temperature: 0.3,
       messages: [
@@ -69,7 +70,8 @@ export async function describeImageStyle(imageUrl: string): Promise<VisionStyleR
 
   if (!res.ok) {
     const txt = await res.text().catch(() => '')
-    throw new Error(`OpenAI Vision ${res.status}: ${txt.slice(0, 500)}`)
+    const label = route.viaGateway ? 'Vercel AI Gateway (vision)' : 'OpenAI Vision'
+    throw new Error(`${label} ${res.status}: ${txt.slice(0, 500)}`)
   }
 
   const json = (await res.json()) as OpenAiChatResponse

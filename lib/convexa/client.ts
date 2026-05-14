@@ -127,6 +127,23 @@ export function buildPayload(
   if (typeof leadAny.berufsklasse === 'string' && leadAny.berufsklasse) {
     payload.Berufsklasse = leadAny.berufsklasse
   }
+
+  // Kontaktfelder für blinde Angebotsversendung (Migration 20260514000000).
+  if (typeof leadAny.geburtsdatum === 'string' && leadAny.geburtsdatum) {
+    payload.Birthdate = leadAny.geburtsdatum
+  }
+  if (typeof leadAny.strasse === 'string' && leadAny.strasse) {
+    payload.Street = leadAny.strasse
+  }
+  if (typeof leadAny.plz === 'string' && leadAny.plz) {
+    payload.Zip = leadAny.plz
+  }
+  if (typeof leadAny.ort === 'string' && leadAny.ort) {
+    payload.City = leadAny.ort
+  }
+  if (leadAny.sterbegeld_summe !== null && leadAny.sterbegeld_summe !== undefined) {
+    payload.InsuredAmount = String(leadAny.sterbegeld_summe)
+  }
   if (
     leadAny.filter_kontext &&
     typeof leadAny.filter_kontext === 'object' &&

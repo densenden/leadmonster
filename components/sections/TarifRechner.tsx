@@ -244,6 +244,7 @@ export function TarifRechner({ produktTyp, produktName, anbieter, produktId, zie
               produktId={produktId}
               zielgruppeTag={zielgruppeTag}
               defaultInteresse={prefillInteresse}
+              defaultSumme={sum}
             />
           </>
         )}

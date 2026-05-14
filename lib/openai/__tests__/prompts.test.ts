@@ -17,11 +17,24 @@ describe('buildHeroPrompt', () => {
     }
   })
 
-  it('integriert styleDescription wenn gesetzt', () => {
+  it('integriert styleDescription wenn gesetzt (Style-First Strategie)', () => {
     const prompt = buildHeroPrompt('sterbegeld', {
       styleDescription: 'soft watercolor illustration, warm earth tones',
     })
-    expect(prompt).toContain('Visual style direction: soft watercolor illustration')
+    // Style-Reference dominiert jetzt den Prompt-Anfang
+    expect(prompt).toContain('VISUAL STYLE')
+    expect(prompt).toContain('soft watercolor illustration')
+    // Style-First positioniert die Style-Direktive vor dem SUBJECT-Anchor
+    expect(prompt.indexOf('VISUAL STYLE')).toBeLessThan(prompt.indexOf('SUBJECT:'))
+  })
+
+  it('fügt bei Style-Reference einen Negativ-Prompt gegen Default-Motive (z. B. Trauerkerzen) an', () => {
+    const prompt = buildHeroPrompt('sterbegeld', {
+      styleDescription: 'lush garden scene, vibrant pinks and greens',
+    })
+    expect(prompt.toLowerCase()).toContain('strictly avoid')
+    // Sterbegeld-Default „candle" sollte explizit ausgeschlossen werden
+    expect(prompt.toLowerCase()).toContain('candle')
   })
 
   it('fügt Zielgruppe als implied subject mit no-faces-Wording an', () => {

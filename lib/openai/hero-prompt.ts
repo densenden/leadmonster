@@ -133,12 +133,27 @@ export function defaultHeroPrompt(produktTyp: string): string {
   return `Editorial storytelling photography: ${scene}. Color palette: ${look.palette}. Lighting: ${look.lighting}. No visible faces, no text overlays.`
 }
 
+/**
+ * Per-Produkttyp Negativ-Prompt-Motive — wenn eine Style-Reference greift,
+ * sollen die Default-Motive aus BRAND_LOOKS NICHT mehr durchschlagen (z. B.
+ * keine Trauerkerze, wenn eine Garten-Vorlage hochgeladen wurde).
+ */
+const TYP_NEGATIVE_MOTIFS: Record<string, string> = {
+  sterbegeld: 'candles, lit flames, lily flowers, gravestones, urns, funeral wreaths, mourning veils',
+  pflege: 'hospital beds, medical equipment, walking frames, clinical interiors',
+  leben: 'wedding rings, gravestones, funeral imagery, hospital scenes',
+  bu: 'wheelchairs, hospital scenes, crutches, medical bandages',
+  unfall: 'ambulances, blood, severe injuries, hospital interiors',
+}
+
 export function buildHeroPrompt(
   produktTyp: string,
   opts: HeroPromptOptions = {},
 ): string {
   const scene = TYP_SCENES[produktTyp] ?? TYP_SCENES.sterbegeld
   const look = getBrandLook(produktTyp)
+  const hasStyleRef =
+    !!opts.styleDescription && opts.styleDescription.trim().length > 0
 
   const subjectPhrases = (opts.zielgruppe ?? [])
     .map(z => ZIELGRUPPE_PHRASES[z])
@@ -147,12 +162,26 @@ export function buildHeroPrompt(
 
   const mood = opts.fokus ? FOKUS_MOOD[opts.fokus] : null
 
-  const parts: string[] = [
-    `Editorial storytelling photography: ${scene}.`,
-    `Color palette: ${look.palette}.`,
-    `Lighting: ${look.lighting}.`,
-    `Symbolic objects (choose one or two, never all): ${look.motifs}.`,
-  ]
+  // STYLE-FIRST Strategie: Wenn eine Style-Reference vorliegt, dominiert sie
+  // den Prompt-Anfang. LLMs gewichten Anfangs-Tokens stärker. Die Default-
+  // Motive aus BRAND_LOOKS werden weggelassen und stattdessen das Subject
+  // generisch beschrieben, damit der Style nicht überschrieben wird.
+  const parts: string[] = []
+
+  if (hasStyleRef) {
+    parts.push(
+      `VISUAL STYLE (primary direction, overrides defaults): ${opts.styleDescription!.trim()}.`,
+    )
+    parts.push(`SUBJECT: ${scene}.`)
+    // Farb-Palette + Lighting nur als sanfte Sekundär-Hinweise — Style hat Vorrang.
+    parts.push(`Secondary palette hint if compatible with style: ${look.palette}.`)
+  } else {
+    parts.push(`Editorial storytelling photography: ${scene}.`)
+    parts.push(`Color palette: ${look.palette}.`)
+    parts.push(`Lighting: ${look.lighting}.`)
+    parts.push(`Symbolic objects (choose one or two, never all): ${look.motifs}.`)
+  }
+
   if (subject) parts.push(`Implied subject: ${subject}.`)
   if (mood) parts.push(`Mood: ${mood}.`)
 
@@ -164,8 +193,12 @@ export function buildHeroPrompt(
   // Note: anbieter (Allianz, DELA, etc.) deliberately NOT added to the prompt —
   // brand logos in AI imagery cause licensing and visual-quality issues.
 
-  if (opts.styleDescription && opts.styleDescription.trim().length > 0) {
-    parts.push(`Visual style direction: ${opts.styleDescription.trim()}.`)
+  // Negativ-Prompt: wenn Style-Ref aktiv, explizit gegen Default-Motive
+  // dieses Produkttyps anschreiben.
+  if (hasStyleRef && TYP_NEGATIVE_MOTIFS[produktTyp]) {
+    parts.push(
+      `Strictly avoid (unless explicitly part of the style reference): ${TYP_NEGATIVE_MOTIFS[produktTyp]}.`,
+    )
   }
 
   parts.push(

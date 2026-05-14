@@ -21,6 +21,11 @@ import { sendLeadConfirmation, sendSalesNotification } from '@/lib/resend/mailer
 // Module-level Map persists across requests within the same server process.
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
 
+// Geburtsdatum-Range: volljährig (mind. 18 Jahre alt) + plausibler Bereich.
+// Hard-coded 1925-01-01 / 2010-12-31 — bei Migration in 2030er Jahren anpassen.
+const BIRTHDATE_MIN = '1925-01-01'
+const BIRTHDATE_MAX = '2010-12-31'
+
 // Validate lead submission fields — email, produktId, zielgruppeTag, intentTag are required.
 const leadSchema = z.object({
   produktId: z.string().min(1),
@@ -34,19 +39,36 @@ const leadSchema = z.object({
   email: z.string().email(),
   telefon: z.string().max(30).optional(),
   interesse: z.string().max(1000).optional(),
+  // Lead-Kontakt-Felder für blinde Angebotsversendung (Migration 20260514000000).
+  // O-Ton Christian: „Ich brauch Geburtsdatum, Adresse, Sterbegeldsumme und Wartezeit."
+  // Alle optional, damit Bestands-Formulare (TarifRechner ohne Adresse) weiter
+  // submitten können — Christian sieht im Lead, was fehlt, und ruft nach.
+  geburtsdatum: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Geburtsdatum muss im Format YYYY-MM-DD vorliegen')
+    .refine(
+      v => v >= BIRTHDATE_MIN && v <= BIRTHDATE_MAX,
+      `Geburtsdatum muss zwischen ${BIRTHDATE_MIN} und ${BIRTHDATE_MAX} liegen`,
+    )
+    .optional(),
+  strasse: z.string().max(200).optional(),
+  plz: z.string().regex(/^\d{5}$/, 'PLZ muss 5-stellig sein').optional(),
+  ort: z.string().max(100).optional(),
   website: z.string().optional(), // honeypot — any non-empty value triggers silent rejection
   // Filter-Werte aus dem VergleichsRechner (Wartezeit, Berufsklasse, etc.).
-  // Bekannte Lead-Felder (akzeptierte_wartezeit_monate, berufsklasse) werden in
-  // eigene Spalten geschrieben, alles andere landet im filter_kontext-jsonb.
+  // Bekannte Lead-Felder (akzeptierte_wartezeit_monate, berufsklasse,
+  // sterbegeld_summe) werden in eigene Spalten geschrieben, alles andere
+  // landet im filter_kontext-jsonb.
   filterContext: z.record(z.string(), z.unknown()).optional(),
 })
 
 // Welche filterContext-Schlüssel landen direkt in eigenen Spalten?
-// (Seit Migration 20260504000000, im generierten Supabase-Type evtl. noch nicht
-// enthalten — daher als string-Liste statt typed Keyset.)
+// (Seit Migration 20260504000000 + 20260514000000, im generierten Supabase-
+// Type evtl. noch nicht enthalten — daher als string-Liste statt typed Keyset.)
 const KNOWN_LEAD_FIELDS: ReadonlyArray<string> = [
   'akzeptierte_wartezeit_monate',
   'berufsklasse',
+  'sterbegeld_summe',
 ]
 
 export async function POST(request: NextRequest) {
@@ -128,6 +150,13 @@ export async function POST(request: NextRequest) {
   if (parsed.data.gewuenschterAnbieter) {
     insertPayload.gewuenschter_anbieter = parsed.data.gewuenschterAnbieter
   }
+  // Kontakt-Felder (Migration 20260514000000). Im generierten Supabase-Type
+  // noch nicht enthalten — daher Cast über generic Record.
+  const insertAsRecord = insertPayload as Record<string, unknown>
+  if (parsed.data.geburtsdatum) insertAsRecord.geburtsdatum = parsed.data.geburtsdatum
+  if (parsed.data.strasse) insertAsRecord.strasse = parsed.data.strasse
+  if (parsed.data.plz) insertAsRecord.plz = parsed.data.plz
+  if (parsed.data.ort) insertAsRecord.ort = parsed.data.ort
 
   // Filter-Kontext: bekannte Schlüssel in eigene Spalten extrahieren,
   // alles übrige landet im filter_kontext-jsonb für Convexa-Push.
