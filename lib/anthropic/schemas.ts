@@ -57,6 +57,49 @@ export const RatgeberSectionSchema = z.object({
   cta_text: z.string(),
 })
 
+export const RatgeberIntroSectionSchema = z.object({
+  type: z.literal('intro'),
+  text: z.string().min(1),
+  image_url: z.string().nullable().optional(),
+  image_alt: z.string().nullable().optional(),
+})
+
+export const RatgeberBodySectionSchema = z.object({
+  type: z.literal('body'),
+  heading: z.string().min(1),
+  paragraphs: z.array(z.string().min(1)).min(2).max(6),
+})
+
+export const RatgeberStepsSectionSchema = z.object({
+  type: z.literal('steps'),
+  heading: z.string().min(1),
+  items: z
+    .array(
+      z.object({
+        number: z.number().int().positive(),
+        title: z.string().min(1),
+        description: z.string().min(1),
+      }),
+    )
+    .min(2)
+    .max(6),
+})
+
+export const RatgeberCtaSectionSchema = z.object({
+  type: z.literal('cta'),
+  headline: z.string().min(1),
+  cta_text: z.string().min(1),
+  cta_anchor: z.string().default('#formular'),
+})
+
+export const RatgeberArticleSectionSchema = z.discriminatedUnion('type', [
+  RatgeberIntroSectionSchema,
+  RatgeberBodySectionSchema,
+  RatgeberStepsSectionSchema,
+  RatgeberCtaSectionSchema,
+  RatgeberSectionSchema,
+])
+
 export const TarifSectionSchema = z.object({
   type: z.literal('tarif'),
   alters_stufen: z.array(
@@ -156,7 +199,12 @@ export const HauptseiteResponseSchema = BaseResponseSchema
 export const FaqResponseSchema = BaseResponseSchema
 export const VergleichResponseSchema = BaseResponseSchema
 export const TarifResponseSchema = BaseResponseSchema
-export const RatgeberResponseSchema = BaseResponseSchema
+export const RatgeberResponseSchema = z.object({
+  meta_title: z.string().transform(s => s.slice(0, 60)),
+  meta_desc: z.string().transform(s => s.slice(0, 160)),
+  schema_markup: z.record(z.string(), z.unknown()),
+  sections: z.array(RatgeberArticleSectionSchema).min(1),
+})
 
 // Map keyed by PageType — used in the generator to look up the correct schema
 // for each page-type call without a switch statement.

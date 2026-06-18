@@ -18,7 +18,7 @@
  * oder leeres Hero) verwendet wird.
  */
 import { createAdminClient } from '@/lib/supabase/server'
-import { getOpenAiRoute } from './gateway'
+import { getOpenAiRouteResolved } from './resolve-credentials'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -83,7 +83,7 @@ interface OpenAiImageResponse {
 }
 
 async function callOpenAi(prompt: string, size: string): Promise<string> {
-  const route = getOpenAiRoute()
+  const route = await getOpenAiRouteResolved()
 
   const res = await fetch(route.imagesUrl, {
     method: 'POST',

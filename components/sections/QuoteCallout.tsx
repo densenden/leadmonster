@@ -1,6 +1,7 @@
 // Pull-Quote als visueller Anker zwischen Sektionen.
 // Server Component.
 import { InlineMarkdown } from '@/components/util/InlineMarkdown'
+import { PortraitCircle } from '@/components/ui/PortraitCircle'
 
 interface QuoteCalloutProps {
   quote: string
@@ -32,12 +33,10 @@ export function QuoteCallout({
         {(author || author_role) && (
           <figcaption className="flex items-center justify-center gap-3 text-sm">
             {author_image_url && (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
+              <PortraitCircle
                 src={author_image_url}
                 alt={author ?? ''}
-                className="w-10 h-10 rounded-full object-cover"
-                loading="lazy"
+                className="w-10 h-10"
               />
             )}
             <span>

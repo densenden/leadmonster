@@ -163,30 +163,47 @@ WICHTIG: anbieter MUSS 3-10 Einträge enthalten. Weniger als 3 = Fehler.`,
 WICHTIG: type MUSS exakt "tarif" sein. alters_stufen sind Objekte mit den 4 numerischen Feldern.`,
   ratgeber: `## Output-Schema (JSON) — STRENGE Mengen!
 {
-  "meta_title": "string, max 60",
-  "meta_desc":  "string, max 160",
-  "schema_markup": { "@context": "https://schema.org", "@type": "Article", ... },
+  "meta_title": "string, max 60 Zeichen",
+  "meta_desc":  "string, max 160 Zeichen",
+  "schema_markup": { "@context": "https://schema.org", "@type": "Article", "headline": "...", "description": "..." },
   "sections": [
     {
-      "type": "ratgeber",
-      "slug": "string (z.B. 'was-ist-sterbegeld')",
-      "titel": "string (Hauptüberschrift des Artikels)",
-      "intro": "string (2-3 Sätze Definition / Antwort auf 'Was ist X?')",
-      "body_paragraphs": [
-        "Absatz 1 — Hintergrund / Kontext",
-        "Absatz 2 — Hauptinhalt / Detail 1",
-        "Absatz 3 — Hauptinhalt / Detail 2",
-        "Absatz 4 — Empfehlung / Fazit"
-      ],
-      "cta_text": "string (Call-to-Action zum Lead-Formular)"
+      "type": "intro",
+      "text": "string (2-3 Sätze Definition / direkte Antwort auf die Nutzerfrage)"
+    },
+    {
+      "type": "body",
+      "heading": "string (H2-Überschrift)",
+      "paragraphs": ["Absatz 1", "Absatz 2", "Absatz 3"]
+    },
+    {
+      "type": "body",
+      "heading": "string (zweiter H2-Abschnitt)",
+      "paragraphs": ["Absatz 1", "Absatz 2", "Absatz 3"]
+    },
+    {
+      "type": "steps",
+      "heading": "So gehen Sie vor",
+      "items": [
+        { "number": 1, "title": "string", "description": "string" },
+        { "number": 2, "title": "string", "description": "string" },
+        { "number": 3, "title": "string", "description": "string" }
+      ]
+    },
+    {
+      "type": "cta",
+      "headline": "Persönliches Angebot anfordern",
+      "cta_text": "Kostenlos anfragen",
+      "cta_anchor": "#formular"
     }
   ]
 }
 
 WICHTIG:
-- type MUSS exakt "ratgeber" sein (nicht "article", nicht "intro", nicht "paragraph").
-- Genau EINE ratgeber-Section pro Response.
-- body_paragraphs MUSS 4-6 Strings (volle Absätze, nicht einzelne Sätze) enthalten.`,
+- Erlaubte section.type-Werte für Ratgeber: "intro" | "body" | "steps" | "cta" (NICHT "ratgeber").
+- Mindestens 1 intro, 2 body, 1 steps, 1 cta Section.
+- Jeder body-Abschnitt braucht 2-4 volle Absätze (nicht Einzeiler).
+- Schreibe zum EXAKT angegebenen Ratgeber-Thema — kein generisches „Was ist Sterbegeld?"-Intro.`,
 }
 
 // Compose the full system + user message pair for a given page type.
@@ -194,12 +211,27 @@ WICHTIG:
 export function composePrompt(
   pageType: PageType,
   layers: { wissensfundus: string; produktDna: string; vertriebssteuerung: string },
+  options?: { topicSlug?: string; topicTitle?: string; topicHint?: string },
 ): { system: string; user: string } {
   const schemaSpec = OUTPUT_SCHEMAS[pageType]
+  const topicBlock =
+    pageType === 'ratgeber' && options?.topicTitle
+      ? [
+          `## Ratgeber-Auftrag (PFLICHT)`,
+          `- URL-Slug: ${options.topicSlug ?? 'ratgeber'}`,
+          `- Artikel-Titel (H1): ${options.topicTitle}`,
+          options.topicHint ? `- Fokus: ${options.topicHint}` : '',
+          `- Schreibe AUSSCHLIESSLICH zu diesem Thema. Kein generisches Intro „Was ist eine Sterbegeldversicherung?" wenn das Thema etwas anderes ist.`,
+        ]
+          .filter(Boolean)
+          .join('\n')
+      : ''
+
   const userParts = [
     layers.wissensfundus,
     layers.produktDna,
     layers.vertriebssteuerung,
+    topicBlock,
     schemaSpec,
     `\nErstelle jetzt den ${pageType}-Inhalt. WICHTIG: Antworte ausschließlich mit gültigem JSON, das EXAKT das oben gezeigte Output-Schema erfüllt. Keine Markdown-Fences, keine Erklärungen außerhalb des JSON-Objekts. Top-Level-Keys MÜSSEN sein: meta_title, meta_desc, schema_markup, sections.`,
   ].filter(Boolean)

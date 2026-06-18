@@ -9,6 +9,7 @@ import { type NextRequest } from 'next/server'
 import { z } from 'zod'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { generateImage, type ImageSlot } from '@/lib/openai/image-generator'
+import { mergeStyleDescriptionIntoPrompt } from '@/lib/openai/style-reference'
 
 const SLOTS = ['hero', 'feature', 'inline', 'og', 'blog_cover'] as const
 
@@ -43,10 +44,11 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Style-Direktive aus produkt-Stil-Referenz holen, wenn produktId mitgeliefert
-  // wurde und der Prompt noch keine "Visual style direction" enthält.
   let promptWithStyle = parsed.data.prompt
-  if (parsed.data.produktId && !promptWithStyle.toLowerCase().includes('visual style direction')) {
+  let styleReferenceApplied = false
+  let styleDescriptionUsed: string | null = null
+
+  if (parsed.data.produktId) {
     try {
       const supabase = createAdminClient()
       const { data: produkt } = await supabase
@@ -55,9 +57,10 @@ export async function POST(request: NextRequest) {
         .eq('id', parsed.data.produktId)
         .maybeSingle()
       const styleDesc = (produkt as { style_description?: string | null } | null)?.style_description
-      if (styleDesc && styleDesc.trim().length > 0) {
-        promptWithStyle = `${promptWithStyle} Visual style direction: ${styleDesc.trim()}.`
-      }
+      const merged = mergeStyleDescriptionIntoPrompt(promptWithStyle, styleDesc)
+      promptWithStyle = merged.prompt
+      styleReferenceApplied = merged.styleReferenceApplied
+      styleDescriptionUsed = styleDesc?.trim() ? styleDesc.trim() : null
     } catch (err) {
       console.warn('[bilder/generate] style_description-Lookup fehlgeschlagen:', err)
     }
@@ -72,7 +75,15 @@ export async function POST(request: NextRequest) {
       blogPostId: parsed.data.blogPostId,
       pageType: parsed.data.pageType,
     })
-    return Response.json({ data: out, error: null })
+    return Response.json({
+      data: {
+        ...out,
+        styleReferenceApplied,
+        styleDescriptionUsed,
+        promptSent: promptWithStyle,
+      },
+      error: null,
+    })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unbekannter Fehler'
     return Response.json(

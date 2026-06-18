@@ -7,8 +7,10 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { ProduktForm } from '@/components/admin/ProduktForm'
 import { HeroImagePanel } from './_components/HeroImagePanel'
 import { StyleReferencePanel } from './_components/StyleReferencePanel'
+import { NavbarLogoPanel } from './_components/NavbarLogoPanel'
 import { StandardAutorPanel } from './_components/StandardAutorPanel'
 import { listActiveProduktTypen } from '@/lib/tarife/produkt-config-db'
+import { resolveAccentColor } from '@/lib/utils/accent'
 import type { ProduktWithConfig, Produkt, ProduktConfig } from '@/lib/supabase/types'
 
 // Always re-fetch — admin product edit page must show fresh DB state.
@@ -107,6 +109,15 @@ export default async function ProduktBearbeitenPage({ params }: PageProps) {
           initialDescription={(initialData as { style_description?: string | null }).style_description ?? null}
         />
 
+        <NavbarLogoPanel
+          produktId={initialData.id}
+          produktName={initialData.brand_display_name ?? initialData.name}
+          accentColor={resolveAccentColor(initialData.typ, initialData.accent_color)}
+          initialVisible={initialData.navbar_logo_visible ?? false}
+          initialUrl={initialData.navbar_logo_url ?? null}
+          initialAlt={initialData.navbar_logo_alt ?? null}
+        />
+
         <HeroImagePanel
           produktId={initialData.id}
           produktName={initialData.name}
@@ -122,6 +133,12 @@ export default async function ProduktBearbeitenPage({ params }: PageProps) {
             !Array.isArray(initialData.produkt_config.argumente)
               ? (initialData.produkt_config.argumente as Record<string, string>)
               : null
+          }
+          styleDescription={
+            (initialData as { style_description?: string | null }).style_description ?? null
+          }
+          styleReferenceUrl={
+            (initialData as { style_reference_url?: string | null }).style_reference_url ?? null
           }
         />
       </div>

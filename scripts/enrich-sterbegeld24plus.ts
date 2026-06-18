@@ -17,17 +17,17 @@
  */
 import { config as loadDotenv } from 'dotenv'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { isOpenAiConfigured, getOpenAiRouteResolved } from '@/lib/openai/resolve-credentials'
 
 loadDotenv({ path: '.env.local' })
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPABASE_SECRET = process.env.SUPABASE_SECRET_KEY
-const OPENAI_KEY = process.env.OPENAI_API_KEY
+const OPENAI_KEY = process.env.OPENAI_API_KEY?.trim()
 if (!SUPABASE_URL || !SUPABASE_SECRET) throw new Error('Supabase ENV fehlt.')
 
-// USE_STOCK=1 erzwingt Unsplash-CDN-URLs (kein OpenAI-Call).
-// Ohne ENV: erst OpenAI versuchen, bei Fehler auf Stock zurückfallen.
-const FORCE_STOCK = process.env.USE_STOCK === '1' || !OPENAI_KEY
+// Set at runtime in main() after DB key lookup
+let FORCE_STOCK = process.env.USE_STOCK === '1'
 
 const STERBEGELD24PLUS_ID = 'fe1e6444-eaab-42df-8fa7-72ec644c3f9f'
 const BUCKET = 'produkt-bilder'
@@ -113,28 +113,33 @@ const IMAGE_SPECS: ImageSpec[] = [
   },
 ]
 
-function unsplashUrl(stockId: string, slot: ImageSpec['slot']): string {
-  const isSquare = slot === 'inline' || slot === 'feature'
-  const w = isSquare ? 1200 : 1600
-  const h = isSquare ? 1200 : 1066
-  return `https://images.unsplash.com/${stockId}?w=${w}&h=${h}&fit=crop&auto=format&q=80`
-}
+import { buildUnsplashCdnUrl, serializeStockMeta } from '@/lib/stock/unsplash'
 
 interface OpenAiImageResponse {
   data: Array<{ b64_json?: string }>
 }
 
 async function useStockImage(spec: ImageSpec, supabase: SupabaseClient): Promise<string> {
-  const url = unsplashUrl(spec.stockId, spec.slot)
-  const w = spec.slot === 'inline' || spec.slot === 'feature' ? 1200 : 1600
-  const h = spec.slot === 'inline' || spec.slot === 'feature' ? 1200 : 1066
+  const isSquare = spec.slot === 'inline' || spec.slot === 'feature'
+  const w = isSquare ? 1200 : 1600
+  const h = isSquare ? 1200 : 1066
+  const url = buildUnsplashCdnUrl(spec.stockId, { width: w, height: h })
+  const photoId = spec.stockId.replace(/^photo-/, '')
+  const meta = serializeStockMeta({
+    source: 'unsplash',
+    photo_id: photoId,
+    photographer: 'Unsplash Contributor',
+    photographer_url: 'https://unsplash.com',
+    photo_page_url: `https://unsplash.com/photos/${photoId}`,
+    search_query: spec.key,
+  })
   const { error: insErr } = await supabase.from('bilder').insert({
     produkt_id: STERBEGELD24PLUS_ID,
     page_type: spec.pageType,
     slot: spec.slot,
     url,
     alt_text: spec.alt,
-    prompt_used: spec.prompt + ' [STOCK: Unsplash]',
+    prompt_used: meta,
     provider: 'unsplash',
     width: w,
     height: h,
@@ -149,14 +154,15 @@ async function generateOne(spec: ImageSpec, supabase: SupabaseClient): Promise<s
 
   if (FORCE_STOCK) return useStockImage(spec, supabase)
 
-  const res = await fetch('https://api.openai.com/v1/images/generations', {
+  const route = await getOpenAiRouteResolved()
+  const res = await fetch(route.imagesUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${OPENAI_KEY}`,
+      Authorization: `Bearer ${route.apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-image-1',
+      model: route.prefixModel('gpt-image-1'),
       prompt: spec.prompt + STYLE_GUARD,
       size: spec.slot === 'inline' || spec.slot === 'feature' ? '1024x1024' : '1536x1024',
       n: 1,
@@ -206,6 +212,21 @@ async function generateOne(spec: ImageSpec, supabase: SupabaseClient): Promise<s
 
 async function main() {
   const supabase = createClient(SUPABASE_URL!, SUPABASE_SECRET!)
+
+  if (!FORCE_STOCK && !OPENAI_KEY) {
+    const { data } = await supabase
+      .from('einstellungen')
+      .select('wert')
+      .eq('schluessel', 'openai_api_key')
+      .maybeSingle()
+    const dbKey = data?.wert?.trim()
+    if (dbKey && dbKey.length >= 8) process.env.OPENAI_API_KEY = dbKey
+  }
+
+  if (!FORCE_STOCK && !(await isOpenAiConfigured())) {
+    FORCE_STOCK = true
+    console.warn('⚠ No OpenAI key — falling back to Unsplash stock images.\n')
+  }
 
   console.log('🎨 Schritt 1: Bilder generieren')
   const urls: Record<string, string> = {}

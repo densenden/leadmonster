@@ -101,7 +101,8 @@ export function MonsterLogo({
 
       {showText && (
         <span
-          style={{ color: textColor, fontWeight: 700, fontSize: '1.1em', letterSpacing: '-0.01em' }}
+          className="font-heading font-bold text-[1.1em] tracking-tight"
+          style={{ color: textColor }}
         >
           {text ?? 'LeadMonster'}
         </span>

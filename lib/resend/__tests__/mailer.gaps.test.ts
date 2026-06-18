@@ -81,6 +81,12 @@ describe('sendSalesNotification — einstellungen DB lookup with env fallback', 
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
+    vi.stubEnv('RESEND_API_KEY', 're_test_key')
+    vi.stubEnv('RESEND_FROM_ADDRESS', 'noreply@verified.example.de')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('uses process.env.SALES_NOTIFICATION_EMAIL when no einstellungen DB row found', async () => {
@@ -139,6 +145,12 @@ describe('sendSalesNotification — Convexa link in fallback HTML', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
+    vi.stubEnv('RESEND_API_KEY', 're_test_key')
+    vi.stubEnv('RESEND_FROM_ADDRESS', 'noreply@verified.example.de')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('includes Convexa link when convexa_lead_id is set', async () => {
@@ -184,6 +196,12 @@ describe('fetchEmailTemplate — delay_hours > 0 rows are skipped with console.w
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
+    vi.stubEnv('RESEND_API_KEY', 're_test_key')
+    vi.stubEnv('RESEND_FROM_ADDRESS', 'noreply@verified.example.de')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('skips rows with delay_hours > 0 and logs console.warn; returns null when only drip rows exist', async () => {

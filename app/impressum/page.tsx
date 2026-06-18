@@ -1,6 +1,7 @@
 // Globales Impressum für die Hauptdomain (PublicChrome-Layout).
 import type { Metadata } from 'next'
 import { loadFirmaImprint } from '@/lib/einstellungen/load'
+import { loadImageCredits } from '@/lib/stock/load-image-credits'
 import { ImpressumBlocks } from '@/components/sections/ImpressumBlocks'
 
 export const revalidate = 3600
@@ -11,10 +12,13 @@ export const metadata: Metadata = {
 }
 
 export default async function GlobalImpressumPage() {
-  const imprint = await loadFirmaImprint()
+  const [imprint, imageCredits] = await Promise.all([
+    loadFirmaImprint(),
+    loadImageCredits(),
+  ])
   return (
     <main className="max-w-3xl mx-auto px-6 py-16">
-      <ImpressumBlocks imprint={imprint} />
+      <ImpressumBlocks imprint={imprint} imageCredits={imageCredits} />
     </main>
   )
 }

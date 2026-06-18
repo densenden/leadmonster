@@ -75,9 +75,16 @@ describe('sendLeadConfirmation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
+    vi.stubEnv('RESEND_API_KEY', 're_test_key')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('returns true when resend.emails.send resolves successfully', async () => {
+    vi.stubEnv('RESEND_FROM_ADDRESS', 'noreply@verified.example.de')
+
     mockFrom.mockImplementation((table: string) => {
       if (table === 'email_sequenzen') return makeEmailSeqChain([])
       return {
@@ -96,7 +103,66 @@ describe('sendLeadConfirmation', () => {
     expect(mockEmailsSend).toHaveBeenCalledOnce()
   })
 
+  it('returns false when resend.emails.send resolves with an API error (no throw)', async () => {
+    vi.stubEnv('RESEND_FROM_ADDRESS', 'noreply@verified.example.de')
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'email_sequenzen') return makeEmailSeqChain([])
+      return {
+        select: vi.fn().mockReturnThis(),
+        in: vi.fn().mockResolvedValue({ data: [], error: null }),
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      }
+    })
+    mockEmailsSend.mockResolvedValue({
+      data: null,
+      error: { statusCode: 403, message: 'Domain not verified', name: 'validation_error' },
+    })
+
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const { sendLeadConfirmation } = await import('@/lib/resend/mailer')
+    const result = await sendLeadConfirmation(SAMPLE_LEAD)
+
+    expect(result).toBe(false)
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[mailer] sendLeadConfirmation: Resend API error:'),
+      expect.objectContaining({ statusCode: 403 }),
+    )
+
+    consoleSpy.mockRestore()
+  })
+
+  it('returns false when RESEND_FROM_ADDRESS is not set', async () => {
+    vi.stubEnv('RESEND_FROM_ADDRESS', '')
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'email_sequenzen') return makeEmailSeqChain([])
+      return {
+        select: vi.fn().mockReturnThis(),
+        in: vi.fn().mockResolvedValue({ data: [], error: null }),
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      }
+    })
+
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const { sendLeadConfirmation } = await import('@/lib/resend/mailer')
+    const result = await sendLeadConfirmation(SAMPLE_LEAD)
+
+    expect(result).toBe(false)
+    expect(mockEmailsSend).not.toHaveBeenCalled()
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[mailer] sendLeadConfirmation: RESEND_FROM_ADDRESS is not configured'),
+    )
+
+    consoleSpy.mockRestore()
+  })
+
   it('returns false and does NOT throw when resend.emails.send rejects', async () => {
+    vi.stubEnv('RESEND_FROM_ADDRESS', 'noreply@verified.example.de')
     mockFrom.mockImplementation((table: string) => {
       if (table === 'email_sequenzen') return makeEmailSeqChain([])
       return {
@@ -129,6 +195,12 @@ describe('sendSalesNotification', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
+    vi.stubEnv('RESEND_API_KEY', 're_test_key')
+    vi.stubEnv('RESEND_FROM_ADDRESS', 'noreply@verified.example.de')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('uses DB email_sequenzen template when a matching [BENACHRICHTIGUNG] row is found', async () => {

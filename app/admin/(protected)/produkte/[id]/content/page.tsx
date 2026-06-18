@@ -15,7 +15,7 @@ import { GenerateButton } from './_components/GenerateButton'
 import { GenerateRatgeberButton } from './_components/generate-ratgeber-button'
 import { GenerationLockProvider } from './_components/generation-lock'
 import { ResetContentButton } from './_components/ResetContentButton'
-import { formatGermanDateTime } from '@/lib/utils/date'
+import { formatGermanDateTime, formatPublicationStatusLabel } from '@/lib/utils/date'
 import type { GenerierterContent } from '@/lib/supabase/types'
 import type { BadgeVariant } from '@/components/ui/Badge'
 
@@ -76,7 +76,7 @@ export default async function ContentManagementPage({ params }: PageProps) {
   const { data: produktRow } = await supabase
     .from('produkte')
     .select(
-      'id, name, typ, style_description, produkt_config(zielgruppe, fokus, argumente)',
+      'id, name, typ, style_description, style_reference_url, produkt_config(zielgruppe, fokus, argumente)',
     )
     .eq('id', params.id)
     .maybeSingle()
@@ -99,6 +99,8 @@ export default async function ContentManagementPage({ params }: PageProps) {
     fokus: cfg?.fokus ?? null,
     argumente: cfg?.argumente ?? null,
     styleDescription: (produktRow as { style_description?: string | null }).style_description ?? null,
+    styleReferenceUrl:
+      (produktRow as { style_reference_url?: string | null }).style_reference_url ?? null,
   }
 
   // Fetch all generierter_content rows for this product, most recent first.
@@ -198,9 +200,7 @@ export default async function ContentManagementPage({ params }: PageProps) {
                           </span>
                         </span>
                         <span>
-                          {row.published_at
-                            ? `Veröffentlicht am: ${formatGermanDateTime(row.published_at)}`
-                            : 'Noch nicht veröffentlicht'}
+                          {formatPublicationStatusLabel(row.status, row.published_at)}
                         </span>
                       </div>
 
@@ -214,6 +214,7 @@ export default async function ContentManagementPage({ params }: PageProps) {
                         fokus={produktContext.fokus}
                         argumente={produktContext.argumente}
                         styleDescription={produktContext.styleDescription}
+                        styleReferenceUrl={produktContext.styleReferenceUrl}
                       />
                     </div>
                   ))}
@@ -280,9 +281,7 @@ export default async function ContentManagementPage({ params }: PageProps) {
                       </span>
                     </span>
                     <span>
-                      {row.published_at
-                        ? `Veröffentlicht am: ${formatGermanDateTime(row.published_at)}`
-                        : 'Noch nicht veröffentlicht'}
+                      {formatPublicationStatusLabel(row.status, row.published_at)}
                     </span>
                   </div>
                   <ContentPreview
@@ -294,6 +293,7 @@ export default async function ContentManagementPage({ params }: PageProps) {
                     fokus={produktContext.fokus}
                     argumente={produktContext.argumente}
                     styleDescription={produktContext.styleDescription}
+                    styleReferenceUrl={produktContext.styleReferenceUrl}
                   />
                 </div>
               </details>

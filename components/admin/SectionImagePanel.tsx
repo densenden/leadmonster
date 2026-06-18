@@ -16,6 +16,7 @@ import {
   defaultSlotForSection,
   type SectionImageSlot,
 } from '@/lib/openai/section-prompt'
+import { StyleReferenceActiveBanner } from '@/components/admin/StyleReferenceActiveBanner'
 
 interface SectionImagePanelProps {
   produktId: string
@@ -37,6 +38,7 @@ interface SectionImagePanelProps {
   argumente?: Record<string, string> | null
   /** Pro-Produkt-Stil-Direktive aus dem Style-Reference-Upload. */
   styleDescription?: string | null
+  styleReferenceUrl?: string | null
   /** Optionaler Story-Hook für die Sektion (z. B. die Headline). */
   contextHint?: string
 }
@@ -60,10 +62,12 @@ export function SectionImagePanel({
   fokus,
   argumente,
   styleDescription,
+  styleReferenceUrl,
   contextHint,
 }: SectionImagePanelProps) {
   const [open, setOpen] = useState(false)
   const [slot, setSlot] = useState<SectionImageSlot>(defaultSlotForSection(sectionType))
+  const [lastGenStyleApplied, setLastGenStyleApplied] = useState<boolean | null>(null)
 
   // Auto-Prompt — neu berechnet, wenn sich Slot oder Section-Kontext ändert.
   const autoPrompt = useMemo(
@@ -123,8 +127,13 @@ export function SectionImagePanel({
         return
       }
       onSet(json.data.url, json.data.alt)
+      setLastGenStyleApplied(
+        typeof json.data.styleReferenceApplied === 'boolean'
+          ? json.data.styleReferenceApplied
+          : null,
+      )
       setOpen(false)
-      setPrompt('')
+      if (!promptDirty) setPrompt(autoPrompt)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Netzwerkfehler')
     } finally {
@@ -178,6 +187,12 @@ export function SectionImagePanel({
 
       {open && (
         <div className="mt-2 space-y-2 bg-gray-50 p-3 border border-gray-200">
+          <StyleReferenceActiveBanner
+            styleDescription={styleDescription}
+            styleReferenceUrl={styleReferenceUrl}
+            compact
+          />
+
           <div>
             <label className="block text-xs text-[#666666] mb-0.5">Slot / Größe</label>
             <select
@@ -218,8 +233,10 @@ export function SectionImagePanel({
             />
             <p className="text-[11px] text-gray-400 mt-1">
               {promptDirty
-                ? 'Eigener Prompt — Stil-Guard wird automatisch ergänzt.'
-                : `Auto-Vorschlag aus Produkttyp "${produktTyp}", Section "${sectionType}" und Slot "${slot}". Frei editierbar.`}
+                ? 'Eigener Prompt — Stilreferenz wird beim Generieren ergänzt, falls noch nicht im Text.'
+                : styleDescription
+                  ? `Auto-Vorschlag inkl. Stilreferenz (VISUAL STYLE zuerst) für "${sectionType}" / "${slot}".`
+                  : `Auto-Vorschlag aus "${produktTyp}" — ohne Stilreferenz (Produktseite → Stil-Referenz hochladen).`}
             </p>
           </div>
 
@@ -247,6 +264,12 @@ export function SectionImagePanel({
               <span className="text-[11px] text-[#02a9e6]">10–30 Sek.</span>
             )}
           </div>
+
+          {lastGenStyleApplied === true && (
+            <p className="text-[11px] text-green-700 bg-green-50 border border-green-200 px-2 py-1">
+              Generiert mit aktiver Stilreferenz (siehe Bilder-Bibliothek → prompt_used).
+            </p>
+          )}
 
           {error && (
             <p className="text-[11px] text-red-600">{error}</p>

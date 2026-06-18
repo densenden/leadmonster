@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { generateImage } from '@/lib/openai/image-generator'
 import { buildHeroPrompt } from '@/lib/openai/hero-prompt'
+import { mergeStyleDescriptionIntoPrompt } from '@/lib/openai/style-reference'
 
 const bodySchema = z.object({
   prompt: z.string().min(8).max(2000).optional(),
@@ -60,6 +61,8 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   const styleDescription = (produkt as { style_description?: string | null }).style_description ?? null
 
   let prompt = parsed.data.prompt
+  let styleReferenceApplied = false
+
   if (!prompt) {
     const { data: configRow } = await supabase
       .from('produkt_config')
@@ -78,11 +81,11 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
           : null,
       styleDescription,
     })
-  } else if (styleDescription) {
-    // User-Prompt — Style-Direktive nicht doppelt einbauen, falls schon enthalten.
-    if (!prompt.toLowerCase().includes('visual style direction')) {
-      prompt = `${prompt} Visual style direction: ${styleDescription}.`
-    }
+    styleReferenceApplied = Boolean(styleDescription?.trim())
+  } else {
+    const merged = mergeStyleDescriptionIntoPrompt(prompt, styleDescription)
+    prompt = merged.prompt
+    styleReferenceApplied = merged.styleReferenceApplied
   }
   const altText = parsed.data.altText ?? `Hauptbild ${produkt.name}`
 
@@ -124,7 +127,17 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       }
     }
 
-    return Response.json({ data: { url: out.url, alt: altText, prompt }, error: null })
+    return Response.json({
+      data: {
+        url: out.url,
+        alt: altText,
+        prompt,
+        styleReferenceApplied,
+        styleDescriptionUsed: styleDescription?.trim() ?? null,
+        promptSent: prompt,
+      },
+      error: null,
+    })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unbekannter Fehler'
     return Response.json(

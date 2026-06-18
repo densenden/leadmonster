@@ -4,6 +4,7 @@
 // `isRoot` steuert, dass die canonical URL `/` statt `/<slug>` ist.
 import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/server'
+import { isRowNotFound } from '@/lib/supabase/errors'
 import { resolveBaseUrl } from '@/lib/seo/organization'
 import {
   buildInsuranceAgencySchema,
@@ -194,10 +195,27 @@ export interface ProduktHauptseiteProps {
   isRoot?: boolean
 }
 
+function DbUnavailableMain({ slug }: { slug: string }) {
+  return (
+    <main>
+      <section className="max-w-[800px] mx-auto px-6 py-20 text-center">
+        <h1 className="text-2xl font-bold text-[#1a365d] mb-3">Service temporarily unavailable</h1>
+        <p className="text-lg text-[#4a5568] mb-2">
+          The database for <span className="font-semibold">{slug}</span> is not reachable right now.
+        </p>
+        <p className="text-sm text-[#718096]">
+          If this is a Supabase free-tier project, restore it in the Supabase dashboard (paused projects
+          stop resolving DNS). After restore, redeploy or wait ~1 minute for cache refresh.
+        </p>
+      </section>
+    </main>
+  )
+}
+
 export async function ProduktHauptseite({ slug, isRoot = false }: ProduktHauptseiteProps) {
   const supabase = createAdminClient()
 
-  const [{ data: row }, { data: produkt }] = await Promise.all([
+  const [contentRes, produktRes] = await Promise.all([
     supabase
       .from('generierter_content')
       .select('content, title, slug, status, produkt_id, autor_id, reviewed_by, reviewed_at, updated_at, produkte!inner(id, slug, name, typ)')
@@ -211,6 +229,17 @@ export async function ProduktHauptseite({ slug, isRoot = false }: ProduktHauptse
       .eq('slug', slug)
       .single(),
   ])
+
+  const row = contentRes.data
+  const produkt = produktRes.data
+
+  if (produktRes.error) {
+    if (isRowNotFound(produktRes.error)) {
+      notFound()
+    }
+    console.error('produkt lookup failed', produktRes.error)
+    return <DbUnavailableMain slug={slug} />
+  }
 
   if (!produkt) {
     notFound()

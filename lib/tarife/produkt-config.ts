@@ -50,8 +50,9 @@ export const PRODUKT_VERGLEICH_CONFIG: Record<ProduktTyp, ProduktVergleichConfig
     summen: [5000, 8000, 10000, 12500, 15000],
     default_summe: 8000,
     default_age: 65,
-    min_age: 40,
-    max_age: 86,
+    // Matches vergleich-tarife-seeds/sterbegeld.csv (geburtsjahr 1945–1970).
+    min_age: 56,
+    max_age: 81,
     summe_label: 'Wunschsumme',
     beitrag_label: 'Beitrag / Monat',
     summe_suffix: '€',

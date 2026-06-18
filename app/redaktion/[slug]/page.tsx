@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 import { createAdminClient } from '@/lib/supabase/server'
 import { renderMarkdown } from '@/lib/markdown/render'
 import { buildSchemaPerson } from '@/lib/redaktion/schema-person'
+import { PortraitCircle } from '@/components/ui/PortraitCircle'
 
 export const revalidate = 3600
 
@@ -129,12 +130,12 @@ export default async function RedaktionDetailPage({ params }: PageProps) {
 
           <div className="flex flex-col md:flex-row items-start gap-8">
             {autor.foto_url
-              ? <img
+              ? <PortraitCircle
                   src={autor.foto_url}
                   alt={autor.foto_alt ?? fullName}
                   width={180}
                   height={180}
-                  className="h-44 w-44 rounded-full object-cover object-[center_10%] border-4 border-white/20 shrink-0"
+                  className="h-44 w-44 border-4 border-white/20"
                 />
               : <div className="h-44 w-44 rounded-full bg-white/10 border-4 border-white/20 flex items-center justify-center text-3xl shrink-0">
                   {autor.vorname[0]}{autor.nachname[0]}

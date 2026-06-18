@@ -39,12 +39,15 @@ describe('middleware', () => {
     mockGetUser.mockClear()
   })
 
-  it('calls supabase.auth.getUser() on a matched route', async () => {
+  it('calls supabase.auth.getUser() on admin routes only', async () => {
     const { middleware } = await import('../middleware')
 
     await middleware(makeMockRequest('/admin') as unknown as Parameters<typeof middleware>[0])
-
     expect(mockGetUser).toHaveBeenCalledTimes(1)
+
+    mockGetUser.mockClear()
+    await middleware(makeMockRequest('/') as unknown as Parameters<typeof middleware>[0])
+    expect(mockGetUser).not.toHaveBeenCalled()
   })
 
   it('returns a response object', async () => {

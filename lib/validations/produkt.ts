@@ -25,6 +25,7 @@ export const produktSchema = z.object({
   brand_display_name:    z.string().max(100).optional().or(z.literal('')),
   brand_subline:         z.string().max(100).optional().or(z.literal('')),
   title_suffix_override: z.string().max(100).optional().or(z.literal('')),
+  navbar_logo_visible:   z.boolean().optional(),
 })
 
 // Extends the base schema with a required id field for PATCH requests.

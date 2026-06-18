@@ -5,6 +5,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { PortraitCircle } from '@/components/ui/PortraitCircle'
 
 interface Autor {
   id: string
@@ -98,7 +99,7 @@ export function StandardAutorPanel({ produktId, autoren, initialAutorId }: Props
           {selected && (
             <div className="flex items-center gap-2">
               {selected.foto_url
-                ? <img src={selected.foto_url} alt="" className="h-10 w-10 rounded-full object-cover border border-gray-200" />
+                ? <PortraitCircle src={selected.foto_url} alt="" className="h-10 w-10 border border-gray-200" />
                 : <div className="h-10 w-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-400">{selected.vorname[0]}{selected.nachname[0]}</div>
               }
               <Link

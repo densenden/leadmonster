@@ -8,7 +8,7 @@ Hauptseite, FAQ, Vergleich, Tarif-Page und Ratgeber-Artikel werden für ein Prod
 - `produkt_config` ausgefüllt (Zielgruppe, Fokus, Anbieter, Argumente)
 - Wissensfundus-Einträge für den Produkttyp existieren (verbessert Output deutlich)
 - Mindestens 2 Anbieter-Tarife in DB (sonst kein VergleichsRechner-Section)
-- Environment: `ANTHROPIC_API_KEY` (oder `AI_GATEWAY_API_KEY`) in `.env.local`
+- Environment: `ANTHROPIC_API_KEY` in `.env.local` (default text provider); for OpenAI text provider also set `OPENAI_API_KEY` (or optional `AI_GATEWAY_API_KEY` for images/vision only)
 
 ## Volle Generierung (alle Page-Types)
 

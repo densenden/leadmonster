@@ -292,6 +292,9 @@ export type Database = {
           hero_image_url: string | null
           id: string
           name: string
+          navbar_logo_alt: string | null
+          navbar_logo_url: string | null
+          navbar_logo_visible: boolean
           og_image_url: string | null
           short_pitch: string | null
           slug: string
@@ -314,6 +317,9 @@ export type Database = {
           hero_image_url?: string | null
           id?: string
           name: string
+          navbar_logo_alt?: string | null
+          navbar_logo_url?: string | null
+          navbar_logo_visible?: boolean
           og_image_url?: string | null
           short_pitch?: string | null
           slug: string
@@ -336,6 +342,9 @@ export type Database = {
           hero_image_url?: string | null
           id?: string
           name?: string
+          navbar_logo_alt?: string | null
+          navbar_logo_url?: string | null
+          navbar_logo_visible?: boolean
           og_image_url?: string | null
           short_pitch?: string | null
           slug?: string

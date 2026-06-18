@@ -15,6 +15,7 @@ const SETTINGS_KEYS = [
   'sales_notification_email',
   'ai_text_provider',
   'ai_text_model',
+  'openai_api_key',
 ] as const
 
 export default async function EinstellungenPage() {
@@ -33,6 +34,7 @@ export default async function EinstellungenPage() {
   )
 
   const get = (key: string): string => db[key] ?? ''
+  const openaiApiKeyConfigured = get('openai_api_key').trim().length >= 8
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
@@ -46,6 +48,7 @@ export default async function EinstellungenPage() {
         salesNotificationEmail={get('sales_notification_email')}
         aiTextProvider={get('ai_text_provider')}
         aiTextModel={get('ai_text_model')}
+        openaiApiKeyConfigured={openaiApiKeyConfigured}
       />
     </div>
   )

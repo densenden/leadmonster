@@ -4,6 +4,7 @@
 // `homePath` und `legalPathPrefix` als Props variabel.
 import Link from 'next/link'
 import { MonsterLogo } from '@/components/MonsterLogo'
+import { NavbarLogoMark } from '@/components/NavbarLogoMark'
 import { LEGAL_NAME } from '@/lib/seo/organization'
 
 export interface ProduktChromeProps {
@@ -13,6 +14,11 @@ export interface ProduktChromeProps {
   name: string
   /** Akzentfarbe (z. B. resolveAccentColor). */
   accentColor: string
+  /** Show logo left of product name — default false when omitted. */
+  navbarLogoVisible?: boolean
+  /** Custom navbar logo URL; when visible and empty → colored MonsterLogo. */
+  navbarLogoUrl?: string | null
+  navbarLogoAlt?: string | null
   /** Pfad zur Produkt-Hauptseite — '/' für Root-Produkt, sonst '/<slug>'. */
   homePath?: string
   /**
@@ -22,8 +28,8 @@ export interface ProduktChromeProps {
    */
   legalPathPrefix?: string
   /**
-   * Optionale Sub-Brand-Zeile rechts vom Logo (z. B. „handwerker.bu" auf /bu).
-   * Aus produkte.brand_subline. Phase 4 § 8 Mitigation 1.
+   * Brand claim under the product name (e.g. „Die Sterbegeldversicherung mit garantierter Aufnahme.").
+   * From produkte.brand_subline. Phase 4 § 8 Mitigation 1.
    */
   brandSubline?: string | null
   children: React.ReactNode
@@ -33,6 +39,9 @@ export function ProduktChrome({
   slug,
   name,
   accentColor,
+  navbarLogoVisible = false,
+  navbarLogoUrl = null,
+  navbarLogoAlt = null,
   homePath,
   legalPathPrefix,
   brandSubline,
@@ -46,23 +55,32 @@ export function ProduktChrome({
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-[#e2e8f0]">
         <div className="max-w-[1200px] mx-auto px-6 py-3 flex items-center justify-between">
-          <Link href={home} className="flex items-baseline gap-2">
-            <MonsterLogo color={accentColor} showText text={name} size={38} />
-            {brandSubline && (
-              <span className="hidden sm:inline text-xs font-mono text-[#718096] -ml-1">
-                · {brandSubline}
+          <Link href={home} className="flex items-center gap-2 shrink-0">
+            <NavbarLogoMark
+              visible={navbarLogoVisible}
+              customUrl={navbarLogoUrl}
+              customAlt={navbarLogoAlt}
+              accentColor={accentColor}
+              productName={name}
+            />
+            <div className="flex flex-col items-start text-left leading-tight">
+              <span className="font-heading font-bold text-base text-[#1a365d] tracking-tight">
+                {name}
               </span>
-            )}
+              {brandSubline && (
+                <span className="font-body text-sm font-light text-[#718096] mt-0.5">{brandSubline}</span>
+              )}
+            </div>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-5 text-sm font-semibold text-[#4a5568]">
+          <nav className="hidden md:flex items-center gap-5 font-body text-base font-light text-[#4a5568]">
             <Link href={`/${slug}/tarife`} className="hover:text-[#02a9e6] transition-colors">Tarifrechner</Link>
             <Link href={`/${slug}/vergleich`} className="hover:text-[#02a9e6] transition-colors">Vergleich</Link>
             <Link href={`/${slug}/faq`} className="hover:text-[#02a9e6] transition-colors">FAQ</Link>
             <Link href="/blog" className="hover:text-[#02a9e6] transition-colors">Blog</Link>
             <Link
               href="#formular"
-              className="inline-flex items-center px-5 py-2 rounded-md text-sm font-semibold border-[1.5px] transition-all duration-200"
+              className="inline-flex items-center px-5 py-2 rounded-md font-body text-base font-semibold border-[1.5px] transition-all duration-200"
               style={{ borderColor: accentColor, color: accentColor }}
             >
               Angebot anfordern
@@ -70,13 +88,13 @@ export function ProduktChrome({
           </nav>
 
           {/* Mobile nav — compact icon row */}
-          <nav className="flex md:hidden items-center gap-3 text-xs font-semibold text-[#4a5568]">
+          <nav className="flex md:hidden items-center gap-3 font-body text-sm font-normal text-[#4a5568]">
             <Link href={`/${slug}/tarife`} className="hover:text-[#02a9e6] transition-colors">Rechner</Link>
             <Link href={`/${slug}/vergleich`} className="hover:text-[#02a9e6] transition-colors">Vergleich</Link>
             <Link href={`/${slug}/faq`} className="hover:text-[#02a9e6] transition-colors">FAQ</Link>
             <Link
               href="#formular"
-              className="px-3 py-1.5 rounded text-xs font-semibold border-[1.5px] transition-all duration-200"
+              className="px-3 py-1.5 rounded font-body text-sm font-semibold border-[1.5px] transition-all duration-200"
               style={{ borderColor: accentColor, color: accentColor }}
             >
               Anfragen
@@ -95,7 +113,7 @@ export function ProduktChrome({
             <MonsterLogo color="#fff" showText text={name} textColor="white" size={34} />
           </div>
           {/* Legal links */}
-          <div className="flex flex-wrap justify-center gap-6 text-sm mb-6">
+          <div className="flex flex-wrap justify-center gap-6 font-body text-sm font-light mb-6">
             {[
               { href: `${legalPrefix}/impressum`,   label: 'Impressum' },
               { href: `${legalPrefix}/datenschutz`, label: 'Datenschutz' },

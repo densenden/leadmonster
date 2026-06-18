@@ -51,8 +51,9 @@ Alle Secrets ausschließlich in `.env.local` (nie in Git):
 # Anthropic (Texte)
 ANTHROPIC_API_KEY=
 
-# OpenAI (Bilder)
+# OpenAI (Bilder + Vision + optional OpenAI-Textprovider) — direkt oder via Gateway
 OPENAI_API_KEY=
+AI_GATEWAY_API_KEY=   # optional; wenn gesetzt, routet getOpenAiRoute() Bilder/Vision über Gateway
 
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=
@@ -65,10 +66,9 @@ RESEND_API_KEY=
 RESEND_FROM_ADDRESS=
 SALES_NOTIFICATION_EMAIL=
 
-# Convexa CRM (API-Doku ausstehend → /docs/convexa-api-anfrage.md)
-CONVEXA_BASE_URL=https://app.convexa.app
-CONVEXA_API_TOKEN=
-CONVEXA_WORKSPACE_ID=
+# Convexa CRM
+CONVEXA_BASE_URL=https://api.convexa.app
+CONVEXA_FORM_TOKEN=
 
 # Public
 NEXT_PUBLIC_BASE_URL=https://finanzteam26.de

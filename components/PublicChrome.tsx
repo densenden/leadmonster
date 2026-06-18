@@ -33,7 +33,7 @@ export function PublicChrome({
             <MonsterLogo color={brandAccent} showText text={brandText} size={38} />
           </Link>
 
-          <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-[#4a5568]">
+          <nav className="hidden md:flex items-center gap-6 font-body text-base font-light text-[#4a5568]">
             <Link href="/" className="hover:text-[#02a9e6] transition-colors">Produkte</Link>
             <Link href="/wissen" className="hover:text-[#02a9e6] transition-colors">Wissensbasis</Link>
             <Link href="/blog" className="hover:text-[#02a9e6] transition-colors">Blog</Link>
@@ -41,7 +41,7 @@ export function PublicChrome({
           </nav>
 
           {/* Mobile nav — kompakt */}
-          <nav className="flex md:hidden items-center gap-4 text-xs font-semibold text-[#4a5568]">
+          <nav className="flex md:hidden items-center gap-4 font-body text-sm font-normal text-[#4a5568]">
             <Link href="/" className="hover:text-[#02a9e6] transition-colors">Produkte</Link>
             <Link href="/wissen" className="hover:text-[#02a9e6] transition-colors">Wissen</Link>
             <Link href="/blog" className="hover:text-[#02a9e6] transition-colors">Blog</Link>
@@ -58,7 +58,7 @@ export function PublicChrome({
           <div className="flex justify-center mb-6">
             <MonsterLogo color="#fff" showText text={brandText} textColor="white" size={34} />
           </div>
-          <div className="flex flex-wrap justify-center gap-6 text-sm mb-6">
+          <div className="flex flex-wrap justify-center gap-6 font-body text-sm font-light mb-6">
             <Link href="/impressum" className="hover:text-white transition-colors">Impressum</Link>
             <Link href="/datenschutz" className="hover:text-white transition-colors">Datenschutz</Link>
             <Link href="/erstinformation" className="hover:text-white transition-colors">Erstinformation</Link>

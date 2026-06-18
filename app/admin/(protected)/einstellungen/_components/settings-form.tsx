@@ -24,6 +24,8 @@ export interface SettingsFormProps {
   salesNotificationEmail: string
   aiTextProvider: string
   aiTextModel: string
+  /** True when openai_api_key is stored in DB (key itself is not sent to client). */
+  openaiApiKeyConfigured: boolean
 }
 
 // ---------------------------------------------------------------------------
@@ -132,6 +134,8 @@ export function SettingsForm(props: SettingsFormProps) {
   const [aiProvider, aiModel] = llmValue.split(':')
 
   const [showToken, setShowToken] = useState(false)
+  const [showOpenAiKey, setShowOpenAiKey] = useState(false)
+  const [openaiApiKey, setOpenaiApiKey] = useState('')
   const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null)
 
   const [isPending, startTransition] = useTransition()
@@ -146,6 +150,7 @@ export function SettingsForm(props: SettingsFormProps) {
       fd.set('sales_notification_email', salesNotificationEmail)
       fd.set('ai_text_provider', aiProvider)
       fd.set('ai_text_model', aiModel)
+      fd.set('openai_api_key', openaiApiKey)
 
       const result = await saveSettings(fd)
 
@@ -242,6 +247,45 @@ export function SettingsForm(props: SettingsFormProps) {
             Provider: <code className="font-mono">{aiProvider}</code> · Modell: <code className="font-mono">{aiModel}</code>
           </p>
         </div>
+      </Card>
+
+      {/* Card: OpenAI Bildgenerierung */}
+      <Card>
+        <div className="mb-4">
+          <h2 className="font-heading text-xl font-bold text-[#1a3252]">
+            Bildgenerierung (OpenAI)
+          </h2>
+          <p className="mt-1 text-xs text-[#718096]">
+            Key für Hero-Bilder, Ratgeber-Cover und Section-Bilder (gpt-image-1).
+            Wird auch genutzt, wenn <code className="mx-1 px-1 py-0.5 bg-[#e1f0fb] rounded text-[#1a3252]">OPENAI_API_KEY</code>
+            in Vercel leer ist. Leer lassen = bestehenden Key behalten.
+          </p>
+        </div>
+
+        <Field
+          id="openai_api_key"
+          label="OpenAI API-Key"
+          helperText={
+            props.openaiApiKeyConfigured
+              ? 'Key ist gespeichert. Nur ausfüllen, wenn Sie ihn ersetzen möchten.'
+              : 'Kein Key gespeichert — Bildgenerierung schlägt fehl, bis Sie einen Key eintragen.'
+          }
+          placeholder={props.openaiApiKeyConfigured ? '•••••••••••• (gespeichert)' : 'sk-…'}
+          value={openaiApiKey}
+          onChange={setOpenaiApiKey}
+          type={showOpenAiKey ? 'text' : 'password'}
+          autoComplete="off"
+          rightElement={
+            <button
+              type="button"
+              onClick={() => setShowOpenAiKey((prev) => !prev)}
+              aria-label={showOpenAiKey ? 'Key verbergen' : 'Key anzeigen'}
+              className="rounded p-1 text-[#999999] hover:text-[#1a3252] focus:outline-none focus:ring-2 focus:ring-[#02a9e6]/40"
+            >
+              {showOpenAiKey ? <EyeOffIcon /> : <EyeIcon />}
+            </button>
+          }
+        />
       </Card>
 
       {/* Card 3: E-Mail Benachrichtigungen */}

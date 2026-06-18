@@ -3,6 +3,7 @@
 // Rendert eine Card- oder Footer-Variante + JSON-LD-Person-Schema.
 import Link from 'next/link'
 import { resolveAuthor } from '@/lib/redaktion/load'
+import { PortraitCircle } from '@/components/ui/PortraitCircle'
 
 interface Props {
   autorId?: string | null
@@ -64,13 +65,12 @@ export async function AuthorByline({
       <>
         <div className="flex items-center gap-3 text-sm text-[#666]">
           {autor.foto_url && (
-            <img
+            <PortraitCircle
               src={autor.foto_url}
               alt={autor.foto_alt ?? fullName}
               width={36}
               height={36}
-              className="h-9 w-9 rounded-full object-cover object-[center_25%] border border-gray-200"
-              loading="lazy"
+              className="h-9 w-9 border border-gray-200"
             />
           )}
           <div>
@@ -98,13 +98,12 @@ export async function AuthorByline({
         aria-label="Verfasst von"
       >
         {autor.foto_url ? (
-          <img
+          <PortraitCircle
             src={autor.foto_url}
             alt={autor.foto_alt ?? fullName}
             width={64}
             height={64}
-            className="h-16 w-16 rounded-full object-cover object-[center_25%] border border-gray-200 shrink-0"
-            loading="lazy"
+            className="h-16 w-16 border border-gray-200"
           />
         ) : (
           <div className="h-16 w-16 rounded-full bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-sm text-gray-400 shrink-0">

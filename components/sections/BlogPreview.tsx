@@ -4,6 +4,7 @@
 // als Cards mit Bild. Pflege deckungsgleich mit /blog (einheitliches Shape).
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/server'
+import { resolveRatgeberTitle, resolveRatgeberCover } from '@/lib/ratgeber/normalize'
 
 interface PreviewEntry {
   href: string
@@ -71,15 +72,13 @@ export async function BlogPreview({
     if (!r.slug || !r.produkte) continue
     if (r.produkte.slug !== produktSlug) continue
     const firstSection = r.content?.sections?.[0]
-    // Eigenes Cover-Bild des Ratgebers bevorzugt, sonst Produkt-Hero-Bild als Fallback.
-    const cover_image_url = r.content?.cover_image_url ?? r.produkte.hero_image_url
-    const cover_image_alt = r.content?.cover_image_alt ?? r.produkte.hero_image_alt
+    const cover = resolveRatgeberCover(r.content, r.produkte, r.slug)
     entries.push({
       href: `/${r.produkte.slug}/ratgeber/${r.slug}`,
-      title: r.title ?? '(ohne Titel)',
+      title: resolveRatgeberTitle({ slug: r.slug, title: r.title, content: r.content }),
       excerpt: r.meta_desc ?? firstSection?.subline ?? firstSection?.intro ?? null,
-      cover_image_url,
-      cover_image_alt,
+      cover_image_url: cover.cover_image_url,
+      cover_image_alt: cover.cover_image_alt,
     })
   }
 

@@ -6,8 +6,11 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { createAdminClient } from '@/lib/supabase/server'
+import { resolveRatgeberTitle, resolveRatgeberCover } from '@/lib/ratgeber/normalize'
 
-export const revalidate = 3600
+// Always fetch live — static build would freeze the article list at deploy time
+// (e.g. only 6 ratgeber published when `next build` ran).
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Blog — Sterbegeld24Plus',
@@ -91,15 +94,13 @@ export default async function BlogIndexPage() {
     const firstSection = r.content?.sections?.[0]
     const excerpt =
       r.meta_desc ?? firstSection?.subline ?? firstSection?.intro ?? null
-    // Eigenes Cover-Bild des Ratgebers bevorzugt, sonst Produkt-Hero-Bild.
-    const cover_image_url = r.content?.cover_image_url ?? r.produkte.hero_image_url
-    const cover_image_alt = r.content?.cover_image_alt ?? r.produkte.hero_image_alt
+    const cover = resolveRatgeberCover(r.content, r.produkte, r.slug)
     entries.push({
       href: `/${r.produkte.slug}/ratgeber/${r.slug}`,
-      title: r.title ?? '(ohne Titel)',
+      title: resolveRatgeberTitle({ slug: r.slug, title: r.title, content: r.content }),
       excerpt,
-      cover_image_url,
-      cover_image_alt,
+      cover_image_url: cover.cover_image_url,
+      cover_image_alt: cover.cover_image_alt,
       published_at: r.generated_at,
       reading_time: null,
       kategorien: null,

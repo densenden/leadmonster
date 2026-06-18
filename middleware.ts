@@ -2,10 +2,20 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { lookupRedirect } from '@/lib/redirects/lookup'
 
+const AUTH_REFRESH_TIMEOUT_MS = 2_000
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | undefined> {
+  return Promise.race([
+    promise,
+    new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), ms)),
+  ])
+}
+
 // Middleware Aufgaben:
 // 1. Redirect-Tabelle abfragen — Vertriebs-pflegbare 301/302 vor jedem Request.
-// 2. Supabase-Session-Cookie auffrischen, damit Auth-State über Navigationen
-//    erhalten bleibt. Auth-Guards selbst leben in app/admin/(protected)/layout.tsx.
+// 2. Supabase-Session-Cookie auffrischen (nur /admin), damit Auth-State erhalten bleibt.
+//    Auth-Guards selbst leben in app/admin/(protected)/layout.tsx.
+// DB calls are time-boxed — paused/slow Supabase must not hit MIDDLEWARE_INVOCATION_TIMEOUT.
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: {
@@ -13,10 +23,16 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+  if (!supabaseUrl || !anonKey) {
+    return response
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    anonKey!,
+    supabaseUrl,
+    anonKey,
     {
       cookies: {
         get(name: string) {
@@ -72,9 +88,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // IMPORTANT: use getUser() not getSession() — getSession() is not safe server-side
-  // as it reads from the cookie without re-validating with the Supabase auth server.
-  await supabase.auth.getUser()
+  // Session refresh only where auth matters — skip on public pages to avoid
+  // blocking every visitor on Supabase auth latency.
+  if (pathname.startsWith('/admin')) {
+    await withTimeout(supabase.auth.getUser(), AUTH_REFRESH_TIMEOUT_MS)
+  }
 
   return response
 }

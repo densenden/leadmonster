@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { createAdminClient } from '@/lib/supabase/server'
+import { PortraitCircle } from '@/components/ui/PortraitCircle'
 
 export const revalidate = 3600
 
@@ -39,12 +40,12 @@ export default async function RedaktionListPage() {
           <li key={a.id} className="rounded-xl border border-gray-200 bg-white p-6">
             <Link href={`/redaktion/${a.slug}`} className="flex items-start gap-4 group">
               {a.foto_url
-                ? <img
+                ? <PortraitCircle
                     src={a.foto_url}
                     alt={a.foto_alt ?? `${a.vorname} ${a.nachname}`}
                     width={96}
                     height={96}
-                    className="h-24 w-24 rounded-full object-cover object-[center_10%] border border-gray-200 shrink-0"
+                    className="h-24 w-24 border border-gray-200"
                   />
                 : <div className="h-24 w-24 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-lg text-gray-400 shrink-0">
                     {a.vorname[0]}{a.nachname[0]}

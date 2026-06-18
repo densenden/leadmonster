@@ -13,6 +13,28 @@ interface RedirectEntry {
 let cache: Map<string, RedirectEntry> | null = null
 let loadedAt = 0
 const TTL_MS = 60_000
+/** Edge middleware must finish quickly — avoid hanging on paused Supabase. */
+const FETCH_TIMEOUT_MS = 2_000
+
+async function loadRedirectMap(
+  supabase: SupabaseClient,
+): Promise<Map<string, RedirectEntry>> {
+  const query = supabase.from('redirects').select('legacy_path, target_path, status')
+  const result = await Promise.race([
+    query,
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), FETCH_TIMEOUT_MS)),
+  ])
+  if (!result || result.error) {
+    return new Map()
+  }
+  const data = result.data
+  return new Map(
+    (data ?? []).map((r: { legacy_path: string; target_path: string; status: number }) => [
+      r.legacy_path,
+      { target: r.target_path, status: r.status },
+    ]),
+  )
+}
 
 /** Manueller Reset — für Tests oder Admin-Aktionen, die unmittelbar wirken sollen. */
 export function resetRedirectCache(): void {
@@ -30,15 +52,7 @@ export async function lookupRedirect(
   pathname: string,
 ): Promise<RedirectEntry | null> {
   if (!cache || Date.now() - loadedAt > TTL_MS) {
-    const { data } = await supabase
-      .from('redirects')
-      .select('legacy_path, target_path, status')
-    cache = new Map(
-      (data ?? []).map((r: { legacy_path: string; target_path: string; status: number }) => [
-        r.legacy_path,
-        { target: r.target_path, status: r.status },
-      ]),
-    )
+    cache = await loadRedirectMap(supabase)
     loadedAt = Date.now()
   }
 

@@ -142,6 +142,8 @@ export function buildSectionPrompt(opts: SectionPromptOptions): string {
   const baseScene = TYP_SCENES[opts.produktTyp] ?? TYP_SCENES.sterbegeld
   const beat = SECTION_BEATS[opts.sectionType] ?? SECTION_BEATS.body
   const composition = SLOT_COMPOSITION[opts.slot] ?? SLOT_COMPOSITION.inline
+  const hasStyleRef =
+    !!opts.styleDescription && opts.styleDescription.trim().length > 0
 
   const subjectPhrases = (opts.zielgruppe ?? [])
     .map(z => ZIELGRUPPE_PHRASES[z])
@@ -149,14 +151,32 @@ export function buildSectionPrompt(opts: SectionPromptOptions): string {
   const subject = subjectPhrases.length > 0 ? joinList(subjectPhrases) : null
   const mood = opts.fokus ? FOKUS_MOOD[opts.fokus] : null
 
-  const parts: string[] = [
-    `Editorial storytelling photograph for an insurance product page, ${opts.sectionType} section.`,
-    `Story beat: ${beat}.`,
-    `Brand-consistent setting (kept identical across all images of this product): ${baseScene}.`,
-    `Color palette: ${look.palette}.`,
-    `Lighting: ${look.lighting}.`,
-    `Composition: ${composition}.`,
-  ]
+  const parts: string[] = []
+
+  // STYLE-FIRST — same strategy as buildHeroPrompt (LLMs weight prompt start).
+  if (hasStyleRef) {
+    parts.push(
+      `VISUAL STYLE (primary direction, from product reference): ${opts.styleDescription!.trim()}.`,
+    )
+    parts.push(
+      `Editorial storytelling photograph for an insurance product page, ${opts.sectionType} section.`,
+    )
+    parts.push(`Story beat: ${beat}.`)
+    parts.push(`Scene anchor: ${baseScene}.`)
+    parts.push(`Secondary palette hint if compatible with style: ${look.palette}.`)
+  } else {
+    parts.push(
+      `Editorial storytelling photograph for an insurance product page, ${opts.sectionType} section.`,
+    )
+    parts.push(`Story beat: ${beat}.`)
+    parts.push(
+      `Brand-consistent setting (kept identical across all images of this product): ${baseScene}.`,
+    )
+    parts.push(`Color palette: ${look.palette}.`)
+    parts.push(`Lighting: ${look.lighting}.`)
+  }
+
+  parts.push(`Composition: ${composition}.`)
 
   if (opts.contextHint && opts.contextHint.trim().length > 0) {
     parts.push(`Specific topic: ${opts.contextHint.trim()}.`)
@@ -164,10 +184,6 @@ export function buildSectionPrompt(opts: SectionPromptOptions): string {
 
   if (subject) parts.push(`Implied subject: ${subject}.`)
   if (mood) parts.push(`Mood: ${mood}.`)
-
-  if (opts.styleDescription && opts.styleDescription.trim().length > 0) {
-    parts.push(`Visual style direction (from product reference): ${opts.styleDescription.trim()}.`)
-  }
 
   parts.push(
     'Strict rules: no clearly visible human faces, no front-facing portraits, no text overlays, no brand logos, no UI mockups. Show humans only via hands, silhouettes, back-views or symbolic absence.',

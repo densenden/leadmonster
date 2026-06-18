@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
     name, slug, typ, status, accent_color, convexa_form_token,
     zielgruppe, fokus, anbieter, argumente,
     brand_display_name, brand_subline, title_suffix_override,
+    navbar_logo_visible,
   } = parsed.data
   const trimNull = (v?: string | null) => (v && v.trim() ? v.trim() : null)
 
@@ -105,6 +106,7 @@ export async function POST(request: NextRequest) {
       brand_display_name:    trimNull(brand_display_name),
       brand_subline:         trimNull(brand_subline),
       title_suffix_override: trimNull(title_suffix_override),
+      navbar_logo_visible:   navbar_logo_visible ?? false,
     })
     .select('id')
     .single()
@@ -185,6 +187,7 @@ export async function PATCH(request: NextRequest) {
     id, name, slug, typ, status, accent_color, convexa_form_token,
     zielgruppe, fokus, anbieter, argumente,
     brand_display_name, brand_subline, title_suffix_override,
+    navbar_logo_visible,
   } = parsed.data
   const trimNull = (v?: string | null) => (v && v.trim() ? v.trim() : null)
 
@@ -201,6 +204,7 @@ export async function PATCH(request: NextRequest) {
       brand_display_name:    trimNull(brand_display_name),
       brand_subline:         trimNull(brand_subline),
       title_suffix_override: trimNull(title_suffix_override),
+      navbar_logo_visible:   navbar_logo_visible ?? false,
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)

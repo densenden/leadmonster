@@ -16,10 +16,11 @@ import {
   combineSchemas,
 } from '@/lib/seo/schema'
 import { calculateReadingTime } from '@/lib/utils/reading-time'
+import { normalizeRatgeberSections, resolveRatgeberTitle, resolveRatgeberCover } from '@/lib/ratgeber/normalize'
 import { RatgeberRenderer } from './_components/ratgeber-renderer'
 import { AuthorByline } from '@/components/sections/AuthorByline'
 import { resolveAuthor } from '@/lib/redaktion/load'
-import type { StepsSection, IntroSection, BodySection } from '@/lib/types/ratgeber'
+import type { StepsSection, BodySection } from '@/lib/types/ratgeber'
 
 // Re-render at most once per hour; allow slugs not pre-built at build time.
 export const revalidate = 3600
@@ -76,14 +77,14 @@ export default async function RatgeberArticlePage({ params }: PageProps) {
     notFound()
   }
 
-  const sections = row.content?.sections ?? []
+  const sections = normalizeRatgeberSections(row.content?.sections)
   const readingTime = calculateReadingTime(sections)
 
   // Fetch the product row to get the name and produkt_id for the breadcrumb + lead form
   const supabase = createAdminClient()
   const { data: produkt } = await supabase
     .from('produkte')
-    .select('id, name, slug, domain')
+    .select('id, name, slug, domain, hero_image_url, hero_image_alt')
     .eq('slug', params.produkt)
     .single()
 
@@ -93,7 +94,7 @@ export default async function RatgeberArticlePage({ params }: PageProps) {
   const origin = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`
 
   // Compose breadcrumb (4 levels): Home > Produkt > Ratgeber > Article title
-  const articleTitle = row.title ?? params.thema
+  const articleTitle = resolveRatgeberTitle(row)
   const breadcrumbSchema = buildBreadcrumbSchema([
     { name: 'Startseite', url: origin },
     { name: produktName, url: `${origin}/${params.produkt}` },
@@ -182,10 +183,15 @@ export default async function RatgeberArticlePage({ params }: PageProps) {
             Image-Generator gesetzt), sonst aus der intro-Section. Wenn beide
             fehlen, rendert nur der Header-Block. */}
         {(() => {
-          const intro = sections.find((s): s is IntroSection => s.type === 'intro')
-          const contentObj = row.content as { cover_image_url?: string; cover_image_alt?: string } | null
-          const cover = contentObj?.cover_image_url ?? intro?.image_url
-          const coverAlt = contentObj?.cover_image_alt ?? intro?.image_alt ?? articleTitle
+          const coverResolved = resolveRatgeberCover(
+            row.content,
+            produkt
+              ? { hero_image_url: produkt.hero_image_url, hero_image_alt: produkt.hero_image_alt }
+              : null,
+            params.thema,
+          )
+          const cover = coverResolved.cover_image_url
+          const coverAlt = coverResolved.cover_image_alt ?? articleTitle
           if (cover) {
             return (
               <section className="mb-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-end">

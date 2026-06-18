@@ -15,6 +15,50 @@ import type { Lead } from '@/lib/supabase/types'
 // so it can be changed via environment config without a code deploy.
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+// Resend SDK resolves with { data, error } and does not throw on 4xx API errors.
+// Callers must inspect `error` — otherwise resend_sent stays true while nothing was sent.
+function getResendFromAddress(): string | null {
+  const from = process.env.RESEND_FROM_ADDRESS?.trim()
+  return from || null
+}
+
+async function dispatchResendEmail(
+  payload: { to: string; subject: string; html: string },
+  logLabel: string,
+): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY?.trim()) {
+    console.error(`[mailer] ${logLabel}: RESEND_API_KEY is not configured`)
+    return false
+  }
+
+  const from = getResendFromAddress()
+  if (!from) {
+    console.error(
+      `[mailer] ${logLabel}: RESEND_FROM_ADDRESS is not configured — use a verified sender domain in Resend`,
+    )
+    return false
+  }
+
+  const { data, error } = await resend.emails.send({
+    from,
+    to: payload.to,
+    subject: payload.subject,
+    html: payload.html,
+  })
+
+  if (error) {
+    console.error(`[mailer] ${logLabel}: Resend API error:`, error)
+    return false
+  }
+
+  if (!data?.id) {
+    console.error(`[mailer] ${logLabel}: Resend returned no message id`)
+    return false
+  }
+
+  return true
+}
+
 // ---------------------------------------------------------------------------
 // Private helpers
 // ---------------------------------------------------------------------------
@@ -90,14 +134,10 @@ export async function sendLeadConfirmation(lead: Lead): Promise<boolean> {
 <p style="color:#666;font-size:14px">Mit freundlichen Grüßen</p>
 </body></html>`
 
-    await resend.emails.send({
-      from: process.env.RESEND_FROM_ADDRESS ?? 'noreply@leadmonster.de',
-      to: lead.email,
-      subject,
-      html,
-    })
-
-    return true
+    return await dispatchResendEmail(
+      { to: lead.email, subject, html },
+      'sendLeadConfirmation',
+    )
   } catch (error) {
     console.error('[mailer] sendLeadConfirmation failed:', error)
     return false
@@ -157,14 +197,10 @@ ${convexaLink}
 </table>
 </body></html>`
 
-    await resend.emails.send({
-      from: process.env.RESEND_FROM_ADDRESS ?? 'noreply@leadmonster.de',
-      to: salesEmail,
-      subject,
-      html,
-    })
-
-    return true
+    return await dispatchResendEmail(
+      { to: salesEmail, subject, html },
+      'sendSalesNotification',
+    )
   } catch (error) {
     console.error('[mailer] sendSalesNotification failed:', error)
     return false

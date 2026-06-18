@@ -2,11 +2,15 @@
 // Schreibt alle E-E-A-T-Pflicht-Sektionen: § 5 TMG, Vertretung, Aufsicht, § 34d,
 // Vermittlerregister, Berufshaftpflicht, Streitschlichtung, Redaktion V.i.S.d.P.
 import type { FirmaImprint } from '@/lib/einstellungen/load'
+import type { ImageCredit } from '@/lib/stock/types'
+import { ImageCreditsIndex } from '@/components/sections/ImageCreditsIndex'
 
 interface Props {
   imprint: FirmaImprint
   /** Optional: Title-Suffix (z.B. „— Sterbegeld24Plus"). */
   titleSuffix?: string
+  /** Stock / KI-Bildnachweise für Impressum-Index. */
+  imageCredits?: ImageCredit[]
 }
 
 function MaybeBlock({ heading, children }: { heading: string; children: React.ReactNode }) {
@@ -20,7 +24,7 @@ function MaybeBlock({ heading, children }: { heading: string; children: React.Re
   )
 }
 
-export function ImpressumBlocks({ imprint, titleSuffix }: Props) {
+export function ImpressumBlocks({ imprint, titleSuffix, imageCredits }: Props) {
   return (
     <>
       <h1 className="text-3xl font-bold text-[#1a3252] mb-8">
@@ -102,6 +106,10 @@ export function ImpressumBlocks({ imprint, titleSuffix }: Props) {
         Als Diensteanbieter sind wir gemäß § 7 Abs. 1 TMG für eigene Inhalte auf
         diesen Seiten nach den allgemeinen Gesetzen verantwortlich.
       </MaybeBlock>
+
+      {imageCredits && imageCredits.length > 0 && (
+        <ImageCreditsIndex credits={imageCredits} />
+      )}
     </>
   )
 }

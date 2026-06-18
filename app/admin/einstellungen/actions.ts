@@ -23,6 +23,8 @@ const settingsSchema = z.object({
   // AI text-LLM provider + model (validated against the catalog at call time).
   ai_text_provider: z.enum(['anthropic', 'openai']),
   ai_text_model: z.string().min(1, 'Modell darf nicht leer sein.'),
+  /** Empty = keep existing DB key; min 8 when user enters a new key */
+  openai_api_key: z.string().max(200).optional().default(''),
 })
 
 const BESCHREIBUNG: Record<string, string> = {
@@ -31,6 +33,7 @@ const BESCHREIBUNG: Record<string, string> = {
   sales_notification_email: 'E-Mail-Adresse für Vertrieb-Benachrichtigungen bei neuen Leads',
   ai_text_provider: 'KI-Provider für Text-Generierung: anthropic | openai',
   ai_text_model: 'Konkretes Modell beim gewählten Provider',
+  openai_api_key: 'OpenAI API-Key für Bildgenerierung (gpt-image-1) und Vision-Stil-Analyse',
 }
 
 // ---------------------------------------------------------------------------
@@ -59,6 +62,7 @@ export async function saveSettings(
     sales_notification_email: (formData.get('sales_notification_email') as string) ?? '',
     ai_text_provider: (formData.get('ai_text_provider') as string) ?? 'openai',
     ai_text_model: (formData.get('ai_text_model') as string) ?? 'gpt-4o-mini',
+    openai_api_key: (formData.get('openai_api_key') as string) ?? '',
   }
 
   const parsed = settingsSchema.safeParse(raw)
@@ -94,6 +98,10 @@ export async function saveSettings(
     await upsertKey('sales_notification_email', values.sales_notification_email)
     await upsertKey('ai_text_provider', values.ai_text_provider)
     await upsertKey('ai_text_model', values.ai_text_model)
+    const newOpenAiKey = values.openai_api_key.trim()
+    if (newOpenAiKey.length >= 8) {
+      await upsertKey('openai_api_key', newOpenAiKey)
+    }
   } catch {
     return { success: false, error: 'Fehler beim Speichern. Bitte erneut versuchen.' }
   }

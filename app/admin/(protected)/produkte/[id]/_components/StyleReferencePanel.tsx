@@ -136,7 +136,8 @@ export function StyleReferencePanel({
                 {description}
               </p>
               <p className="text-[11px] text-gray-400 mt-1">
-                Wird automatisch an jeden Hero-/Section-Bild-Prompt angehängt.
+                Aktiv für Hero- und Section-Bilder — beim Generieren siehst du die blaue
+                Box „Stilreferenz aktiv“ und im Prompt-Feld „VISUAL STYLE“ am Anfang.
               </p>
             </div>
           )}

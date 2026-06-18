@@ -11,6 +11,7 @@ import {
   type RedaktionSchema,
 } from '@/lib/validation/redaktion'
 import type { ActionResult, Redaktion } from '@/lib/supabase/types'
+import { PortraitCircle } from '@/components/ui/PortraitCircle'
 
 interface Props {
   autor?: Redaktion
@@ -239,7 +240,7 @@ export function RedaktionForm({ autor, action, autorId }: Props) {
         </legend>
         <div className="flex items-center gap-4">
           {fotoUrl
-            ? <img src={fotoUrl} alt="Aktuelles Portrait" className="h-24 w-24 rounded-full object-cover border border-gray-200" />
+            ? <PortraitCircle src={fotoUrl} alt="Aktuelles Portrait" className="h-24 w-24 border border-gray-200" />
             : <div className="h-24 w-24 rounded-full bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-xs text-gray-400">kein Foto</div>
           }
           <div className="flex-1 space-y-2">

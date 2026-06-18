@@ -17,6 +17,7 @@ import {
 } from './prompt-builder'
 import { PageResponseSchemas } from './schemas'
 import { buildSchemaMarkup } from '@/lib/seo/schema'
+import { getTitleForSlug, normalizeRatgeberSections } from '@/lib/ratgeber/normalize'
 import type { GenerationResult, PageType, PageTypeError, PageTypeResult } from './types'
 
 // Fetch relevant knowledge base articles for a given product type and format
@@ -113,6 +114,17 @@ const RATGEBER_SLUGS = [
   'kosten-leistungen',
 ] as const
 
+function resolveRatgeberTitleFromSections(
+  sections: Array<{ type: string; heading?: string; titel?: string }>,
+  slug: string,
+): string {
+  const legacy = sections.find(s => s.type === 'ratgeber')
+  if (legacy?.titel) return legacy.titel
+  const body = sections.find(s => s.type === 'body' && s.heading)
+  if (body?.heading) return body.heading
+  return getTitleForSlug(slug)
+}
+
 // Orchestrate all Claude content generation calls for a product.
 // Fetches product data, composes prompts, calls Claude for each page type,
 // validates the response JSON, and upserts rows to generierter_content.
@@ -184,11 +196,20 @@ export async function generateContent(
     // -------------------------------------------------------------------------
     if (topic !== undefined && topic.trim().length > 0) {
       const ratgeberSlug = topic.trim()
+      const topicTitle = getTitleForSlug(ratgeberSlug)
       try {
-        const { system, user } = composePrompt('ratgeber', layers)
+        const { system, user } = composePrompt('ratgeber', layers, {
+          topicSlug: ratgeberSlug,
+          topicTitle,
+        })
         const raw = await callLLMWithRetry(system, user, 'ratgeber', produktId)
         const parsed = JSON.parse(raw) as Json
         const validated = PageResponseSchemas.ratgeber.parse(parsed)
+        const normalizedSections = normalizeRatgeberSections(validated.sections)
+        const articleTitle = resolveRatgeberTitleFromSections(
+          validated.sections as Array<{ type: string; heading?: string; titel?: string }>,
+          ratgeberSlug,
+        )
 
         const canonicalUrl = `${baseUrl}/${produkt.slug}/ratgeber/${ratgeberSlug}`
         const schemaMarkup = buildSchemaMarkup('ratgeber', { canonicalUrl })
@@ -200,9 +221,15 @@ export async function generateContent(
               produkt_id: produktId,
               page_type: 'ratgeber',
               slug: ratgeberSlug,
-              meta_title: (validated as { meta_title: string }).meta_title,
-              meta_desc: (validated as { meta_desc: string }).meta_desc,
-              content: validated as unknown as Json,
+              title: articleTitle,
+              meta_title: validated.meta_title,
+              meta_desc: validated.meta_desc,
+              content: {
+                sections: normalizedSections,
+                meta_title: validated.meta_title,
+                meta_desc: validated.meta_desc,
+                schema_markup: validated.schema_markup,
+              } as unknown as Json,
               schema_markup: schemaMarkup as unknown as Json,
               status: 'entwurf',
               generated_at: new Date().toISOString(),
@@ -347,10 +374,19 @@ export async function generateContent(
     // -------------------------------------------------------------------------
     for (const ratgeberSlug of RATGEBER_SLUGS) {
       try {
-        const { system, user } = composePrompt('ratgeber', layers)
+        const topicTitle = getTitleForSlug(ratgeberSlug)
+        const { system, user } = composePrompt('ratgeber', layers, {
+          topicSlug: ratgeberSlug,
+          topicTitle,
+        })
         const raw = await callLLMWithRetry(system, user, 'ratgeber', produktId)
         const parsed = JSON.parse(raw) as Json
         const validated = PageResponseSchemas.ratgeber.parse(parsed)
+        const normalizedSections = normalizeRatgeberSections(validated.sections)
+        const articleTitle = resolveRatgeberTitleFromSections(
+          validated.sections as Array<{ type: string; heading?: string; titel?: string }>,
+          ratgeberSlug,
+        )
 
         const canonicalUrl = `${baseUrl}/${produkt.slug}/ratgeber/${ratgeberSlug}`
         const schemaMarkup = buildSchemaMarkup('ratgeber', { canonicalUrl })
@@ -362,9 +398,15 @@ export async function generateContent(
               produkt_id: produktId,
               page_type: 'ratgeber',
               slug: ratgeberSlug,
-              meta_title: (validated as { meta_title: string }).meta_title,
-              meta_desc: (validated as { meta_desc: string }).meta_desc,
-              content: validated as unknown as Json,
+              title: articleTitle,
+              meta_title: validated.meta_title,
+              meta_desc: validated.meta_desc,
+              content: {
+                sections: normalizedSections,
+                meta_title: validated.meta_title,
+                meta_desc: validated.meta_desc,
+                schema_markup: validated.schema_markup,
+              } as unknown as Json,
               schema_markup: schemaMarkup as unknown as Json,
               status: 'entwurf',
               generated_at: new Date().toISOString(),

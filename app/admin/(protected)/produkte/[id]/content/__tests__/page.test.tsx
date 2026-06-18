@@ -159,4 +159,41 @@ describe('Content management page — grouping by page_type', () => {
     expect(screen.getByTestId('preview-rg1')).toBeDefined()
     expect(screen.getByTestId('preview-rg2')).toBeDefined()
   })
+
+  it('shows publiziert label even when published_at is null (status is source of truth)', async () => {
+    mockSupabaseCalls(VALID_PRODUKT, [
+      makeContentRow({
+        id: 'rg-pub',
+        page_type: 'ratgeber',
+        status: 'publiziert',
+        published_at: null,
+        title: 'Published without date',
+      }),
+    ])
+
+    const { default: ContentPage } = await import('../page')
+    const element = await ContentPage({ params: { id: 'prod-1' } })
+    render(element as React.ReactElement)
+
+    expect(screen.getByText(/Veröffentlicht \(Datum fehlt\)/i)).toBeDefined()
+    expect(screen.queryByText(/Noch nicht veröffentlicht/i)).toBeNull()
+  })
+
+  it('shows "Noch nicht veröffentlicht" for entwurf status regardless of published_at', async () => {
+    mockSupabaseCalls(VALID_PRODUKT, [
+      makeContentRow({
+        id: 'rg-draft',
+        page_type: 'hauptseite',
+        status: 'entwurf',
+        published_at: '2026-04-07T10:00:00.000Z',
+      }),
+    ])
+
+    const { default: ContentPage } = await import('../page')
+    const element = await ContentPage({ params: { id: 'prod-1' } })
+    render(element as React.ReactElement)
+
+    expect(screen.getByText(/Noch nicht veröffentlicht/i)).toBeDefined()
+    expect(screen.queryByText(/Veröffentlicht am:/i)).toBeNull()
+  })
 })

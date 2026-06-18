@@ -114,6 +114,9 @@ export function ProduktForm({ mode, initialData, typOptions }: ProduktFormProps)
   const [titleSuffixOverride, setTitleSuffixOverride] = useState(
     initialData?.title_suffix_override ?? '',
   )
+  const [navbarLogoVisible, setNavbarLogoVisible] = useState(
+    initialData?.navbar_logo_visible ?? false,
+  )
 
   // Slug pristine flag — when true, slug auto-updates from name.
   const [slugPristine, setSlugPristine] = useState(mode === 'create')
@@ -222,6 +225,7 @@ export function ProduktForm({ mode, initialData, typOptions }: ProduktFormProps)
       brand_display_name: brandDisplayName.trim(),
       brand_subline: brandSubline.trim(),
       title_suffix_override: titleSuffixOverride.trim(),
+      navbar_logo_visible: navbarLogoVisible,
     }
 
     const payload =
@@ -484,6 +488,24 @@ export function ProduktForm({ mode, initialData, typOptions }: ProduktFormProps)
               Wird an den Title-Tag angehängt (<code>… | &lt;Suffix&gt;</code>).
               Sterbegeld-Produkte ignorieren diesen Wert standardmäßig.
             </p>
+          </div>
+          <div className="flex items-start gap-3 pt-1">
+            <input
+              id="navbar_logo_visible"
+              type="checkbox"
+              checked={navbarLogoVisible}
+              onChange={(e) => setNavbarLogoVisible(e.target.checked)}
+              className="mt-1 h-4 w-4"
+            />
+            <div>
+              <label htmlFor="navbar_logo_visible" className="text-sm font-medium text-[#333333]">
+                Logo in der Navbar anzeigen
+              </label>
+              <p className="text-xs text-[#666666]">
+                Standard: ausgeblendet. Wenn an und kein eigenes Bild hochgeladen:
+                farbiges Monster-Maskottchen. Upload im Panel unterhalb des Formulars.
+              </p>
+            </div>
           </div>
         </div>
       </fieldset>

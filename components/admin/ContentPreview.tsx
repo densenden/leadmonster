@@ -8,6 +8,7 @@ import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/Badge'
 import { SectionImagePanel } from '@/components/admin/SectionImagePanel'
+import { StyleReferenceActiveBanner } from '@/components/admin/StyleReferenceActiveBanner'
 import type { GenerierterContent } from '@/lib/supabase/types'
 import type { BadgeVariant } from '@/components/ui/Badge'
 
@@ -23,6 +24,7 @@ interface ContentPreviewProps {
   argumente?: Record<string, string> | null
   /** Aus dem Style-Reference-Upload abgeleitete Stil-Direktive. */
   styleDescription?: string | null
+  styleReferenceUrl?: string | null
 }
 
 // A content section as stored in the JSONB content.sections array.
@@ -76,6 +78,7 @@ export function ContentPreview({
   fokus,
   argumente,
   styleDescription,
+  styleReferenceUrl,
 }: ContentPreviewProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -291,6 +294,16 @@ export function ContentPreview({
 
   return (
     <div className="border border-gray-200 bg-white p-4">
+      {(styleDescription || styleReferenceUrl) && (
+        <div className="mb-4">
+          <StyleReferenceActiveBanner
+            styleDescription={styleDescription}
+            styleReferenceUrl={styleReferenceUrl}
+            compact
+          />
+        </div>
+      )}
+
       {/* Status row — status badge, dropdown, forward button, regenerate */}
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <Badge variant={STATUS_BADGE[status]}>{status}</Badge>
@@ -574,6 +587,7 @@ export function ContentPreview({
                     fokus={fokus}
                     argumente={argumente}
                     styleDescription={styleDescription}
+                    styleReferenceUrl={styleReferenceUrl}
                     contextHint={
                       typeof section.headline === 'string'
                         ? section.headline

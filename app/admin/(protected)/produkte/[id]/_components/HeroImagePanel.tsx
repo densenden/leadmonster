@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { buildHeroPrompt } from '@/lib/openai/hero-prompt'
+import { StyleReferenceActiveBanner } from '@/components/admin/StyleReferenceActiveBanner'
 
 interface HeroImagePanelProps {
   produktId: string
@@ -14,6 +15,8 @@ interface HeroImagePanelProps {
   fokus?: string | null
   anbieter?: string[] | null
   argumente?: Record<string, string> | null
+  styleDescription?: string | null
+  styleReferenceUrl?: string | null
 }
 
 export function HeroImagePanel({
@@ -26,16 +29,26 @@ export function HeroImagePanel({
   fokus,
   anbieter,
   argumente,
+  styleDescription,
+  styleReferenceUrl,
 }: HeroImagePanelProps) {
   const router = useRouter()
   const [url, setUrl] = useState(initialUrl)
   const [alt, setAlt] = useState(initialAlt ?? '')
+  const [lastGenStyleApplied, setLastGenStyleApplied] = useState<boolean | null>(null)
 
   // Auto-built prompt that reflects the saved Produkt-Konfig (Zielgruppe, Fokus,
   // Argumente). Recomputed only on mount — user edits remain authoritative.
   const autoPrompt = useMemo(
-    () => buildHeroPrompt(produktTyp, { zielgruppe, fokus, anbieter, argumente }),
-    [produktTyp, zielgruppe, fokus, anbieter, argumente],
+    () =>
+      buildHeroPrompt(produktTyp, {
+        zielgruppe,
+        fokus,
+        anbieter,
+        argumente,
+        styleDescription,
+      }),
+    [produktTyp, zielgruppe, fokus, anbieter, argumente, styleDescription],
   )
 
   const [prompt, setPrompt] = useState(autoPrompt)
@@ -74,6 +87,11 @@ export function HeroImagePanel({
       }
       setUrl(json.data.url)
       setAlt(json.data.alt)
+      setLastGenStyleApplied(
+        typeof json.data.styleReferenceApplied === 'boolean'
+          ? json.data.styleReferenceApplied
+          : null,
+      )
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Netzwerkfehler')
@@ -112,6 +130,11 @@ export function HeroImagePanel({
 
         {/* Controls */}
         <div className="space-y-3">
+          <StyleReferenceActiveBanner
+            styleDescription={styleDescription}
+            styleReferenceUrl={styleReferenceUrl}
+          />
+
           <div>
             <label className="block text-sm font-medium text-[#333333] mb-1">
               Alt-Text
@@ -152,8 +175,10 @@ export function HeroImagePanel({
             />
             <p className="text-xs text-gray-400 mt-1">
               {promptDirty
-                ? 'Eigener Prompt — Änderungen am Produkt unten setzen den Vorschlag erst nach Speichern + Reload neu.'
-                : 'Auto-Vorschlag aus Zielgruppe + Vertriebsfokus + Argumenten. Frei editierbar.'}
+                ? 'Eigener Prompt — Stilreferenz wird beim Generieren ergänzt, falls noch nicht im Text.'
+                : styleDescription
+                  ? 'Auto-Vorschlag inkl. Stilreferenz (VISUAL STYLE am Anfang). Frei editierbar.'
+                  : 'Auto-Vorschlag aus Zielgruppe + Vertriebsfokus + Argumenten. Ohne Stilreferenz — zuerst Beispielbild oben hochladen.'}
             </p>
           </div>
 
@@ -169,6 +194,17 @@ export function HeroImagePanel({
           {isGenerating && (
             <p className="text-xs text-[#02a9e6]">
               gpt-image-1 läuft — Bilder können 10–30 Sek. dauern.
+            </p>
+          )}
+
+          {lastGenStyleApplied === true && (
+            <p className="text-xs text-green-700 bg-green-50 border border-green-200 px-2 py-1">
+              Letzte Generierung: Stilreferenz war im API-Prompt aktiv.
+            </p>
+          )}
+          {lastGenStyleApplied === false && styleDescription && (
+            <p className="text-xs text-orange-700 bg-orange-50 border border-orange-200 px-2 py-1">
+              Letzte Generierung: Stil war bereits im Prompt eingebaut (kein doppeltes Anhängen).
             </p>
           )}
 

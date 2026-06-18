@@ -139,14 +139,16 @@ describe('buildSectionPrompt', () => {
     expect(b).toContain('sage green')
   })
 
-  it('integriert styleDescription wenn gesetzt', () => {
+  it('integriert styleDescription wenn gesetzt (Style-First wie Hero)', () => {
     const prompt = buildSectionPrompt({
       produktTyp: 'sterbegeld',
       sectionType: 'body',
       slot: 'inline',
       styleDescription: 'documentary photography, muted film grain',
     })
-    expect(prompt).toContain('Visual style direction (from product reference): documentary photography')
+    expect(prompt).toContain('VISUAL STYLE')
+    expect(prompt).toContain('documentary photography, muted film grain')
+    expect(prompt.indexOf('VISUAL STYLE')).toBeLessThan(prompt.indexOf('Story beat'))
   })
 })
 

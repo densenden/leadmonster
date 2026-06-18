@@ -13,7 +13,7 @@
  *   gleichbleibend kohärenten Look über alle Bilder eines Produkts.
  */
 
-import { getOpenAiRoute } from './gateway'
+import { getOpenAiRouteResolved } from './resolve-credentials'
 
 const VISION_MODEL = process.env.OPENAI_VISION_MODEL ?? 'gpt-4o-mini'
 
@@ -43,7 +43,7 @@ interface OpenAiChatResponse {
  * englische Stil-Beschreibung zurück. Wirft bei Fehlern.
  */
 export async function describeImageStyle(imageUrl: string): Promise<VisionStyleResult> {
-  const route = getOpenAiRoute()
+  const route = await getOpenAiRouteResolved()
 
   const res = await fetch(route.chatUrl, {
     method: 'POST',
