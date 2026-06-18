@@ -28,6 +28,18 @@ describe('resolveRatgeberCover', () => {
     expect(result.cover_image_alt).toBe('Intro')
   })
 
+  it('ignores stale unsplash intro url and uses curated cover', () => {
+    const dead = 'https://images.unsplash.com/photo-1567096038228-7d57aacd33b1?w=1600'
+    const result = resolveRatgeberCover(
+      {
+        sections: [{ type: 'intro', text: 'Lead', image_url: dead, image_alt: 'Dead' }],
+      },
+      { hero_image_url: null, hero_image_alt: null },
+      'was-ist-sterbegeld',
+    )
+    expect(result.cover_image_url).toContain('images.unsplash.com/photo-1507003211169')
+  })
+
   it('prefers dedicated cover over intro', () => {
     const result = resolveRatgeberCover(
       {

@@ -141,6 +141,11 @@ export function getTitleForSlug(slug: string): string {
   return TITLE_BY_SLUG[slug] ?? humanizeSlug(slug)
 }
 
+/** Only Supabase-hosted images are trusted from DB JSON — hotlinked Unsplash URLs go stale. */
+export function isStoredCoverUrl(url: string | null | undefined): boolean {
+  return isInternalImageUrl(url)
+}
+
 /** LeadMonster images are hosted on Supabase Storage — reject CDN hotlinks. */
 export function isInternalImageUrl(url: string | null | undefined): boolean {
   if (!url?.trim()) return false
@@ -186,14 +191,18 @@ export function resolveRatgeberCover(
   const heroUrl = produktHero?.hero_image_url
 
   if (
-    isInternalImageUrl(cover) &&
+    isStoredCoverUrl(cover) &&
     !isReusedProductHeroCover(cover, heroUrl)
   ) {
     return { cover_image_url: cover!, cover_image_alt: coverAlt ?? null }
   }
 
   const introCover = getIntroSectionImage(content)
-  if (introCover && !isReusedProductHeroCover(introCover.cover_image_url, heroUrl)) {
+  if (
+    introCover &&
+    isStoredCoverUrl(introCover.cover_image_url) &&
+    !isReusedProductHeroCover(introCover.cover_image_url, heroUrl)
+  ) {
     return introCover
   }
 
