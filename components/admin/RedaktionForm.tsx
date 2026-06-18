@@ -59,11 +59,13 @@ export function RedaktionForm({ autor, action, autorId }: Props) {
   const [isPublic, setIsPublic] = useState(autor?.public ?? true)
 
   const [fotoUrl, setFotoUrl] = useState(autor?.foto_url ?? '')
+  const [fotoAlt, setFotoAlt] = useState(autor?.foto_alt ?? '')
   const [fotoUploading, setFotoUploading] = useState(false)
   const [fotoError, setFotoError] = useState<string>()
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [serverError, setServerError] = useState<string>()
+  const [successMessage, setSuccessMessage] = useState<string>()
 
   function handleNameChange(v: string, n: string) {
     setVorname(v)
@@ -128,6 +130,7 @@ export function RedaktionForm({ autor, action, autorId }: Props) {
       linkedin_url: linkedin || null,
       xing_url: xing || null,
       website_url: website || null,
+      foto_alt: fotoAlt || null,
       public: isPublic,
     }
 
@@ -149,16 +152,39 @@ export function RedaktionForm({ autor, action, autorId }: Props) {
     })
     expertise.forEach(e => formData.append('expertise', e))
     formData.set('qualifikationen', qualifikationen)
+    if (autorId) formData.set('autor_id', autorId)
 
     startTransition(async () => {
-      const result = await action(formData)
-      if (result.success) {
-        router.push('/admin/redaktion')
-        router.refresh()
-      } else if (result.fieldErrors) {
-        setFieldErrors(result.fieldErrors as Record<string, string[]>)
-      } else if (result.error) {
-        setServerError(result.error)
+      try {
+        const result = await action(formData)
+        if (!result) {
+          setSuccessMessage(undefined)
+          setServerError('Keine Antwort vom Server — bitte erneut versuchen.')
+          return
+        }
+        if (result.success) {
+          setServerError(undefined)
+          setFieldErrors({})
+          if (!autor) {
+            router.push('/admin/redaktion')
+            router.refresh()
+            return
+          }
+          setSuccessMessage('Gespeichert.')
+          router.refresh()
+          return
+        }
+        setSuccessMessage(undefined)
+        if (result.fieldErrors) {
+          setFieldErrors(result.fieldErrors as Record<string, string[]>)
+        } else if (result.error) {
+          setServerError(result.error)
+        } else {
+          setServerError('Speichern fehlgeschlagen — unbekannter Fehler.')
+        }
+      } catch (err) {
+        setSuccessMessage(undefined)
+        setServerError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen.')
       }
     })
   }
@@ -169,6 +195,11 @@ export function RedaktionForm({ autor, action, autorId }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 max-w-3xl">
+      {successMessage && (
+        <div role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          {successMessage}
+        </div>
+      )}
       {serverError && (
         <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {serverError}
@@ -266,6 +297,16 @@ export function RedaktionForm({ autor, action, autorId }: Props) {
             {fotoError && <p className="text-xs text-red-600">{fotoError}</p>}
           </div>
         </div>
+        <Field label="Foto Alt-Text" error={fieldErrors.foto_alt?.[0]}
+               hint={'Barrierefreiheit + SEO, z. B. "Christian Wimmer, Versicherungsmakler …"'}>
+          <input
+            type="text"
+            value={fotoAlt}
+            onChange={e => setFotoAlt(e.target.value)}
+            className={inputCls}
+            placeholder="Vorname Nachname, Rolle …"
+          />
+        </Field>
       </fieldset>
 
       {/* Bio */}

@@ -6,6 +6,8 @@ import { createAdminClient } from '@/lib/supabase/server'
 import type { Json } from '@/lib/supabase/types'
 import { toSquareWebp } from '@/lib/images/process'
 import { buildSchemaPerson } from '@/lib/redaktion/schema-person'
+import { revalidateRedaktionDependents } from '@/lib/redaktion/revalidate'
+import { requireAdminUser } from '@/lib/supabase/require-admin'
 
 const BUCKET = 'redaktion-fotos'
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://finanzteam26.de'
@@ -14,9 +16,10 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const supabase = createAdminClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await requireAdminUser()
   if (!user) return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
+
+  const supabase = createAdminClient()
 
   const id = params.id
   if (!id) return NextResponse.json({ error: 'Ungültige ID' }, { status: 400 })
@@ -73,6 +76,8 @@ export async function POST(
   if (updateError) {
     return NextResponse.json({ error: `DB-Update: ${updateError.message}` }, { status: 500 })
   }
+
+  await revalidateRedaktionDependents(id, autor.slug)
 
   return NextResponse.json({
     ok: true,

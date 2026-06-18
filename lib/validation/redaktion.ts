@@ -37,6 +37,7 @@ export const redaktionSchema = z.object({
   linkedin_url: z.string().url('Ungültige URL.').optional().nullable().or(z.literal('')),
   xing_url: z.string().url('Ungültige URL.').optional().nullable().or(z.literal('')),
   website_url: z.string().url('Ungültige URL.').optional().nullable().or(z.literal('')),
+  foto_alt: z.string().max(200).optional().nullable(),
   public: z.boolean(),
 })
 

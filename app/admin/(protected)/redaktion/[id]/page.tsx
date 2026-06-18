@@ -32,7 +32,12 @@ export default async function EditAutorPage({ params }: PageProps) {
         {autor.vorname} {autor.nachname}
       </h1>
       <p className="mb-8 text-sm text-[#666]">{autor.rolle}</p>
-      <RedaktionForm autor={autor} autorId={params.id} action={updateAction} />
+      <RedaktionForm
+        key={autor.updated_at}
+        autor={autor}
+        autorId={params.id}
+        action={updateAction}
+      />
     </div>
   )
 }

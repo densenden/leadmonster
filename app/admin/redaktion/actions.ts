@@ -6,14 +6,14 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server'
+import { requireAdminUser } from '@/lib/supabase/require-admin'
 import type { ActionResult, Json } from '@/lib/supabase/types'
 import { redaktionSchema } from '@/lib/validation/redaktion'
 import { buildSchemaPerson } from '@/lib/redaktion/schema-person'
+import { revalidateRedaktionDependents } from '@/lib/redaktion/revalidate'
 
 async function requireAuth() {
-  const supabase = createAdminClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
+  return requireAdminUser()
 }
 
 function nullify<T>(v: T | undefined | null): T | null {
@@ -49,6 +49,7 @@ function fromForm(formData: FormData) {
     linkedin_url: nullify((formData.get('linkedin_url') as string)?.trim()),
     xing_url: nullify((formData.get('xing_url') as string)?.trim()),
     website_url: nullify((formData.get('website_url') as string)?.trim()),
+    foto_alt: nullify((formData.get('foto_alt') as string)?.trim()),
     public: formData.get('public') === 'on' || formData.get('public') === 'true',
   }
 }
@@ -70,11 +71,20 @@ export async function createAutor(formData: FormData): Promise<ActionResult> {
     schema_person: buildSchemaPerson({ ...parsed.data, foto_url: null }, baseUrl) as unknown as Json,
   }
 
-  const { error } = await supabase.from('redaktion').insert(insertRow)
+  const { data: created, error } = await supabase
+    .from('redaktion')
+    .insert(insertRow)
+    .select('id')
+    .single()
   if (error) return { success: false, error: `Datenbankfehler: ${error.message}` }
 
   revalidatePath('/admin/redaktion')
-  revalidatePath('/redaktion')
+  if (created?.id) {
+    await revalidateRedaktionDependents(created.id, parsed.data.slug)
+  } else {
+    revalidatePath('/redaktion')
+    revalidatePath(`/redaktion/${parsed.data.slug}`)
+  }
   return { success: true }
 }
 
@@ -93,30 +103,39 @@ export async function updateAutor(id: string, formData: FormData): Promise<Actio
 
   const { data: existing } = await supabase
     .from('redaktion')
-    .select('foto_url, foto_alt')
+    .select('foto_url, foto_alt, slug')
     .eq('id', id)
     .single()
 
   const merged = {
     ...parsed.data,
     foto_url: existing?.foto_url ?? null,
+    foto_alt: parsed.data.foto_alt ?? existing?.foto_alt ?? null,
   }
 
   const updateRow = {
     ...parsed.data,
+    foto_alt: merged.foto_alt,
     schema_person: buildSchemaPerson(merged, baseUrl) as unknown as Json,
   }
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('redaktion')
     .update(updateRow)
     .eq('id', id)
+    .select('id')
+    .single()
   if (error) return { success: false, error: `Datenbankfehler: ${error.message}` }
+  if (!updated) {
+    return { success: false, error: 'Speichern fehlgeschlagen — Autor nicht gefunden.' }
+  }
 
   revalidatePath('/admin/redaktion')
   revalidatePath(`/admin/redaktion/${id}`)
-  revalidatePath('/redaktion')
-  revalidatePath(`/redaktion/${parsed.data.slug}`)
+  if (existing?.slug && existing.slug !== parsed.data.slug) {
+    revalidatePath(`/redaktion/${existing.slug}`)
+  }
+  await revalidateRedaktionDependents(id, parsed.data.slug)
   return { success: true }
 }
 
@@ -126,11 +145,22 @@ export async function deleteAutor(id: string): Promise<ActionResult> {
   if (!user) return { success: false, error: 'Nicht autorisiert' }
 
   const supabase = createAdminClient()
+
+  const { data: existing } = await supabase
+    .from('redaktion')
+    .select('slug')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase.from('redaktion').delete().eq('id', id)
   if (error) return { success: false, error: `Datenbankfehler: ${error.message}` }
 
   revalidatePath('/admin/redaktion')
-  revalidatePath('/redaktion')
+  if (existing?.slug) {
+    await revalidateRedaktionDependents(id, existing.slug)
+  } else {
+    revalidatePath('/redaktion')
+  }
   return { success: true }
 }
 
@@ -140,12 +170,23 @@ export async function togglePublic(id: string, value: boolean): Promise<ActionRe
   if (!user) return { success: false, error: 'Nicht autorisiert' }
 
   const supabase = createAdminClient()
+
+  const { data: autor } = await supabase
+    .from('redaktion')
+    .select('slug')
+    .eq('id', id)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('redaktion')
     .update({ public: value })
     .eq('id', id)
   if (error) return { success: false, error: error.message }
   revalidatePath('/admin/redaktion')
-  revalidatePath('/redaktion')
+  if (autor?.slug) {
+    await revalidateRedaktionDependents(id, autor.slug)
+  } else {
+    revalidatePath('/redaktion')
+  }
   return { success: true }
 }
