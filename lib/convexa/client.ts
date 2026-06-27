@@ -17,7 +17,13 @@
  */
 import { createAdminClient } from '@/lib/supabase/server'
 import type { Lead } from '@/lib/supabase/types'
+import { CONVEXA_FORM_VERSION, CONVEXA_LEAD_SOURCE } from './constants'
 import type { ConvexaLeadPayload, ConvexaLeadResponse } from './types'
+
+function str(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  return String(value)
+}
 
 const DEFAULT_BASE_URL = 'https://api.convexa.app'
 
@@ -97,68 +103,46 @@ export function buildPayload(
   lead: Lead,
   context: { produktName: string; produktSlug: string; produktTyp: string },
 ): ConvexaLeadPayload {
-  const payload: ConvexaLeadPayload = {
-    Email: lead.email,
-  }
-
-  if (lead.vorname) payload.FirstName = lead.vorname
-  if (lead.nachname) payload.LastName = lead.nachname
-  if (lead.telefon) payload.Phone = lead.telefon
-  if (lead.interesse) payload.Interest = lead.interesse
-
-  payload.Product = context.produktName
-  payload.ProductSlug = context.produktSlug
-  payload.ProductType = context.produktTyp
-
-  if (lead.zielgruppe_tag) payload.Zielgruppe = lead.zielgruppe_tag
-  if (lead.intent_tag) payload.Intent = lead.intent_tag
-
-  // gewuenschter_anbieter ist eine optionale Spalte — Lead-Type kennt sie evtl.
-  // noch nicht je nach Migrationsstand, daher cast über generic record.
   const leadAny = lead as unknown as Record<string, unknown>
-  if (typeof leadAny.gewuenschter_anbieter === 'string' && leadAny.gewuenschter_anbieter) {
-    payload.GewuenschterAnbieter = leadAny.gewuenschter_anbieter
-  }
 
-  // Filter-Werte aus VergleichsRechner (Migration 20260504000000).
-  if (leadAny.akzeptierte_wartezeit_monate !== null && leadAny.akzeptierte_wartezeit_monate !== undefined) {
-    payload.AkzeptierteWartezeitMonate = String(leadAny.akzeptierte_wartezeit_monate)
-  }
-  if (typeof leadAny.berufsklasse === 'string' && leadAny.berufsklasse) {
-    payload.Berufsklasse = leadAny.berufsklasse
-  }
-
-  // Kontaktfelder für blinde Angebotsversendung (Migration 20260514000000).
-  if (typeof leadAny.geburtsdatum === 'string' && leadAny.geburtsdatum) {
-    payload.Birthdate = leadAny.geburtsdatum
-  }
-  if (typeof leadAny.strasse === 'string' && leadAny.strasse) {
-    payload.Street = leadAny.strasse
-  }
-  if (typeof leadAny.plz === 'string' && leadAny.plz) {
-    payload.Zip = leadAny.plz
-  }
-  if (typeof leadAny.ort === 'string' && leadAny.ort) {
-    payload.City = leadAny.ort
-  }
-  if (leadAny.sterbegeld_summe !== null && leadAny.sterbegeld_summe !== undefined) {
-    payload.InsuredAmount = String(leadAny.sterbegeld_summe)
-  }
-  if (
+  const filterKontext =
     leadAny.filter_kontext &&
     typeof leadAny.filter_kontext === 'object' &&
-    !Array.isArray(leadAny.filter_kontext) &&
-    Object.keys(leadAny.filter_kontext as Record<string, unknown>).length > 0
-  ) {
-    payload.FilterKontext = JSON.stringify(leadAny.filter_kontext)
+    !Array.isArray(leadAny.filter_kontext)
+      ? (leadAny.filter_kontext as Record<string, unknown>)
+      : {}
+
+  const formPlacement =
+    typeof filterKontext.form_placement === 'string' ? filterKontext.form_placement : ''
+
+  return {
+    Email: lead.email,
+    FirstName: str(lead.vorname),
+    LastName: str(lead.nachname),
+    Phone: str(lead.telefon),
+    Interest: str(lead.interesse),
+    Product: context.produktName,
+    ProductSlug: context.produktSlug,
+    ProductType: context.produktTyp,
+    Zielgruppe: str(lead.zielgruppe_tag),
+    Intent: str(lead.intent_tag),
+    GewuenschterAnbieter: str(leadAny.gewuenschter_anbieter),
+    AkzeptierteWartezeitMonate: str(leadAny.akzeptierte_wartezeit_monate),
+    Berufsklasse: str(leadAny.berufsklasse),
+    Birthdate: str(leadAny.geburtsdatum),
+    Street: str(leadAny.strasse),
+    Zip: str(leadAny.plz),
+    City: str(leadAny.ort),
+    InsuredAmount: str(leadAny.sterbegeld_summe),
+    FilterKontext: JSON.stringify(filterKontext),
+    SourceUrl: str(lead.source_url),
+    UtmSource: str(lead.utm_source),
+    UtmMedium: str(lead.utm_medium),
+    UtmCampaign: str(lead.utm_campaign),
+    FormVersion: CONVEXA_FORM_VERSION,
+    LeadSource: CONVEXA_LEAD_SOURCE,
+    FormPlacement: formPlacement,
   }
-
-  if (lead.source_url) payload.SourceUrl = lead.source_url
-  if (lead.utm_source) payload.UtmSource = lead.utm_source
-  if (lead.utm_medium) payload.UtmMedium = lead.utm_medium
-  if (lead.utm_campaign) payload.UtmCampaign = lead.utm_campaign
-
-  return payload
 }
 
 /**

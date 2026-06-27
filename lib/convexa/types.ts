@@ -14,39 +14,52 @@
  * Payload, der an Convexa gesendet wird. PascalCase ist Pflicht für die
  * dokumentierten Standard-Felder; eigene Custom-Felder fügen wir mit dem
  * gleichen Stil an, damit das Convexa-Backend ein konsistentes Mapping kann.
+ *
+ * Every field is always sent (empty string when unknown) so Convexa sees one
+ * stable form schema regardless of which page embedded the LeadForm.
  */
 export interface ConvexaLeadPayload {
   // Standard-Felder aus der Doku
   Email: string
-  FirstName?: string
-  LastName?: string
+  FirstName: string
+  LastName: string
+  Phone: string
+  Interest: string
 
-  // Erweiterungen — die Doku stellt frei, weitere Felder mitzusenden.
-  // Convexa zeigt sie als Custom-Felder im Lead-Datensatz.
-  Phone?: string
-  Interest?: string                // Freitext aus dem Formular (interesse)
-  Product?: string                 // Produktname (z. B. "Sterbegeld24Plus")
-  ProductSlug?: string
-  ProductType?: string
-  Zielgruppe?: string
-  Intent?: string                  // sicherheit | preis | sofortschutz
-  GewuenschterAnbieter?: string
+  // Produkt + Routing
+  Product: string
+  ProductSlug: string
+  ProductType: string
+  Zielgruppe: string
+  Intent: string
+  GewuenschterAnbieter: string
+
   // VergleichsRechner-Filter (Migration 20260504000000)
-  AkzeptierteWartezeitMonate?: string
-  Berufsklasse?: string
+  AkzeptierteWartezeitMonate: string
+  Berufsklasse: string
+
   // Lead-Kontakt-Felder für „blinde" Angebotsversendung (Migration 20260514000000)
-  // O-Ton Christian: „Ich brauch Geburtsdatum, Adresse, Sterbegeldsumme und Wartezeit."
-  Birthdate?: string                // ISO-Datum YYYY-MM-DD
-  Street?: string
-  Zip?: string                       // DE 5-stellig
-  City?: string
-  InsuredAmount?: string             // Versicherungssumme in EUR (als String, Convexa-Convention)
-  /** JSON-serialisierte Restfelder aus filter_kontext (jsonb). */
-  FilterKontext?: string
-  SourceUrl?: string
-  UtmSource?: string
-  UtmMedium?: string
-  UtmCampaign?: string
+  Birthdate: string
+  Street: string
+  Zip: string
+  City: string
+  InsuredAmount: string
+
+  /** JSON-serialisierte Restfelder aus filter_kontext (jsonb), `{}` when empty. */
+  FilterKontext: string
+
+  // Tracking
+  SourceUrl: string
+  UtmSource: string
+  UtmMedium: string
+  UtmCampaign: string
+
+  /** Stable schema id — same value for every submission. */
+  FormVersion: string
+  /** Integration source — always LeadMonster. */
+  LeadSource: string
+  /** Page context (hauptseite, tarifrechner, …) — empty when unknown. */
+  FormPlacement: string
 }
 
 /**

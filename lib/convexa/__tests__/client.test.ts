@@ -119,16 +119,70 @@ describe('buildPayload', () => {
     expect(payload.UtmCampaign).toBe('q2-2026')
   })
 
+  it('sendet immer das gleiche Feld-Set (normalisiertes Convexa-Schema)', async () => {
+    const { buildPayload } = await import('../client')
+    const { CONVEXA_FORM_VERSION, CONVEXA_LEAD_SOURCE } = await import('../constants')
+    const minimal = {
+      ...SAMPLE_LEAD,
+      vorname: null,
+      nachname: null,
+      telefon: null,
+      interesse: null,
+      gewuenschter_anbieter: null,
+      intent_tag: null,
+      zielgruppe_tag: null,
+      source_url: null,
+      utm_source: null,
+      utm_medium: null,
+      utm_campaign: null,
+    } as Lead
+    const payload = buildPayload(minimal, CONTEXT)
+    const keys = Object.keys(payload).sort()
+
+    expect(keys).toEqual([
+      'AkzeptierteWartezeitMonate',
+      'Berufsklasse',
+      'Birthdate',
+      'City',
+      'Email',
+      'FilterKontext',
+      'FirstName',
+      'FormPlacement',
+      'FormVersion',
+      'GewuenschterAnbieter',
+      'InsuredAmount',
+      'Intent',
+      'Interest',
+      'LastName',
+      'LeadSource',
+      'Phone',
+      'Product',
+      'ProductSlug',
+      'ProductType',
+      'SourceUrl',
+      'Street',
+      'UtmCampaign',
+      'UtmMedium',
+      'UtmSource',
+      'Zielgruppe',
+      'Zip',
+    ])
+    expect(payload.FormVersion).toBe(CONVEXA_FORM_VERSION)
+    expect(payload.LeadSource).toBe(CONVEXA_LEAD_SOURCE)
+    expect(payload.FirstName).toBe('')
+    expect(payload.FilterKontext).toBe('{}')
+  })
+
   it('lässt optionale Felder weg, wenn nicht gesetzt', async () => {
     const minimal = { ...SAMPLE_LEAD, vorname: null, nachname: null, telefon: null, interesse: null, gewuenschter_anbieter: null } as Lead
     const { buildPayload } = await import('../client')
     const payload = buildPayload(minimal, CONTEXT)
     expect(payload.Email).toBe('anna@example.de')
-    expect(payload.FirstName).toBeUndefined()
-    expect(payload.LastName).toBeUndefined()
-    expect(payload.Phone).toBeUndefined()
-    expect(payload.Interest).toBeUndefined()
-    expect(payload.GewuenschterAnbieter).toBeUndefined()
+    expect(payload.FirstName).toBe('')
+    expect(payload.LastName).toBe('')
+    expect(payload.Phone).toBe('')
+    expect(payload.Interest).toBe('')
+    expect(payload.GewuenschterAnbieter).toBe('')
   })
 
   it('mappt Kontakt-Felder für blinde Angebote (Migration 20260514000000)', async () => {
@@ -139,6 +193,7 @@ describe('buildPayload', () => {
       plz: '80331',
       ort: 'München',
       sterbegeld_summe: 10000,
+      filter_kontext: { form_placement: 'tarifrechner' },
     } as Lead & Record<string, unknown>
     const { buildPayload } = await import('../client')
     const payload = buildPayload(withContact, CONTEXT)
@@ -147,6 +202,7 @@ describe('buildPayload', () => {
     expect(payload.Zip).toBe('80331')
     expect(payload.City).toBe('München')
     expect(payload.InsuredAmount).toBe('10000')
+    expect(payload.FormPlacement).toBe('tarifrechner')
   })
 })
 

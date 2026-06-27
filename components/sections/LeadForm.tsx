@@ -1,10 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Label } from '@/components/ui/Label'
 import { FieldError } from '@/components/ui/FieldError'
+import { readMarketingConsent } from '@/lib/cookies/consent'
+import { trackMetaLead } from '@/lib/tracking/meta-pixel'
+
+const BIRTHDATE_MIN = '1925-01-01'
+const BIRTHDATE_MAX = '2010-12-31'
+
+/** Maps formId prefixes to a stable Convexa FormPlacement value. */
+const FORM_PLACEMENT_BY_ID: Record<string, string> = {
+  'lead-form-hauptseite': 'hauptseite',
+  'lead-form-vergleich': 'vergleichsrechner',
+  'lead-form-tarif': 'tarifrechner',
+  'lead-form-ratgeber': 'ratgeber',
+  'lead-form-vergleich-page': 'vergleich',
+  'lead-form-anbieter': 'anbieter',
+}
+
+function resolveFormPlacement(formId: string): string {
+  return FORM_PLACEMENT_BY_ID[formId] ?? 'sonstige'
+}
 
 /**
  * LeadForm — public-facing lead capture form.
@@ -19,6 +38,8 @@ export interface LeadFormProps {
   /** Intent tag pre-set from page context (e.g. "sicherheit", "preis", "sofortschutz").
    *  Optional — when omitted the field is sent as undefined and the API applies its own default. */
   intentTag?: string
+  /** Unique prefix for field ids when multiple forms exist on one page. */
+  formId?: string
   /** Optional Anbieter-Wunsch aus VergleichsRechner — wenn gesetzt, wird ein
    *  sichtbarer Hinweis "Anfrage zu: {Anbieter}" angezeigt und das Feld als
    *  gewuenschterAnbieter mit dem Submit gesendet. */
@@ -36,10 +57,24 @@ export interface LeadFormProps {
    *  VergleichsRechner.summe) — wird als Hidden-Field in filterContext.sterbegeld_summe
    *  gesendet, damit Christian beim Lead direkt die Wunschsumme sieht. */
   defaultSumme?: number
-  /** Akzeptierte Wartezeit aus dem VergleichsRechner — wird als Hidden-Field
-   *  in filterContext.akzeptierte_wartezeit_monate gesendet. Optional, da der
-   *  TarifRechner keine Wartezeit-Auswahl hat. */
+  /** Akzeptierte Wartezeit aus dem VergleichsRechner — vorbefüllt das sichtbare Wartezeit-Feld. */
   defaultWartezeitMonate?: number
+  /** Dropdown-Optionen für „Akzeptable Wartezeit“ (Sterbegeld). Wenn gesetzt, erscheint das Feld im Formular. */
+  wartezeitOptions?: ReadonlyArray<{ value: number; label: string }>
+  /** false = Wartezeit kommt aus gewähltem Anbieter-Tarif (kein Dropdown). */
+  showWartezeitDropdown?: boolean
+  /** Lesbarer Hinweis wenn Dropdown ausgeblendet (z. B. „6 Monate (LV1871-Tarif)“). */
+  wartezeitFromTarifLabel?: string
+}
+
+function resolveInitialWartezeit(
+  defaultWartezeitMonate?: number,
+  filterContext?: Record<string, unknown>,
+): string {
+  if (defaultWartezeitMonate != null) return String(defaultWartezeitMonate)
+  const fromContext = filterContext?.akzeptierte_wartezeit_monate
+  if (typeof fromContext === 'number') return String(fromContext)
+  return ''
 }
 
 /** Named export — no default export per project convention. */
@@ -47,73 +82,171 @@ export function LeadForm({
   produktId,
   zielgruppeTag,
   intentTag,
+  formId = 'lead-form',
   gewuenschterAnbieter,
   defaultInteresse,
   filterContext,
   defaultSumme,
   defaultWartezeitMonate,
+  wartezeitOptions,
+  showWartezeitDropdown = true,
+  wartezeitFromTarifLabel,
 }: LeadFormProps) {
-  // Four-state status machine: all conditional rendering derives from this single variable.
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
 
-  // Controlled field values
   const [vorname, setVorname] = useState('')
   const [nachname, setNachname] = useState('')
   const [email, setEmail] = useState('')
   const [telefon, setTelefon] = useState('')
-  const [interesse, setInteresse] = useState(defaultInteresse ?? '')
-
-  // Kontakt-Felder für blinde Angebotsversendung (Christian-Wunsch).
   const [geburtsdatum, setGeburtsdatum] = useState('')
   const [strasse, setStrasse] = useState('')
   const [plz, setPlz] = useState('')
   const [ort, setOrt] = useState('')
+  const [interesse, setInteresse] = useState(defaultInteresse ?? '')
+  const [wartezeitMonate, setWartezeitMonate] = useState(() =>
+    resolveInitialWartezeit(defaultWartezeitMonate, filterContext),
+  )
 
-  // Client-side validation errors — separate from network status
+  // Keep calculator prefill in sync when parent remounts or filter values change.
+  useEffect(() => {
+    if (defaultInteresse != null) {
+      setInteresse(defaultInteresse)
+    }
+  }, [defaultInteresse])
+
+  useEffect(() => {
+    const next = resolveInitialWartezeit(defaultWartezeitMonate, filterContext)
+    if (next) setWartezeitMonate(next)
+  }, [
+    defaultWartezeitMonate,
+    filterContext?.akzeptierte_wartezeit_monate,
+  ])
+
+  const [vornameError, setVornameError] = useState('')
+  const [nachnameError, setNachnameError] = useState('')
   const [emailError, setEmailError] = useState('')
+  const [telefonError, setTelefonError] = useState('')
+  const [geburtsdatumError, setGeburtsdatumError] = useState('')
+  const [strasseError, setStrasseError] = useState('')
   const [plzError, setPlzError] = useState('')
+  const [ortError, setOrtError] = useState('')
+  const [wartezeitError, setWartezeitError] = useState('')
 
-  // Honeypot value — humans never see or interact with this field
   const [honeypot, setHoneypot] = useState('')
+
+  const field = (name: string) => `${formId}-${name}`
+
+  function validateGeburtsdatum(value: string): string {
+    if (!value) return 'Bitte geben Sie Ihr Geburtsdatum ein.'
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return 'Bitte geben Sie ein gültiges Geburtsdatum ein.'
+    }
+    if (value < BIRTHDATE_MIN || value > BIRTHDATE_MAX) {
+      return `Geburtsdatum muss zwischen ${BIRTHDATE_MIN.split('-').reverse().join('.')} und ${BIRTHDATE_MAX.split('-').reverse().join('.')} liegen.`
+    }
+    return ''
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setVornameError('')
+    setNachnameError('')
     setEmailError('')
+    setTelefonError('')
+    setGeburtsdatumError('')
+    setStrasseError('')
     setPlzError('')
+    setOrtError('')
+    setWartezeitError('')
 
-    // Client-side email presence check
+    let hasError = false
+
+    if (!vorname.trim()) {
+      setVornameError('Bitte geben Sie Ihren Vornamen ein.')
+      hasError = true
+    }
+
+    if (!nachname.trim()) {
+      setNachnameError('Bitte geben Sie Ihren Nachnamen ein.')
+      hasError = true
+    }
+
     if (!email) {
       setEmailError('Bitte geben Sie Ihre E-Mail-Adresse ein.')
-      return
-    }
-
-    // Client-side email format check
-    if (!/.+@.+\..+/.test(email)) {
+      hasError = true
+    } else if (!/.+@.+\..+/.test(email)) {
       setEmailError('Bitte geben Sie eine gültige E-Mail-Adresse ein.')
-      return
+      hasError = true
     }
 
-    // PLZ optional, aber wenn ausgefüllt → 5-stellig DE.
-    if (plz && !/^\d{5}$/.test(plz)) {
-      setPlzError('Die PLZ muss 5-stellig sein.')
-      return
+    if (!telefon.trim()) {
+      setTelefonError('Bitte geben Sie Ihre Telefonnummer ein.')
+      hasError = true
     }
+
+    const birthError = validateGeburtsdatum(geburtsdatum)
+    if (birthError) {
+      setGeburtsdatumError(birthError)
+      hasError = true
+    }
+
+    if (!strasse.trim()) {
+      setStrasseError('Bitte geben Sie Ihre Straße und Hausnummer ein.')
+      hasError = true
+    }
+
+    if (!plz.trim()) {
+      setPlzError('Bitte geben Sie Ihre PLZ ein.')
+      hasError = true
+    } else if (!/^\d{5}$/.test(plz.trim())) {
+      setPlzError('PLZ muss 5-stellig sein.')
+      hasError = true
+    }
+
+    if (!ort.trim()) {
+      setOrtError('Bitte geben Sie Ihren Ort ein.')
+      hasError = true
+    }
+
+    const showWartezeitDropdownField =
+      (wartezeitOptions?.length ?? 0) > 0 && showWartezeitDropdown
+    let parsedWartezeit: number | undefined
+    if (showWartezeitDropdownField) {
+      if (!wartezeitMonate) {
+        setWartezeitError('Bitte wählen Sie Ihre akzeptable Wartezeit.')
+        hasError = true
+      } else {
+        parsedWartezeit = Number(wartezeitMonate)
+        if (Number.isNaN(parsedWartezeit)) {
+          setWartezeitError('Bitte wählen Sie eine gültige Wartezeit.')
+          hasError = true
+        }
+      }
+    } else if (typeof defaultWartezeitMonate === 'number') {
+      parsedWartezeit = defaultWartezeitMonate
+    }
+
+    if (hasError) return
 
     setStatus('loading')
 
-    // Hidden filter-Kontext: Defaults aus Rechner + bestehender filterContext zusammenführen.
-    // defaultSumme/defaultWartezeitMonate landen unter den Schlüsseln, die
-    // KNOWN_LEAD_FIELDS in der API als eigene Spalten erkennen.
     const mergedFilterContext: Record<string, unknown> = { ...(filterContext ?? {}) }
     if (typeof defaultSumme === 'number' && mergedFilterContext.sterbegeld_summe == null) {
       mergedFilterContext.sterbegeld_summe = defaultSumme
     }
     if (
+      parsedWartezeit !== undefined &&
+      mergedFilterContext.akzeptierte_wartezeit_monate == null
+    ) {
+      mergedFilterContext.akzeptierte_wartezeit_monate = parsedWartezeit
+    } else if (
       typeof defaultWartezeitMonate === 'number' &&
       mergedFilterContext.akzeptierte_wartezeit_monate == null
     ) {
       mergedFilterContext.akzeptierte_wartezeit_monate = defaultWartezeitMonate
     }
+
+    const sourceUrl = typeof window !== 'undefined' ? window.location.href : undefined
 
     try {
       const res = await fetch('/api/leads', {
@@ -125,17 +258,19 @@ export function LeadForm({
         body: JSON.stringify({
           produktId,
           zielgruppeTag,
-          intentTag,
+          intentTag: intentTag ?? 'anfrage',
+          formPlacement: resolveFormPlacement(formId),
           gewuenschterAnbieter,
-          vorname,
-          nachname,
+          vorname: vorname.trim(),
+          nachname: nachname.trim(),
           email,
-          telefon,
+          telefon: telefon.trim(),
+          geburtsdatum,
+          strasse: strasse.trim(),
+          plz: plz.trim(),
+          ort: ort.trim(),
           interesse,
-          geburtsdatum: geburtsdatum || undefined,
-          strasse: strasse || undefined,
-          plz: plz || undefined,
-          ort: ort || undefined,
+          sourceUrl,
           website: honeypot,
           filterContext:
             Object.keys(mergedFilterContext).length > 0 ? mergedFilterContext : undefined,
@@ -143,6 +278,9 @@ export function LeadForm({
       })
 
       if (res.ok) {
+        if (readMarketingConsent()) {
+          trackMetaLead(intentTag ?? zielgruppeTag)
+        }
         setStatus('success')
       } else {
         setStatus('error')
@@ -152,13 +290,10 @@ export function LeadForm({
     }
   }
 
-  // Success state: replace form entirely with thank-you block.
-  // role="status" announces the message to screen readers.
   if (status === 'success') {
     return (
       <div
         role="status"
-        id="formular"
         className="bg-white p-8 shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] rounded-none"
       >
         <h3 className="font-heading font-bold text-[#1a365d] text-xl mb-3">
@@ -175,12 +310,11 @@ export function LeadForm({
 
   return (
     <form
-      id="formular"
+      id={field('form')}
       onSubmit={handleSubmit}
       className="bg-white shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08)] rounded-xl py-10 px-6 md:px-8"
       noValidate
     >
-      {/* Honeypot — hidden from humans via inline style, not Tailwind (avoids purge risk) */}
       <div
         style={{
           position: 'absolute',
@@ -200,7 +334,6 @@ export function LeadForm({
         />
       </div>
 
-      {/* Anbieter-Wunsch aus VergleichsRechner — sichtbarer Hinweis + Hidden-Field */}
       {gewuenschterAnbieter && (
         <div
           data-testid="leadform-anbieter-hint"
@@ -217,131 +350,210 @@ export function LeadForm({
       )}
 
       <div className="flex flex-col gap-5">
-        {/* Vorname + Nachname nebeneinander auf Tablet+ */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="vorname">Vorname</Label>
+            <Label htmlFor={field('vorname')} required>
+              Vorname
+            </Label>
             <Input
-              id="vorname"
+              id={field('vorname')}
               type="text"
               autoComplete="given-name"
               value={vorname}
               onChange={e => setVorname(e.target.value)}
+              required
+              aria-required="true"
+              aria-describedby={field('vorname-error')}
               disabled={isLoading}
+              invalid={Boolean(vornameError)}
             />
+            <FieldError id={field('vorname-error')}>{vornameError}</FieldError>
           </div>
           <div>
-            <Label htmlFor="nachname">Nachname</Label>
+            <Label htmlFor={field('nachname')} required>
+              Nachname
+            </Label>
             <Input
-              id="nachname"
+              id={field('nachname')}
               type="text"
               autoComplete="family-name"
               value={nachname}
               onChange={e => setNachname(e.target.value)}
+              required
+              aria-required="true"
+              aria-describedby={field('nachname-error')}
               disabled={isLoading}
+              invalid={Boolean(nachnameError)}
             />
+            <FieldError id={field('nachname-error')}>{nachnameError}</FieldError>
           </div>
         </div>
 
-        {/* E-Mail — required */}
         <div>
-          <Label htmlFor="email" required>E-Mail-Adresse</Label>
+          <Label htmlFor={field('email')} required>
+            E-Mail-Adresse
+          </Label>
           <Input
-            id="email"
+            id={field('email')}
             type="email"
             autoComplete="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
             aria-required="true"
-            aria-describedby="email-error"
+            aria-describedby={field('email-error')}
             disabled={isLoading}
             invalid={Boolean(emailError)}
           />
-          <FieldError id="email-error">{emailError}</FieldError>
+          <FieldError id={field('email-error')}>{emailError}</FieldError>
         </div>
 
-        {/* Telefon */}
         <div>
-          <Label htmlFor="telefon">Telefonnummer <span className="text-[#888] font-normal">(optional)</span></Label>
+          <Label htmlFor={field('telefon')} required>
+            Telefonnummer
+          </Label>
           <Input
-            id="telefon"
+            id={field('telefon')}
             type="tel"
             autoComplete="tel"
             value={telefon}
             onChange={e => setTelefon(e.target.value)}
+            required
+            aria-required="true"
+            aria-describedby={field('telefon-error')}
             disabled={isLoading}
+            invalid={Boolean(telefonError)}
           />
+          <FieldError id={field('telefon-error')}>{telefonError}</FieldError>
         </div>
 
-        {/* Geburtsdatum — Vertriebs-Wunsch für blinde Angebotsversendung */}
         <div>
-          <Label htmlFor="geburtsdatum">
-            Geburtsdatum <span className="text-[#888] font-normal">(optional, präziser Beitrag)</span>
+          <Label htmlFor={field('geburtsdatum')} required>
+            Geburtsdatum
           </Label>
           <Input
-            id="geburtsdatum"
+            id={field('geburtsdatum')}
             type="date"
             autoComplete="bday"
+            min={BIRTHDATE_MIN}
+            max={BIRTHDATE_MAX}
             value={geburtsdatum}
             onChange={e => setGeburtsdatum(e.target.value)}
+            required
+            aria-required="true"
+            aria-describedby={field('geburtsdatum-error')}
             disabled={isLoading}
-            min="1925-01-01"
-            max="2010-12-31"
+            invalid={Boolean(geburtsdatumError)}
           />
+          <FieldError id={field('geburtsdatum-error')}>{geburtsdatumError}</FieldError>
         </div>
 
-        {/* Adresse */}
         <div>
-          <Label htmlFor="strasse">
-            Straße &amp; Hausnummer <span className="text-[#888] font-normal">(optional)</span>
+          <Label htmlFor={field('strasse')} required>
+            Straße und Hausnummer
           </Label>
           <Input
-            id="strasse"
+            id={field('strasse')}
             type="text"
             autoComplete="street-address"
             value={strasse}
             onChange={e => setStrasse(e.target.value)}
+            required
+            aria-required="true"
+            aria-describedby={field('strasse-error')}
             disabled={isLoading}
+            invalid={Boolean(strasseError)}
           />
+          <FieldError id={field('strasse-error')}>{strasseError}</FieldError>
         </div>
-        <div className="grid grid-cols-[1fr_2fr] gap-4">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="plz">PLZ</Label>
+            <Label htmlFor={field('plz')} required>
+              PLZ
+            </Label>
             <Input
-              id="plz"
+              id={field('plz')}
               type="text"
               inputMode="numeric"
               autoComplete="postal-code"
-              value={plz}
-              onChange={e => setPlz(e.target.value)}
-              disabled={isLoading}
               maxLength={5}
-              aria-describedby="plz-error"
+              value={plz}
+              onChange={e => setPlz(e.target.value.replace(/\D/g, '').slice(0, 5))}
+              required
+              aria-required="true"
+              aria-describedby={field('plz-error')}
+              disabled={isLoading}
               invalid={Boolean(plzError)}
             />
-            <FieldError id="plz-error">{plzError}</FieldError>
+            <FieldError id={field('plz-error')}>{plzError}</FieldError>
           </div>
           <div>
-            <Label htmlFor="ort">Ort</Label>
+            <Label htmlFor={field('ort')} required>
+              Ort
+            </Label>
             <Input
-              id="ort"
+              id={field('ort')}
               type="text"
               autoComplete="address-level2"
               value={ort}
               onChange={e => setOrt(e.target.value)}
+              required
+              aria-required="true"
+              aria-describedby={field('ort-error')}
               disabled={isLoading}
+              invalid={Boolean(ortError)}
             />
+            <FieldError id={field('ort-error')}>{ortError}</FieldError>
           </div>
         </div>
 
-        {/* Interesse */}
+        {(wartezeitOptions?.length ?? 0) > 0 && showWartezeitDropdown && (
+          <div>
+            <Label htmlFor={field('wartezeit')} required>
+              Akzeptable Wartezeit
+            </Label>
+            <select
+              id={field('wartezeit')}
+              value={wartezeitMonate}
+              onChange={e => setWartezeitMonate(e.target.value)}
+              required
+              aria-required="true"
+              aria-describedby={field('wartezeit-error')}
+              disabled={isLoading}
+              className={[
+                'w-full border rounded-none px-3 py-2 text-sm font-body font-light text-[#333333]',
+                'focus:outline-none focus:ring-2 focus:ring-brand-link min-h-[44px] bg-white cursor-pointer',
+                wartezeitError ? 'border-red-500' : 'border-[#e5e5e5]',
+              ].join(' ')}
+            >
+              <option value="">Bitte wählen…</option>
+              {wartezeitOptions!.map(opt => (
+                <option key={opt.value} value={String(opt.value)}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <FieldError id={field('wartezeit-error')}>{wartezeitError}</FieldError>
+          </div>
+        )}
+
+        {(wartezeitOptions?.length ?? 0) > 0 && !showWartezeitDropdown && wartezeitFromTarifLabel && (
+          <div
+            className="rounded-none border border-[#e5e5e5] bg-[#f8fafc] px-4 py-3 text-sm text-[#333333]"
+            data-testid={`${formId}-wartezeit-from-tarif`}
+          >
+            <span className="font-medium">Wartezeit laut gewähltem Tarif:</span>{' '}
+            {wartezeitFromTarifLabel}
+          </div>
+        )}
+
         <div>
-          <Label htmlFor="interesse">
+          <Label htmlFor={field('interesse')}>
             Ihr Interesse / Ihre Frage <span className="text-[#888] font-normal">(optional)</span>
           </Label>
           <Textarea
-            id="interesse"
+            id={field('interesse')}
             value={interesse}
             onChange={e => setInteresse(e.target.value)}
             disabled={isLoading}
@@ -349,7 +561,6 @@ export function LeadForm({
           />
         </div>
 
-        {/* Submit button — full-width, accessible, loading-aware */}
         <button
           type="submit"
           disabled={isLoading}
@@ -381,7 +592,6 @@ export function LeadForm({
           {isLoading ? 'Wird gesendet\u2026' : 'Jetzt Angebot anfordern'}
         </button>
 
-        {/* Server/network error message — rendered only in error state */}
         {status === 'error' && (
           <p role="alert" className="text-red-600 text-sm text-center">
             Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut oder kontaktieren Sie uns

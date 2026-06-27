@@ -31,29 +31,30 @@ const leadSchema = z.object({
   produktId: z.string().min(1),
   zielgruppeTag: z.string().min(1),
   intentTag: z.string().min(1).optional(),
+  /** Stable page context for Convexa (hauptseite, tarifrechner, …). */
+  formPlacement: z.string().max(50).optional(),
   // Anbieter-Wunsch aus VergleichsRechner-CTA — leer/undefined wenn der User
   // keinen spezifischen Anbieter ausgewählt hat.
   gewuenschterAnbieter: z.string().max(100).optional(),
-  vorname: z.string().max(100).optional(),
-  nachname: z.string().max(100).optional(),
+  vorname: z.string().min(1, 'Vorname ist erforderlich').max(100),
+  nachname: z.string().min(1, 'Nachname ist erforderlich').max(100),
   email: z.string().email(),
-  telefon: z.string().max(30).optional(),
+  telefon: z.string().min(1, 'Telefonnummer ist erforderlich').max(30),
   interesse: z.string().max(1000).optional(),
   // Lead-Kontakt-Felder für blinde Angebotsversendung (Migration 20260514000000).
   // O-Ton Christian: „Ich brauch Geburtsdatum, Adresse, Sterbegeldsumme und Wartezeit."
-  // Alle optional, damit Bestands-Formulare (TarifRechner ohne Adresse) weiter
-  // submitten können — Christian sieht im Lead, was fehlt, und ruft nach.
   geburtsdatum: z
     .string()
+    .min(1, 'Geburtsdatum ist erforderlich')
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Geburtsdatum muss im Format YYYY-MM-DD vorliegen')
     .refine(
       v => v >= BIRTHDATE_MIN && v <= BIRTHDATE_MAX,
       `Geburtsdatum muss zwischen ${BIRTHDATE_MIN} und ${BIRTHDATE_MAX} liegen`,
-    )
-    .optional(),
-  strasse: z.string().max(200).optional(),
-  plz: z.string().regex(/^\d{5}$/, 'PLZ muss 5-stellig sein').optional(),
-  ort: z.string().max(100).optional(),
+    ),
+  strasse: z.string().min(1, 'Straße ist erforderlich').max(200),
+  plz: z.string().regex(/^\d{5}$/, 'PLZ muss 5-stellig sein'),
+  ort: z.string().min(1, 'Ort ist erforderlich').max(100),
+  sourceUrl: z.string().url().max(500).optional(),
   website: z.string().optional(), // honeypot — any non-empty value triggers silent rejection
   // Filter-Werte aus dem VergleichsRechner (Wartezeit, Berufsklasse, etc.).
   // Bekannte Lead-Felder (akzeptierte_wartezeit_monate, berufsklasse,
@@ -144,7 +145,7 @@ export async function POST(request: NextRequest) {
     telefon: parsed.data.telefon,
     interesse: parsed.data.interesse,
     zielgruppe_tag: parsed.data.zielgruppeTag,
-    intent_tag: parsed.data.intentTag,
+    intent_tag: parsed.data.intentTag ?? 'anfrage',
   }
   // Only include gewuenschter_anbieter when set — keeps the payload narrow.
   if (parsed.data.gewuenschterAnbieter) {
@@ -153,10 +154,11 @@ export async function POST(request: NextRequest) {
   // Kontakt-Felder (Migration 20260514000000). Im generierten Supabase-Type
   // noch nicht enthalten — daher Cast über generic Record.
   const insertAsRecord = insertPayload as Record<string, unknown>
-  if (parsed.data.geburtsdatum) insertAsRecord.geburtsdatum = parsed.data.geburtsdatum
-  if (parsed.data.strasse) insertAsRecord.strasse = parsed.data.strasse
-  if (parsed.data.plz) insertAsRecord.plz = parsed.data.plz
-  if (parsed.data.ort) insertAsRecord.ort = parsed.data.ort
+  insertAsRecord.geburtsdatum = parsed.data.geburtsdatum
+  insertAsRecord.strasse = parsed.data.strasse
+  insertAsRecord.plz = parsed.data.plz
+  insertAsRecord.ort = parsed.data.ort
+  if (parsed.data.sourceUrl) insertAsRecord.source_url = parsed.data.sourceUrl
 
   // Filter-Kontext: bekannte Schlüssel in eigene Spalten extrahieren,
   // alles übrige landet im filter_kontext-jsonb für Convexa-Push.
@@ -172,6 +174,16 @@ export async function POST(request: NextRequest) {
     }
     if (Object.keys(restContext).length > 0) {
       ;(insertPayload as Record<string, unknown>).filter_kontext = restContext
+    }
+  }
+
+  if (parsed.data.formPlacement) {
+    const existing =
+      ((insertPayload as Record<string, unknown>).filter_kontext as Record<string, unknown> | undefined) ??
+      {}
+    ;(insertPayload as Record<string, unknown>).filter_kontext = {
+      ...existing,
+      form_placement: parsed.data.formPlacement,
     }
   }
 
