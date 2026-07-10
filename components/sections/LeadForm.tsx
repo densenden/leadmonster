@@ -676,7 +676,7 @@ export function LeadForm({
             htmlFor={field('marketing-consent')}
             className="text-sm text-[#333333] leading-relaxed cursor-pointer"
           >
-            Ich bin damit einverstanden, telefonisch oder per E-Mail über ähnliche
+            Ich bin damit einverstanden, telefonisch oder per E-Mail über passende
             Versicherungsangebote informiert zu werden.{' '}
             <span className="text-[#888]">(optional)</span>
           </label>
