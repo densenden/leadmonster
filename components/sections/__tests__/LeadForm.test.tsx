@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LeadForm } from '../LeadForm'
+import { fillRequiredLeadFormFields } from './lead-form-test-helpers'
 
 // Default props covering the three required fields
 const DEFAULT_PROPS = {
@@ -22,14 +23,17 @@ describe('LeadForm — structure and state', () => {
   // ---------------------------------------------------------------------------
   // Test 1: Renders all five visible fields + submit button with German labels
   // ---------------------------------------------------------------------------
-  it('Test 1: renders all five visible fields and submit button with German labels', () => {
+  it('Test 1: renders all visible fields and submit button with German labels', () => {
     render(<LeadForm {...DEFAULT_PROPS} />)
 
-    // All five visible fields
     expect(screen.getByLabelText(/Vorname/i)).toBeDefined()
     expect(screen.getByLabelText(/Nachname/i)).toBeDefined()
     expect(screen.getByLabelText(/E-Mail-Adresse/i)).toBeDefined()
     expect(screen.getByLabelText(/Telefonnummer/i)).toBeDefined()
+    expect(screen.getByLabelText(/Geburtsdatum/i)).toBeDefined()
+    expect(screen.getByLabelText(/Straße und Hausnummer/i)).toBeDefined()
+    expect(screen.getByLabelText(/^PLZ/i)).toBeDefined()
+    expect(screen.getByLabelText(/^Ort/i)).toBeDefined()
     expect(screen.getByLabelText(/Ihr Interesse/i)).toBeDefined()
 
     // Submit button with German label
@@ -74,8 +78,7 @@ describe('LeadForm — structure and state', () => {
 
     render(<LeadForm {...DEFAULT_PROPS} />)
 
-    // Fill in the required email field
-    await user.type(screen.getByLabelText(/E-Mail-Adresse/i), 'test@example.de')
+    await fillRequiredLeadFormFields(user)
 
     // Submit
     await user.click(screen.getByRole('button', { name: /Jetzt Angebot anfordern/i }))
@@ -104,7 +107,7 @@ describe('LeadForm — structure and state', () => {
 
     render(<LeadForm {...DEFAULT_PROPS} />)
 
-    await user.type(screen.getByLabelText(/E-Mail-Adresse/i), 'test@example.de')
+    await fillRequiredLeadFormFields(user)
     await user.click(screen.getByRole('button', { name: /Jetzt Angebot anfordern/i }))
 
     // German generic error message must appear

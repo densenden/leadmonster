@@ -17,7 +17,7 @@ export function QuoteCallout({
   author_image_url,
 }: QuoteCalloutProps) {
   return (
-    <section className="py-[70px] px-6 bg-[#f8f8f8]">
+    <section className="py-section-sm md:py-section px-4 sm:px-6 bg-[#f8f8f8]">
       <figure className="max-w-3xl mx-auto text-center">
         <svg
           aria-hidden="true"

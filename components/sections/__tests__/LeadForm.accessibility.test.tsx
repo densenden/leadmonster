@@ -23,7 +23,7 @@ describe('LeadForm — accessibility', () => {
 
     // Collect all interactive fields (inputs excluding honeypot, textarea)
     const visibleInputs = Array.from(container.querySelectorAll('input')).filter(
-      el => el.getAttribute('name') !== 'website' && el.getAttribute('tabIndex') !== '-1',
+      el => !el.id.endsWith('-company') && el.getAttribute('tabIndex') !== '-1',
     )
     const textareas = Array.from(container.querySelectorAll('textarea'))
     const allFields = [...visibleInputs, ...textareas]
@@ -56,6 +56,6 @@ describe('LeadForm — accessibility', () => {
 
     const emailInput = screen.getByLabelText(/E-Mail-Adresse/i)
     expect(emailInput.getAttribute('aria-required')).toBe('true')
-    expect(emailInput.getAttribute('aria-describedby')).toBe('email-error')
+    expect(emailInput.getAttribute('aria-describedby')).toBe('lead-form-email-error')
   })
 })

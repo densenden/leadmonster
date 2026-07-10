@@ -17,6 +17,8 @@ interface TarifRechnerProps {
   /** Zielgruppe-Tag aus produkt_config — wird ans LeadForm durchgereicht und
    *  landet auf dem Lead. Default `'allgemein'`, falls die Page keinen Wert hat. */
   zielgruppeTag?: string
+  /** Link to privacy policy for embedded LeadForm. */
+  datenschutzHref?: string
 }
 
 // Supported sum tiers in EUR — must match keys defined in TARIF_DATA.
@@ -36,7 +38,7 @@ const SUM_OPTIONS = [5000, 7500, 10000, 12500, 15000] as const
  * Design note: tokens.json specifies border-radius: 0px, but the spec requires 12px
  * card radius (rounded-xl) for the calculator card surface — intentional override.
  */
-export function TarifRechner({ produktTyp, produktName, anbieter, produktId, zielgruppeTag = 'allgemein' }: TarifRechnerProps) {
+export function TarifRechner({ produktTyp, produktName, anbieter: _anbieter, produktId, zielgruppeTag = 'allgemein', datenschutzHref = '/datenschutz' }: TarifRechnerProps) {
   const [age, setAge] = useState(55)
   const [sum, setSum] = useState(10000)
   // Result + LeadForm sind direkt beim Page-Load sichtbar — der User soll
@@ -92,14 +94,11 @@ export function TarifRechner({ produktTyp, produktName, anbieter, produktId, zie
   // Render
   // ---------------------------------------------------------------------------
 
-  // Slice anbieter to first 3 items for the badge row
-  const anbieterBadges = anbieter.slice(0, 3)
-
   return (
     <section aria-label="Beitragsrechner" className="py-[40px] px-4 md:px-0">
       {/* Calculator card */}
       {/* rounded-xl overrides the tokens.json radius: 0px — required by spec for the card surface */}
-      <div className="bg-white shadow-ft-default rounded-xl p-8 max-w-2xl mx-auto">
+      <div className="bg-white shadow-ft-default rounded-xl p-4 sm:p-6 md:p-8 max-w-2xl mx-auto">
         <h2 className="font-heading font-bold text-[#333333] text-h2-desktop mb-6">
           {produktName} Beitragsrechner
         </h2>
@@ -183,20 +182,6 @@ export function TarifRechner({ produktTyp, produktName, anbieter, produktId, zie
                 {' '}pro Monat
               </p>
 
-              {/* Insurer badges — first 3 from anbieter prop */}
-              {anbieterBadges.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4" aria-label="Beispielanbieter">
-                  {anbieterBadges.map(name => (
-                    <span
-                      key={name}
-                      className="text-xs font-body font-light border border-brand-orange text-[#333333] px-2 py-1 rounded-none"
-                    >
-                      {name}
-                    </span>
-                  ))}
-                </div>
-              )}
-
               {/* Mandatory disclaimer — always visible once result shown, never collapsible */}
               <p className="text-sm font-body font-light text-brand-neutral-muted">
                 Hinweis: Diese Berechnung dient ausschließlich zur Orientierung und stellt kein
@@ -240,11 +225,16 @@ export function TarifRechner({ produktTyp, produktName, anbieter, produktId, zie
             </h3>
             <LeadForm
               key={formKey}
+              formId="lead-form-tarif"
               intentTag="preis"
               produktId={produktId}
               zielgruppeTag={zielgruppeTag}
               defaultInteresse={prefillInteresse}
               defaultSumme={sum}
+              defaultMonatsbeitrag={
+                result ? Math.round(((result.low + result.high) / 2) * 100) / 100 : undefined
+              }
+              datenschutzHref={datenschutzHref}
             />
           </>
         )}

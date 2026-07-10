@@ -7,6 +7,7 @@
 // All external dependencies (Supabase, Convexa, Resend) are mocked so these
 // tests run without a real database, Convexa tenant, or Resend account.
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { COMPLETE_LEAD_PAYLOAD } from '@/components/sections/__tests__/lead-form-test-helpers'
 
 // ---------------------------------------------------------------------------
 // Module-level mock definitions — hoisted by Vitest before imports.
@@ -74,12 +75,11 @@ vi.mock('next/headers', () => ({
 // ---------------------------------------------------------------------------
 
 const VALID_PAYLOAD = {
+  ...COMPLETE_LEAD_PAYLOAD,
   produktId: 'test-produkt-uuid-001',
   email: 'test@test.de',
   vorname: 'Test',
   nachname: 'Pilot',
-  zielgruppeTag: 'senioren_50plus',
-  intentTag: 'sicherheit',
 }
 
 // Builds a Request with the CSRF header and correct content-type.

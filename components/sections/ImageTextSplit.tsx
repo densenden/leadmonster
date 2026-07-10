@@ -38,7 +38,7 @@ export function ImageTextSplit({
   const headingClass = background === 'navy' ? 'text-white' : 'text-[#1a365d]'
 
   return (
-    <section className={`${bgClass} py-[70px] px-6`}>
+    <section className={`${bgClass} py-section-sm md:py-section px-4 sm:px-6`}>
       <div
         className={`max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-10 items-center ${
           image_side === 'right' ? 'md:[&>div:first-child]:order-2' : ''

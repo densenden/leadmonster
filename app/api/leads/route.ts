@@ -15,6 +15,7 @@ import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/server'
 import type { TablesInsert } from '@/lib/supabase/types'
 import { pushLeadToConvexa } from '@/lib/convexa/client'
+import { PRIVACY_POLICY_VERSION } from '@/lib/privacy/lead-consent'
 import { sendLeadConfirmation, sendSalesNotification } from '@/lib/resend/mailer'
 
 // IP-based rate limiting: max 3 submissions per IP per 60-minute window.
@@ -56,6 +57,11 @@ const leadSchema = z.object({
   ort: z.string().min(1, 'Ort ist erforderlich').max(100),
   sourceUrl: z.string().url().max(500).optional(),
   website: z.string().optional(), // honeypot — any non-empty value triggers silent rejection
+  privacyConsent: z.literal(true, {
+    message: 'Datenschutz-Einwilligung ist erforderlich',
+  }),
+  privacyPolicyVersion: z.string().max(20).optional(),
+  marketingConsent: z.boolean().optional().default(false),
   // Filter-Werte aus dem VergleichsRechner (Wartezeit, Berufsklasse, etc.).
   // Bekannte Lead-Felder (akzeptierte_wartezeit_monate, berufsklasse,
   // sterbegeld_summe) werden in eigene Spalten geschrieben, alles andere
@@ -70,6 +76,7 @@ const KNOWN_LEAD_FIELDS: ReadonlyArray<string> = [
   'akzeptierte_wartezeit_monate',
   'berufsklasse',
   'sterbegeld_summe',
+  'monatsbeitrag_eur',
 ]
 
 export async function POST(request: NextRequest) {
@@ -132,6 +139,10 @@ export async function POST(request: NextRequest) {
   // 4. Honeypot silent rejection — any non-empty website value means bot.
   // Return 200 to avoid tipping off automated scanners; do not write to DB.
   if (parsed.data.website) {
+    console.warn('[api/leads] Honeypot triggered — submission discarded', {
+      email: parsed.data.email,
+      sourceUrl: parsed.data.sourceUrl,
+    })
     return Response.json({ data: { id: 'bot' } }, { status: 200 })
   }
 
@@ -159,6 +170,15 @@ export async function POST(request: NextRequest) {
   insertAsRecord.plz = parsed.data.plz
   insertAsRecord.ort = parsed.data.ort
   if (parsed.data.sourceUrl) insertAsRecord.source_url = parsed.data.sourceUrl
+
+  const consentAt = new Date().toISOString()
+  insertAsRecord.privacy_consent_at = consentAt
+  insertAsRecord.privacy_policy_version =
+    parsed.data.privacyPolicyVersion ?? PRIVACY_POLICY_VERSION
+  insertAsRecord.marketing_consent = parsed.data.marketingConsent ?? false
+  if (parsed.data.marketingConsent) {
+    insertAsRecord.marketing_consent_at = consentAt
+  }
 
   // Filter-Kontext: bekannte Schlüssel in eigene Spalten extrahieren,
   // alles übrige landet im filter_kontext-jsonb für Convexa-Push.

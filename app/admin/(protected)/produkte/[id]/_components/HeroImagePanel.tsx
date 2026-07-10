@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { buildHeroPrompt } from '@/lib/openai/hero-prompt'
 import { StyleReferenceActiveBanner } from '@/components/admin/StyleReferenceActiveBanner'
+import { BildPickerGrid, type BildPickerItem } from '@/components/admin/BildPickerGrid'
 
 interface HeroImagePanelProps {
   produktId: string
@@ -54,6 +55,8 @@ export function HeroImagePanel({
   const [prompt, setPrompt] = useState(autoPrompt)
   const [promptDirty, setPromptDirty] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isAssigning, setIsAssigning] = useState(false)
+  const [showLibrary, setShowLibrary] = useState(false)
   const [error, setError] = useState('')
 
   function handleResetPrompt() {
@@ -97,6 +100,42 @@ export function HeroImagePanel({
       setError(err instanceof Error ? err.message : 'Netzwerkfehler')
     } finally {
       setIsGenerating(false)
+    }
+  }
+
+  async function handlePickFromLibrary(bild: BildPickerItem) {
+    if (
+      url &&
+      url !== bild.url &&
+      !window.confirm('Bestehendes Hero-Bild wird durch die Bibliotheks-Auswahl ersetzt. Fortfahren?')
+    ) {
+      return
+    }
+
+    setError('')
+    setIsAssigning(true)
+    try {
+      const res = await fetch(`/api/admin/produkte/${produktId}/hero-image`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bildId: bild.id,
+          altText: alt.trim() || undefined,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setError(json.error?.message ?? 'Auswahl fehlgeschlagen')
+        return
+      }
+      setUrl(json.data.url)
+      setAlt(json.data.altText)
+      setShowLibrary(false)
+      router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Netzwerkfehler')
+    } finally {
+      setIsAssigning(false)
     }
   }
 
@@ -185,11 +224,39 @@ export function HeroImagePanel({
           <button
             type="button"
             onClick={handleGenerate}
-            disabled={isGenerating}
+            disabled={isGenerating || isAssigning}
             className="bg-[#1a3252] text-white px-4 py-2 text-sm font-medium hover:bg-[#02a9e6] disabled:opacity-50"
           >
             {isGenerating ? 'Generiere…' : url ? 'Hero neu generieren' : 'Hero generieren'}
           </button>
+
+          <div className="border-t border-gray-200 pt-3">
+            <button
+              type="button"
+              onClick={() => setShowLibrary(open => !open)}
+              disabled={isGenerating || isAssigning}
+              className="text-sm font-medium text-[#1a3252] hover:underline disabled:opacity-50"
+            >
+              {showLibrary ? 'Bibliothek schließen' : 'Aus Bibliothek wählen'}
+            </button>
+            <p className="text-xs text-gray-400 mt-1">
+              Vorhandene Bilder aus der Bilder-Sammlung (Admin → Bilder) — ohne neue KI-Generierung.
+            </p>
+
+            {showLibrary && (
+              <div className="mt-3">
+                <BildPickerGrid
+                  produktId={produktId}
+                  selectedUrl={url}
+                  onSelect={handlePickFromLibrary}
+                  disabled={isGenerating || isAssigning}
+                />
+                {isAssigning && (
+                  <p className="text-xs text-[#02a9e6] mt-2">Hero wird gesetzt…</p>
+                )}
+              </div>
+            )}
+          </div>
 
           {isGenerating && (
             <p className="text-xs text-[#02a9e6]">

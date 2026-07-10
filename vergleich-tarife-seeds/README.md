@@ -112,7 +112,7 @@ npx tsx scripts/seed-all-vergleich-tarife.ts
 ```
 
 Idempotent: Mehrfach-Aufrufe schreiben dieselben Rows (UNIQUE auf
-`produkt_id, anbieter_name, alter_von, summe`).
+`produkt_id, anbieter_name, alter_von, summe, berufsklasse, wartezeit_monate`).
 
 ## Lücken handhaben
 

@@ -1,6 +1,7 @@
 // Loader für Anbieter-Landingpages.
 // Liest die View `tarife_besonderheiten_aggregiert` + Tarif-Detail-Rows.
 import { createAdminClient } from '@/lib/supabase/server'
+import { slugifyAnbieter } from './slug'
 
 export interface AnbieterAggregat {
   produkt_id: string
@@ -23,16 +24,6 @@ export interface AnbieterAggregat {
   summe_max: number
 }
 
-function slugifyAnbieter(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/ß/g, 'ss')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
-
 export async function loadAnbieterForProdukt(produktId: string): Promise<AnbieterAggregat[]> {
   const supabase = createAdminClient()
   const { data } = await supabase
@@ -48,4 +39,4 @@ export async function loadAnbieterDetail(produktId: string, anbieterSlug: string
   return all.find(a => slugifyAnbieter(a.anbieter_name) === anbieterSlug) ?? null
 }
 
-export { slugifyAnbieter }
+export { slugifyAnbieter } from './slug'

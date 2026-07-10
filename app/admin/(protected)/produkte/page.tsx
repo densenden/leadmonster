@@ -272,6 +272,7 @@ function ProduktCard({ produkt }: { produkt: ProduktWithStats }) {
         <div className="mb-4">
           <ProduktStatusToggle
             produktId={produkt.id}
+            produktName={produkt.name}
             initialStatus={produkt.status as ProduktStatus}
           />
         </div>

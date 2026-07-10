@@ -4,11 +4,17 @@
 export interface HeroSection {
   type: 'hero'
   headline: string
+  /** Second part of headline rendered in accent color (e.g. "VERSICHERUNG"). */
+  headline_accent?: string
   subline: string
   cta_text: string
   cta_anchor: string
   image_url?: string | null
   image_alt?: string | null
+  /** Flyer-style layout with benefits + price badge. */
+  variant?: 'classic' | 'inviting'
+  price_from?: string
+  benefits?: string[]
 }
 
 export interface FeaturesSection {

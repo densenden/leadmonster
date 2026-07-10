@@ -29,8 +29,8 @@ export default async function AdminProtectedLayout({
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminNav email={user.email ?? ''} produkte={produkte} />
-      <main className="ml-56 min-h-screen">
-        <div className="px-8 py-8">{children}</div>
+      <main className="lg:ml-56 min-h-screen">
+        <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</div>
       </main>
     </div>
   )

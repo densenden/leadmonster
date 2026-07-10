@@ -66,7 +66,7 @@ describe('fetchAllRatgeberForProdukt', () => {
         meta_desc: 'Sterbegeldversicherung erklärt.',
         content: { sections: [] },
         published_at: '2026-04-01T00:00:00.000Z',
-        produkte: { slug: 'sterbegeld24plus', status: 'publiziert' },
+        produkte: { slug: 'sterbegeld24plus', status: 'archiviert' },
       },
     ]
 

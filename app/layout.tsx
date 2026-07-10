@@ -1,17 +1,19 @@
 import type { Metadata } from 'next'
-import { Roboto, Nunito_Sans } from 'next/font/google'
+import { Fraunces, Quicksand } from 'next/font/google'
+import { CookieConsentProvider } from '@/components/cookies/CookieConsent'
+import { MetaPixel } from '@/components/tracking/MetaPixel'
 import './globals.css'
 
-const roboto = Roboto({
+const fraunces = Fraunces({
   subsets: ['latin'],
-  weight: ['400', '700'],
-  variable: '--font-roboto',
+  weight: ['400', '600', '700'],
+  variable: '--font-heading',
   display: 'swap',
 })
-const nunitoSans = Nunito_Sans({
+const quicksand = Quicksand({
   subsets: ['latin'],
-  weight: ['300', '400', '600'],
-  variable: '--font-nunito',
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-body',
   display: 'swap',
 })
 
@@ -28,9 +30,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="de"
-      className={`${roboto.variable} ${nunitoSans.variable}`}
+      className={`${fraunces.variable} ${quicksand.variable}`}
     >
-      <body className="font-body text-body bg-white antialiased">{children}</body>
+      <body className="font-body text-body bg-white antialiased overflow-x-hidden">
+        <CookieConsentProvider>
+          <MetaPixel />
+          {children}
+        </CookieConsentProvider>
+      </body>
     </html>
   )
 }

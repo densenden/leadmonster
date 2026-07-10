@@ -1,6 +1,7 @@
 // Tests for POST /api/leads — core validation, CSRF, rate limiting, and honeypot.
 // Mocks Supabase so no real DB calls are made. Each test runs under 50ms.
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { COMPLETE_LEAD_PAYLOAD } from '@/components/sections/__tests__/lead-form-test-helpers'
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -58,16 +59,7 @@ vi.mock('next/headers', () => ({
 // Helpers
 // ---------------------------------------------------------------------------
 
-const VALID_PAYLOAD = {
-  produktId: '987fcdeb-51a2-43d7-b456-426614174001',
-  zielgruppeTag: 'senioren_50plus',
-  intentTag: 'sicherheit',
-  vorname: 'Anna',
-  nachname: 'Beispiel',
-  email: 'anna@example.de',
-  telefon: '0151 9876543',
-  interesse: 'Sofortschutz für meine Eltern',
-}
+const VALID_PAYLOAD = COMPLETE_LEAD_PAYLOAD
 
 /**
  * Builds a NextRequest-compatible Request with CSRF header by default.
@@ -176,5 +168,19 @@ describe('POST /api/leads', () => {
     const body = await response.json()
     expect(body.data).toBeNull()
     expect(body.error.code).toBe('FORBIDDEN')
+  })
+
+  it('Test 6: missing privacy consent returns HTTP 422 with VALIDATION_ERROR', async () => {
+    const { POST } = await import('../route')
+    const { privacyConsent: _omit, ...payloadWithoutConsent } = VALID_PAYLOAD
+
+    const response = await POST(makeRequest(payloadWithoutConsent) as never)
+
+    expect(response.status).toBe(422)
+    const body = await response.json()
+    expect(body.error.code).toBe('VALIDATION_ERROR')
+    expect(
+      body.error.details.some((d: { field: string }) => d.field === 'privacyConsent'),
+    ).toBe(true)
   })
 })

@@ -13,6 +13,8 @@ interface SearchParams {
   produkt?: string
   convexa_synced?: string
   intent_tag?: string
+  von?: string
+  bis?: string
   page?: string
 }
 
@@ -54,8 +56,36 @@ export default async function LeadsPage({
   if (searchParams.intent_tag) {
     query = query.eq('intent_tag', searchParams.intent_tag)
   }
+  if (searchParams.von) {
+    query = query.gte('created_at', `${searchParams.von}T00:00:00.000Z`)
+  }
+  if (searchParams.bis) {
+    query = query.lte('created_at', `${searchParams.bis}T23:59:59.999Z`)
+  }
 
-  const { data: leads, count } = await query.range(offset, offset + PAGE_SIZE - 1)
+  const { data: leads, count, error: leadsError } = await query.range(
+    offset,
+    offset + PAGE_SIZE - 1,
+  )
+
+  if (leadsError) {
+    console.error('[admin/leads] Query failed:', leadsError)
+    return (
+      <div className="max-w-7xl mx-auto px-6 py-10">
+        <h1 className="font-heading text-3xl text-[#333333]">Leads</h1>
+        <div
+          role="alert"
+          className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+        >
+          <p className="font-medium">Leads konnten nicht geladen werden.</p>
+          <p className="mt-1">
+            {leadsError.message || 'Unbekannter Datenbankfehler.'} Prüfen Sie{' '}
+            <code className="text-xs">SUPABASE_SECRET_KEY</code> in den Vercel-Umgebungsvariablen.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   const totalCount = count ?? 0
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
@@ -64,6 +94,8 @@ export default async function LeadsPage({
     produkt: searchParams.produkt,
     convexa_synced: searchParams.convexa_synced,
     intent_tag: searchParams.intent_tag,
+    von: searchParams.von,
+    bis: searchParams.bis,
   }
 
   return (

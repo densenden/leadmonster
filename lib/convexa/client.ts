@@ -25,6 +25,39 @@ function str(value: unknown): string {
   return String(value)
 }
 
+/** "Musterstraße 1, 80331 München" for Convexa forms that expect one address field. */
+export function formatConvexaAddress(
+  strasse: unknown,
+  plz: unknown,
+  ort: unknown,
+): string {
+  const street = str(strasse).trim()
+  const zip = str(plz).trim()
+  const city = str(ort).trim()
+  const parts: string[] = []
+  if (street) parts.push(street)
+  const cityLine = [zip, city].filter(Boolean).join(' ')
+  if (cityLine) parts.push(cityLine)
+  return parts.join(', ')
+}
+
+/** Human-readable waiting period for Convexa UI columns. */
+export function formatConvexaWartezeit(months: unknown): string {
+  if (months === null || months === undefined || months === '') return ''
+  const n = Number(months)
+  if (Number.isNaN(n)) return str(months)
+  if (n === 0) return 'Keine Wartezeit'
+  return `${n} Monate`
+}
+
+/** Two-decimal EUR string for Convexa MonatsbeitragEur. */
+export function formatConvexaMonatsbeitrag(value: unknown): string {
+  if (value === null || value === undefined || value === '') return ''
+  const n = Number(value)
+  if (Number.isNaN(n)) return str(value)
+  return n.toFixed(2)
+}
+
 const DEFAULT_BASE_URL = 'https://api.convexa.app'
 
 interface TokenResolution {
@@ -115,6 +148,8 @@ export function buildPayload(
   const formPlacement =
     typeof filterKontext.form_placement === 'string' ? filterKontext.form_placement : ''
 
+  const wartezeitMonate = leadAny.akzeptierte_wartezeit_monate
+
   return {
     Email: lead.email,
     FirstName: str(lead.vorname),
@@ -127,13 +162,16 @@ export function buildPayload(
     Zielgruppe: str(lead.zielgruppe_tag),
     Intent: str(lead.intent_tag),
     GewuenschterAnbieter: str(leadAny.gewuenschter_anbieter),
-    AkzeptierteWartezeitMonate: str(leadAny.akzeptierte_wartezeit_monate),
+    AkzeptierteWartezeitMonate: str(wartezeitMonate),
+    GewuenschteWartezeit: formatConvexaWartezeit(wartezeitMonate),
     Berufsklasse: str(leadAny.berufsklasse),
     Birthdate: str(leadAny.geburtsdatum),
     Street: str(leadAny.strasse),
     Zip: str(leadAny.plz),
     City: str(leadAny.ort),
+    Address: formatConvexaAddress(leadAny.strasse, leadAny.plz, leadAny.ort),
     InsuredAmount: str(leadAny.sterbegeld_summe),
+    MonatsbeitragEur: formatConvexaMonatsbeitrag(leadAny.monatsbeitrag_eur),
     FilterKontext: JSON.stringify(filterKontext),
     SourceUrl: str(lead.source_url),
     UtmSource: str(lead.utm_source),

@@ -26,10 +26,12 @@
   --font-size-base:   16px;
   --line-height-base: 1.7;
 
-  /* Spacing */
+  /* Spacing — tightened on narrow viewports via media query below */
   --section-pad:  70px;
+  --section-pad-mobile: 40px;
   --content-max:  1200px;
   --content-px:   24px;
+  --content-px-mobile: 16px;
 
   /* Transitions */
   --transition: all 0.2s ease;
@@ -47,17 +49,25 @@
   }
 
   body {
-    font-family: var(--font-nunito, 'Nunito Sans'), sans-serif;
+    font-family: var(--font-body, 'Quicksand'), system-ui, sans-serif;
     font-size: var(--font-size-base);
     line-height: var(--line-height-base);
     color: var(--color-body);
     background: var(--color-bg);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  @media (max-width: 767px) {
+    :root {
+      --section-pad: var(--section-pad-mobile);
+      --content-px: var(--content-px-mobile);
+    }
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-roboto, 'Roboto'), sans-serif;
+    font-family: var(--font-heading, 'Fraunces'), Georgia, serif;
     color: var(--color-navy);
     font-weight: 700;
     line-height: 1.2;
@@ -81,7 +91,7 @@
   .btn {
     @apply inline-flex items-center justify-center gap-2;
     padding: 10px 24px;
-    font-family: var(--font-nunito, 'Nunito Sans'), sans-serif;
+    font-family: var(--font-body, 'Quicksand'), system-ui, sans-serif;
     font-size: 15px;
     font-weight: 600;
     line-height: 1;
@@ -93,6 +103,12 @@
     text-decoration: none;
     transition: var(--transition);
     white-space: nowrap;
+  }
+  @media (max-width: 639px) {
+    .btn {
+      white-space: normal;
+      text-align: center;
+    }
   }
   .btn:focus-visible {
     outline: 2px solid var(--color-cyan);

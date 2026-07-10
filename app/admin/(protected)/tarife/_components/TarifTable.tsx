@@ -167,7 +167,7 @@ export function TarifTable({ produktId, einheit, tarife, filterAxes, distinctAnb
               <th className={TH}>Beitrag €/Mo</th>
               {besonderheitenAxes.map(a => (
                 <th key={a.key} className={TH}>
-                  {a.label}
+                  {a.key === 'wartezeit_monate' ? 'Wartezeit' : a.label}
                 </th>
               ))}
               <th className={TH}>Besonderheiten</th>

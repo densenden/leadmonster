@@ -18,6 +18,7 @@ import {
   getProduktConfig,
   FALLBACK,
 } from './produkt-config'
+import { resolveFilterAxes } from './resolve-filter-axes'
 
 // ---------------------------------------------------------------------------
 // getProduktConfigFromDb — Lookup pro Slug mit 1h-Cache
@@ -70,7 +71,7 @@ async function loadProduktTypFromDb(typ: string): Promise<ProduktVergleichConfig
       beitrag_label: row.beitrag_label,
       summe_suffix: row.summe_suffix,
       produkt_label: row.name,
-      filter_axes: Array.isArray(row.filter_axes) ? row.filter_axes : [],
+      filter_axes: resolveFilterAxes(typ, Array.isArray(row.filter_axes) ? row.filter_axes : []),
     }
   } catch {
     return null

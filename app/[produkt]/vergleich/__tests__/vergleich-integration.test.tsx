@@ -1,44 +1,30 @@
-// Integration tests for Vergleich — DB content shape → rendered insurer rows.
-// New schema: vergleich section contains { type: 'vergleich', anbieter: AnbieterOffer[] }
+// Integration tests — DB tarife shape → rendered insurer rows.
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { Vergleich, type AnbieterOffer } from '@/components/sections/Vergleich'
+import { Vergleich } from '@/components/sections/Vergleich'
+import { mapTarifeToVergleichOffers } from '@/lib/tarife/vergleich-static'
+import type { AnbieterTarif } from '@/lib/tarife/lookup'
 
-// Simulate the shape that the vergleich page extracts from generierter_content.content
-const dbContentShape = {
-  sections: [
-    {
-      type: 'vergleich',
-      anbieter: [
-        {
-          name: 'AXA',
-          wartezeit: 'Keine bei Unfalltod',
-          gesundheitsfragen: 'Vereinfacht',
-          garantierte_aufnahme: true,
-          beitrag_beispiel: '7,99 €/Monat',
-          besonderheit: 'Direktauszahlung in 24h',
-        },
-        {
-          name: 'Allianz',
-          wartezeit: '6 Monate',
-          gesundheitsfragen: 'Ja',
-          garantierte_aufnahme: false,
-          beitrag_beispiel: '9,50 €/Monat',
-          besonderheit: 'Familienbonus',
-        },
-      ],
-    },
-  ],
-}
+const dbTarife: AnbieterTarif[] = [
+  {
+    anbieter_name: 'DELA',
+    tarif_name: 'sorgenfrei Leben',
+    beitrag_eur: 17.14,
+    besonderheiten: { wartezeit_monate: 0, gp: false, doppelte_unfall: true },
+    badges: [],
+  },
+  {
+    anbieter_name: 'Allianz',
+    tarif_name: 'Bestattungsschutzbrief',
+    beitrag_eur: 19.8,
+    besonderheiten: { wartezeit_monate: 12, gp: true, doppelte_unfall: true },
+    badges: [],
+  },
+]
 
-function extractAnbieter(content: typeof dbContentShape): AnbieterOffer[] {
-  const vergleichSection = content.sections.find(s => s.type === 'vergleich')
-  return (vergleichSection?.anbieter ?? []) as AnbieterOffer[]
-}
-
-describe('Vergleich integration — DB content shape → rendered insurer rows', () => {
-  it('renders one row per insurer extracted from DB content', () => {
-    const anbieter = extractAnbieter(dbContentShape)
+describe('Vergleich integration — DB tarife → rendered insurer rows', () => {
+  it('renders one row per insurer from tarife table mapping', () => {
+    const anbieter = mapTarifeToVergleichOffers(dbTarife)
 
     render(
       <Vergleich
@@ -48,12 +34,12 @@ describe('Vergleich integration — DB content shape → rendered insurer rows',
       />
     )
 
-    expect(screen.getByText('AXA')).toBeDefined()
+    expect(screen.getByText('DELA')).toBeDefined()
     expect(screen.getByText('Allianz')).toBeDefined()
   })
 
-  it('renders check icon for AXA garantierte_aufnahme=true and minus for Allianz=false', () => {
-    const anbieter = extractAnbieter(dbContentShape)
+  it('renders check icon when gp=false and minus when gp=true', () => {
+    const anbieter = mapTarifeToVergleichOffers(dbTarife)
 
     render(
       <Vergleich
@@ -70,8 +56,8 @@ describe('Vergleich integration — DB content shape → rendered insurer rows',
     expect(minusIcons.length).toBe(1)
   })
 
-  it('renders beitrag_beispiel strings as plain text in cells', () => {
-    const anbieter = extractAnbieter(dbContentShape)
+  it('renders beitrag from DB as formatted monthly premium', () => {
+    const anbieter = mapTarifeToVergleichOffers(dbTarife)
 
     render(
       <Vergleich
@@ -81,7 +67,7 @@ describe('Vergleich integration — DB content shape → rendered insurer rows',
       />
     )
 
-    expect(screen.getByText('7,99 €/Monat')).toBeDefined()
-    expect(screen.getByText('9,50 €/Monat')).toBeDefined()
+    expect(screen.getByText('ab 17,14 €/Monat')).toBeDefined()
+    expect(screen.getByText('ab 19,80 €/Monat')).toBeDefined()
   })
 })

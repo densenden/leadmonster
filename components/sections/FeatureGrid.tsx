@@ -25,8 +25,8 @@ interface FeatureGridProps {
 
 export function FeatureGrid({ items }: FeatureGridProps) {
   return (
-    <section aria-label="Produktvorteile" className="py-[70px] px-6 bg-white">
-      <div className="max-w-6xl mx-auto grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8">
+    <section aria-label="Produktvorteile" className="py-section-sm md:py-section px-4 sm:px-6 bg-white">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         {items.map((item, i) => (
           <div
             key={i}

@@ -1,21 +1,22 @@
-// Public tarif (tariff calculator) page — statically generated with ISR hourly revalidation.
-// Renders the TarifRechner client component after fetching product + config from Supabase.
-// Injects HowTo JSON-LD schema into the page for AEO/SEO.
+// Public tariff comparison page — VergleichsRechner with Wartezeit filter + DB tarife.
+// Replaces the old Marktkorridor-only TarifRechner on this URL so users see
+// per-insurer rows (Allianz, DELA, …) including Wartezeit column.
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/server'
 import { generateHowToSchema } from '@/lib/seo/schema'
-import { TarifRechner } from '@/components/sections/TarifRechner'
-import type { ProduktTyp } from '@/lib/tarif-data'
+import { VergleichsRechner } from '@/components/sections/VergleichsRechner'
+import { resolveDatenschutzHref } from '@/lib/privacy/lead-consent'
+import { lookupVergleichTarife } from '@/lib/tarife/lookup'
+import { getProduktConfigFromDb } from '@/lib/tarife/produkt-config-db'
+import { resolveFilterAxes } from '@/lib/tarife/resolve-filter-axes'
 
-// Re-render at most once per hour — consistent with other [produkt] sub-route pages.
 export const revalidate = 3600
 
 interface PageProps {
   params: { produkt: string }
 }
-
-// ===== Shared data fetcher =====
 
 interface TarifePageData {
   produkt: {
@@ -26,7 +27,6 @@ interface TarifePageData {
     status: string
   }
   config: {
-    anbieter: string[] | null
     zielgruppe: string[] | null
   } | null
   contentRow: {
@@ -35,8 +35,6 @@ interface TarifePageData {
   } | null
 }
 
-// Fetches the product row, its config, and any published tarif content row.
-// Returns null when the product slug does not exist.
 async function fetchTarifePageData(slug: string): Promise<TarifePageData | null> {
   const supabase = createAdminClient()
 
@@ -50,7 +48,7 @@ async function fetchTarifePageData(slug: string): Promise<TarifePageData | null>
 
   const { data: config } = await supabase
     .from('produkt_config')
-    .select('anbieter, zielgruppe')
+    .select('zielgruppe')
     .eq('produkt_id', produkt.id)
     .single()
 
@@ -69,9 +67,6 @@ async function fetchTarifePageData(slug: string): Promise<TarifePageData | null>
   }
 }
 
-// ===== Static params =====
-
-// Pre-build one tarif page per active product slug.
 export async function generateStaticParams() {
   try {
     const supabase = createAdminClient()
@@ -83,8 +78,6 @@ export async function generateStaticParams() {
   }
 }
 
-// ===== Metadata =====
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const result = await fetchTarifePageData(params.produkt)
 
@@ -94,10 +87,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const { produkt, contentRow } = result
 
-  // Use meta_title from the published tarif content row when available; fall back to constructed string.
   const rawTitle = contentRow?.meta_title
     ? contentRow.meta_title
-    : `${produkt.name} Tarifrechner — Beitragsbeispiele`
+    : `${produkt.name} Tarife vergleichen`
 
   const title = rawTitle.slice(0, 60)
   const description = contentRow?.meta_desc ?? undefined
@@ -105,19 +97,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title, description }
 }
 
-// ===== Page component =====
-
 export default async function TarifePage({ params }: PageProps) {
   const result = await fetchTarifePageData(params.produkt)
 
-  // 404 for unknown slugs
   if (!result) {
     notFound()
   }
 
   const { produkt, config } = result
+  const vergleichConfig = await getProduktConfigFromDb(produkt.typ)
+  const filterAxes = resolveFilterAxes(produkt.typ, vergleichConfig.filter_axes)
+  const initialData = await lookupVergleichTarife(
+    produkt.id,
+    vergleichConfig.default_age,
+    vergleichConfig.default_summe,
+  )
 
-  // Build the HowTo JSON-LD schema for the tariff calculator steps
   const howToSchema = generateHowToSchema({
     produktName: produkt.name,
     produktSlug: produkt.slug,
@@ -125,38 +120,34 @@ export default async function TarifePage({ params }: PageProps) {
 
   return (
     <>
-      {/* Structured data — HowTo schema for the calculator flow */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
       />
 
-      <main className="max-w-[1200px] mx-auto px-6">
-        {/* Back link to main product page */}
-        <a
+      <main className="max-w-[1200px] mx-auto px-4 sm:px-6">
+        <Link
           href={`/${produkt.slug}`}
           className="inline-block mb-4 mt-4 text-sm text-[#1a365d] hover:underline"
         >
           &larr; Zurück zur Produktseite
-        </a>
+        </Link>
 
-        {/* Page heading */}
-        <h1 className="font-heading font-bold text-[#333333] text-3xl mb-8">
-          {produkt.name} Tarifrechner
-        </h1>
-
-        {/* Eigener Tarif-Kalkulator für alle Produkte (Covomo wurde 2026-04 abgeschaltet,
-            wir behalten 100 % Lead- und Tracking-Hoheit). */}
-        <TarifRechner
-          produktTyp={produkt.typ as ProduktTyp}
-          produktName={produkt.name}
-          anbieter={config?.anbieter ?? []}
+        <VergleichsRechner
           produktId={produkt.id}
-          zielgruppeTag={config?.zielgruppe?.[0] ?? 'allgemein'}
+          produktTyp={produkt.typ}
+          produktName={produkt.name}
+          zielgruppeTag={config?.zielgruppe?.[0] ?? 'senioren_50plus'}
+          intentTag="preis"
+          headline={`${produkt.name} — Tarife im Anbieter-Vergleich`}
+          intro="Geben Sie Geburtsjahr und Wunschsumme ein. Filtern Sie optional nach akzeptabler Wartezeit — die Tabelle zeigt Beiträge je Anbieter aus unserer Tarifdatenbank."
+          inputHint="Werte aus interner Marktbeobachtung. Verbindliches Angebot nach Anfrage."
+          ctaLabel="Persönliches Angebot anfordern"
+          initialData={initialData}
+          filterAxes={filterAxes}
+          datenschutzHref={resolveDatenschutzHref(params.produkt)}
         />
 
-
-        {/* Regulatory disclaimer below the calculator */}
         <p className="mt-8 text-xs text-[#999999] text-center max-w-2xl mx-auto">
           Alle Beitragsbeispiele sind unverbindliche Musterkalkulationen ohne Rechtsverbindlichkeit.
           Bitte wenden Sie sich für ein verbindliches Angebot an einen unserer Versicherungsexperten.

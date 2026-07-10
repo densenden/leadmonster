@@ -26,6 +26,18 @@ vi.mock('next/link', () => ({
     `<a href="${href}">${children}</a>`,
 }))
 
+vi.mock('@/lib/tarife/lookup', () => ({
+  lookupVergleichTarife: vi.fn().mockResolvedValue([
+    {
+      anbieter_name: 'DELA',
+      tarif_name: 'sorgenfrei Leben',
+      beitrag_eur: 17.14,
+      besonderheiten: { wartezeit_monate: 0, gp: false },
+      badges: [],
+    },
+  ]),
+}))
+
 // Mock the Vergleich component so JSX renders cleanly
 vi.mock('@/components/sections/Vergleich', () => ({
   Vergleich: () => '<table data-testid="vergleich-table"></table>',
@@ -200,13 +212,30 @@ describe('VergleichPage component', () => {
     })
   })
 
-  it('calls notFound() when no published vergleich row is found', async () => {
+  it('renders from tariff data when no published vergleich row exists', async () => {
     let callCount = 0
     mockAdminFrom.mockImplementation(() => {
       callCount++
       if (callCount === 1) return makeChain({ data: makeProduktRow(), error: null })
       if (callCount === 2) return makeChain({ data: makeConfigRow(), error: null })
-      // Third call — content — returns null
+      return makeChain({ data: null, error: { code: 'PGRST116' } })
+    })
+
+    const { default: VergleichPage } = await import('../page')
+    const result = await VergleichPage({ params: { produkt: 'sterbegeld24plus' } })
+    expect(result).toBeDefined()
+    expect(mockNotFound).not.toHaveBeenCalled()
+  })
+
+  it('calls notFound() when content is unpublished and no tariff rows exist', async () => {
+    const { lookupVergleichTarife } = await import('@/lib/tarife/lookup')
+    vi.mocked(lookupVergleichTarife).mockResolvedValueOnce([])
+
+    let callCount = 0
+    mockAdminFrom.mockImplementation(() => {
+      callCount++
+      if (callCount === 1) return makeChain({ data: makeProduktRow(), error: null })
+      if (callCount === 2) return makeChain({ data: makeConfigRow(), error: null })
       return makeChain({ data: null, error: { code: 'PGRST116' } })
     })
 
@@ -217,7 +246,7 @@ describe('VergleichPage component', () => {
     expect(mockNotFound).toHaveBeenCalled()
   })
 
-  it('calls notFound() when content status is not publiziert', async () => {
+  it('renders from tariff data when content status is not publiziert', async () => {
     let callCount = 0
     mockAdminFrom.mockImplementation(() => {
       callCount++
@@ -227,10 +256,9 @@ describe('VergleichPage component', () => {
     })
 
     const { default: VergleichPage } = await import('../page')
-    await expect(
-      VergleichPage({ params: { produkt: 'sterbegeld24plus' } })
-    ).rejects.toThrow('NEXT_NOT_FOUND')
-    expect(mockNotFound).toHaveBeenCalled()
+    const result = await VergleichPage({ params: { produkt: 'sterbegeld24plus' } })
+    expect(result).toBeDefined()
+    expect(mockNotFound).not.toHaveBeenCalled()
   })
 
   it('renders without throwing when all data is present and publiziert', async () => {

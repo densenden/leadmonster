@@ -182,6 +182,16 @@ WICHTIG: type MUSS exakt "tarif" sein. alters_stufen sind Objekte mit den 4 nume
       "paragraphs": ["Absatz 1", "Absatz 2", "Absatz 3"]
     },
     {
+      "type": "body",
+      "heading": "string (dritter H2-Abschnitt)",
+      "paragraphs": ["Absatz 1", "Absatz 2", "Absatz 3"]
+    },
+    {
+      "type": "body",
+      "heading": "string (vierter H2-Abschnitt, optional aber empfohlen)",
+      "paragraphs": ["Absatz 1", "Absatz 2"]
+    },
+    {
       "type": "steps",
       "heading": "So gehen Sie vor",
       "items": [
@@ -201,7 +211,7 @@ WICHTIG: type MUSS exakt "tarif" sein. alters_stufen sind Objekte mit den 4 nume
 
 WICHTIG:
 - Erlaubte section.type-Werte für Ratgeber: "intro" | "body" | "steps" | "cta" (NICHT "ratgeber").
-- Mindestens 1 intro, 2 body, 1 steps, 1 cta Section.
+- Mindestens 1 intro, 3 body (besser 4), 1 steps, 1 cta Section.
 - Jeder body-Abschnitt braucht 2-4 volle Absätze (nicht Einzeiler).
 - Schreibe zum EXAKT angegebenen Ratgeber-Thema — kein generisches „Was ist Sterbegeld?"-Intro.`,
 }

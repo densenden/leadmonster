@@ -11,6 +11,7 @@ import type { FAQItem } from '@/components/sections/FAQ'
 
 // Re-render at most once per hour — consistent with main product page ISR interval.
 export const revalidate = 3600
+export const dynamicParams = true
 
 interface PageProps {
   params: { produkt: string }
@@ -36,8 +37,8 @@ interface FAQPageData {
   } | null
 }
 
-// Fetches the product row and its published FAQ content row.
-// Returns null for the faqRecord when no published FAQ exists.
+// Fetches the product row and FAQ items from a dedicated FAQ page or,
+// as fallback, the FAQ section on the published hauptseite.
 async function fetchFAQPageData(slug: string): Promise<FAQPageData | null> {
   const supabase = createAdminClient()
 
@@ -49,15 +50,43 @@ async function fetchFAQPageData(slug: string): Promise<FAQPageData | null> {
 
   if (!produkt) return null
 
-  const { data: faqRecord } = await supabase
+  const { data: faqRow } = await supabase
     .from('generierter_content')
     .select('title, meta_title, meta_desc, content, schema_markup, status')
     .eq('produkt_id', produkt.id)
     .eq('page_type', 'faq')
-    .eq('status', 'publiziert')
-    .single()
+    .maybeSingle()
 
-  return { produkt, faqRecord: faqRecord ?? null }
+  if (faqRow?.status === 'publiziert' && extractFAQItems(faqRow.content).length > 0) {
+    return { produkt, faqRecord: faqRow }
+  }
+
+  for (const status of ['publiziert', 'review', 'entwurf'] as const) {
+    const { data: hauptseite } = await supabase
+      .from('generierter_content')
+      .select('title, meta_title, meta_desc, content, schema_markup, status')
+      .eq('produkt_id', produkt.id)
+      .eq('page_type', 'hauptseite')
+      .eq('status', status)
+      .maybeSingle()
+
+    const fallbackItems = extractFAQItems(hauptseite?.content)
+    if (fallbackItems.length > 0) {
+      return {
+        produkt,
+        faqRecord: {
+          title: hauptseite?.title ?? null,
+          meta_title: hauptseite?.meta_title ?? null,
+          meta_desc: hauptseite?.meta_desc ?? null,
+          content: { sections: [{ type: 'faq', items: fallbackItems }] },
+          schema_markup: null,
+          status: status === 'publiziert' ? 'publiziert' : 'entwurf',
+        },
+      }
+    }
+  }
+
+  return { produkt, faqRecord: null }
 }
 
 // ===== Static params =====
@@ -112,7 +141,7 @@ function extractFAQItems(content: unknown): FAQItem[] {
 export default async function FAQPage({ params }: PageProps) {
   const result = await fetchFAQPageData(params.produkt)
 
-  if (!result || !result.faqRecord) {
+  if (!result || result.produkt.status !== 'aktiv' || !result.faqRecord) {
     notFound()
   }
 
@@ -151,10 +180,10 @@ export default async function FAQPage({ params }: PageProps) {
       {/* Structured data — FAQPage + BreadcrumbList combined in @graph */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
 
-      <main className="max-w-[1200px] mx-auto px-6">
+      <main className="max-w-[1200px] mx-auto px-4 sm:px-6">
         {/* Breadcrumb navigation */}
         <nav aria-label="Breadcrumb" className="py-4">
-          <ol className="flex items-center gap-2 text-sm text-[#666666]">
+          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[#666666]">
             <li>
               <a href={`https://${baseUrl}`} className="hover:text-[#1a365d]">
                 Startseite

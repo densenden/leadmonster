@@ -29,23 +29,25 @@ export function parseUnsplashPhotoId(url: string): string | null {
   return m?.[1] ?? null
 }
 
-/** English search terms for German insurance / ratgeber slugs. */
+/** English search terms for German insurance / ratgeber slugs (abstract, solemn — no cheerful people). */
 export function buildStockSearchQuery(slug: string, title: string): string {
   const slugMap: Record<string, string> = {
-    'was-ist-sterbegeld': 'senior hands tea notebook planning calm',
-    'fuer-wen': 'three generations family garden sunset silhouette',
+    'was-ist-sterbegeld': 'documents desk pen planning muted abstract',
+    'fuer-wen': 'empty bench park solitude fog muted',
     'kosten-leistungen': 'funeral costs documents desk pen calculator',
-    'beerdigungskosten': 'funeral flowers cemetery peaceful',
-    'sterbegeld-mit-vorerkrankungen': 'senior couple walking park supportive',
-    'sterbegeld-ohne-gesundheitsfragen': 'elderly signing document trusted advisor',
-    'sterbegeld-als-erbe-steuerlich': 'family inheritance documents table',
-    'sterbegeld-bei-scheidung': 'divorce papers calm desk minimal',
-    'sterbegeld-fuer-senioren': 'senior portrait back view window light',
-    'sterbegeld-vs-lebensversicherung': 'insurance comparison documents hands',
-    'sterbegeld-vs-sparplan': 'savings jar coins planning table',
-    'sterbegeld-online-abschliessen': 'laptop senior home comfortable',
-    'bestattungsvorsorge': 'memorial candle flowers quiet',
-    'wartezeit': 'calendar waiting patience senior',
+    'beerdigungskosten': 'funeral flowers still life muted peaceful',
+    'sterbegeld-mit-vorerkrankungen': 'fog mountain landscape abstract solemn',
+    'sterbegeld-ohne-gesundheitsfragen': 'hands signing document desk no face',
+    'sterbegeld-als-erbe-steuerlich': 'inheritance documents desk pen abstract',
+    'sterbegeld-bei-scheidung': 'divorce papers contract desk minimal muted',
+    'sterbegeld-fuer-senioren': 'empty bench fog landscape solitude no people',
+    'sterbegeld-vs-lebensversicherung': 'insurance comparison documents calculator hands',
+    'sterbegeld-vs-sparplan': 'coins savings jar desk still life muted',
+    'sterbegeld-online-abschliessen': 'hands laptop overhead desk no face',
+    'bestattungsvorsorge': 'memorial flowers fog landscape quiet abstract',
+    wartezeit: 'calendar desk planning muted abstract',
+    'sterbegeld-bei-suizid': 'fog forest wilderness abstract solemn',
+    'sterbegeld-fuer-buergergeld-empfaenger': 'forest path fog muted landscape',
   }
 
   if (slugMap[slug]) return slugMap[slug]
@@ -56,7 +58,7 @@ export function buildStockSearchQuery(slug: string, title: string): string {
     .trim()
 
   const slugWords = slug.replace(/-/g, ' ')
-  return `${fromTitle || slugWords} senior family germany lifestyle editorial`
+  return `${fromTitle || slugWords} documents fog landscape abstract muted germany editorial no people`
 }
 
 export function serializeStockMeta(meta: StockPhotoMeta): string {
@@ -121,12 +123,16 @@ export async function searchUnsplashPhotos(
   return json.results ?? []
 }
 
-/** Pick first photo that looks editorial (no obvious brand/UI). */
+/** Pick first photo that looks editorial (no brand/UI, no cheerful people). */
 export function pickEditorialPhoto(photos: UnsplashPhoto[]): UnsplashPhoto | null {
-  const blocked = /\b(logo|screenshot|mockup|ui|website|advertisement|billboard)\b/i
+  const blocked =
+    /\b(logo|screenshot|mockup|ui|website|advertisement|billboard|smiling|smile|happy|laughing|cheerful|celebration|party|selfie|portrait|headshot|community|team|friends|wedding|crowd)\b/i
+  const peopleHeavy =
+    /\b(couple|family|generations|senior couple|people group|group of people|business meeting|advisory)\b/i
   for (const p of photos) {
     const text = `${p.alt_description ?? ''} ${p.description ?? ''}`
-    if (!blocked.test(text)) return p
+    if (blocked.test(text) || peopleHeavy.test(text)) continue
+    return p
   }
   return photos[0] ?? null
 }

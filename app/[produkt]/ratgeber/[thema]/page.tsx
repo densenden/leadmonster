@@ -16,9 +16,16 @@ import {
   combineSchemas,
 } from '@/lib/seo/schema'
 import { calculateReadingTime } from '@/lib/utils/reading-time'
-import { normalizeRatgeberSections, resolveRatgeberTitle, resolveRatgeberCover } from '@/lib/ratgeber/normalize'
+import {
+  normalizeRatgeberSections,
+  resolveRatgeberTitle,
+  resolveRatgeberCover,
+  sanitizeRatgeberSectionImages,
+} from '@/lib/ratgeber/normalize'
 import { RatgeberRenderer } from './_components/ratgeber-renderer'
 import { AuthorByline } from '@/components/sections/AuthorByline'
+import { ProductBreadcrumb } from '@/components/layout/ProductBreadcrumb'
+import { ROOT_PRODUKT_SLUG } from '@/lib/seo/organization'
 import { resolveAuthor } from '@/lib/redaktion/load'
 import type { StepsSection, BodySection } from '@/lib/types/ratgeber'
 
@@ -77,7 +84,10 @@ export default async function RatgeberArticlePage({ params }: PageProps) {
     notFound()
   }
 
-  const sections = normalizeRatgeberSections(row.content?.sections)
+  const sections = sanitizeRatgeberSectionImages(
+    params.thema,
+    normalizeRatgeberSections(row.content?.sections),
+  )
   const readingTime = calculateReadingTime(sections)
 
   // Fetch the product row to get the name and produkt_id for the breadcrumb + lead form
@@ -141,6 +151,8 @@ export default async function RatgeberArticlePage({ params }: PageProps) {
 
   const combinedSchema = combineSchemas(...schemasToEmit)
 
+  const homeHref = params.produkt === ROOT_PRODUKT_SLUG ? '/' : `/${params.produkt}`
+
   return (
     <>
       {/* Structured data — Article + BreadcrumbList + optional HowTo */}
@@ -149,35 +161,15 @@ export default async function RatgeberArticlePage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: combinedSchema }}
       />
 
-      <main className="max-w-[1200px] mx-auto px-6 py-8">
-        {/* Breadcrumb navigation — 4 levels */}
-        <nav aria-label="Breadcrumb" className="mb-6">
-          <ol className="flex flex-wrap items-center gap-1 text-sm text-[#666666]">
-            <li>
-              <a href={origin} className="hover:text-[#1a365d]">
-                Startseite
-              </a>
-            </li>
-            <li aria-hidden="true" className="text-[#999999]">/</li>
-            <li>
-              <a href={`/${params.produkt}`} className="hover:text-[#1a365d]">
-                {produktName}
-              </a>
-            </li>
-            <li aria-hidden="true" className="text-[#999999]">/</li>
-            <li>
-              <a href={`/${params.produkt}/ratgeber`} className="hover:text-[#1a365d]">
-                Ratgeber
-              </a>
-            </li>
-            <li aria-hidden="true" className="text-[#999999]">/</li>
-            <li>
-              <span aria-current="page" className="text-[#333333]">
-                {articleTitle}
-              </span>
-            </li>
-          </ol>
-        </nav>
+      <main className="max-w-content mx-auto px-6 py-8">
+        <ProductBreadcrumb
+          items={[
+            { label: 'Startseite', href: homeHref },
+            { label: produktName, href: homeHref },
+            { label: 'Ratgeber', href: `/${params.produkt}/ratgeber` },
+            { label: articleTitle },
+          ]}
+        />
 
         {/* Hero — Cover-Bild bevorzugt aus content.cover_image_url (vom
             Image-Generator gesetzt), sonst aus der intro-Section. Wenn beide
@@ -196,13 +188,13 @@ export default async function RatgeberArticlePage({ params }: PageProps) {
             return (
               <section className="mb-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
                 <div className="md:col-span-7 order-2 md:order-1">
-                  <p className="text-xs uppercase tracking-widest text-[#02a9e6] font-semibold mb-3">
+                  <p className="text-xs uppercase tracking-widest text-accent font-semibold mb-3 font-body">
                     {produktName} · Ratgeber
                   </p>
-                  <h1 className="font-heading font-bold text-[#1a365d] text-3xl md:text-4xl leading-tight mb-3">
+                  <h1 className="font-heading font-bold text-navy text-3xl md:text-4xl leading-tight mb-3">
                     {articleTitle}
                   </h1>
-                  <p className="text-sm text-[#666666]">
+                  <p className="text-sm text-body font-body">
                     Lesezeit: ca. {readingTime} Minuten
                   </p>
                 </div>
@@ -219,13 +211,13 @@ export default async function RatgeberArticlePage({ params }: PageProps) {
           }
           return (
             <header className="mb-8">
-              <p className="text-xs uppercase tracking-widest text-[#02a9e6] font-semibold mb-2">
+              <p className="text-xs uppercase tracking-widest text-accent font-semibold mb-2 font-body">
                 {produktName} · Ratgeber
               </p>
-              <h1 className="font-heading font-bold text-[#1a365d] text-3xl leading-tight mb-2">
+              <h1 className="font-heading font-bold text-navy text-3xl leading-tight mb-2">
                 {articleTitle}
               </h1>
-              <p className="text-sm text-[#666666] mt-1">
+              <p className="text-sm text-body font-body mt-1">
                 Lesezeit: ca. {readingTime} Minuten
               </p>
             </header>
@@ -271,11 +263,11 @@ export default async function RatgeberArticlePage({ params }: PageProps) {
                   .map(stripMd)
                 if (headings.length < 2) return null
                 return (
-                  <nav aria-label="Inhaltsverzeichnis" className="border-l-2 border-[#abd5f4] pl-4">
-                    <p className="text-xs uppercase tracking-widest text-[#02a9e6] font-semibold mb-2">
+                  <nav aria-label="Inhaltsverzeichnis" className="border-l-2 border-accent/30 pl-4">
+                    <p className="text-xs uppercase tracking-widest text-accent font-semibold mb-2 font-body">
                       Inhalt
                     </p>
-                    <ol className="space-y-1.5 text-sm text-[#1a365d]">
+                    <ol className="space-y-1.5 text-sm text-navy font-body">
                       {headings.map((h, i) => (
                         <li key={i} className="leading-snug">
                           {h}
@@ -287,16 +279,16 @@ export default async function RatgeberArticlePage({ params }: PageProps) {
               })()}
 
               {/* Quick CTA card */}
-              <div className="bg-gradient-to-br from-[#1a365d] to-[#02a9e6] text-white p-5 rounded-xl shadow-md">
-                <p className="text-sm font-semibold mb-1">
+              <div className="bg-gradient-to-br from-navy to-orange text-white p-5 rounded-xl shadow-md">
+                <p className="text-sm font-semibold mb-1 font-body">
                   Persönliche Beratung gefällig?
                 </p>
-                <p className="text-xs text-white/85 mb-3 leading-relaxed">
+                <p className="text-xs text-white/85 mb-3 leading-relaxed font-body">
                   Unser Team beantwortet Ihre Fragen zu {produktName} unverbindlich.
                 </p>
                 <a
                   href="#formular"
-                  className="inline-block bg-white text-[#1a365d] text-xs font-bold px-3 py-2 rounded hover:bg-[#abd5f4] transition-colors"
+                  className="inline-block bg-white text-navy text-xs font-bold px-3 py-2 rounded-lg hover:bg-orange/10 transition-colors font-body"
                 >
                   Jetzt Beratung anfordern →
                 </a>
@@ -309,7 +301,7 @@ export default async function RatgeberArticlePage({ params }: PageProps) {
         <div className="mt-12 pt-6 border-t border-gray-200">
           <a
             href={`/${params.produkt}/ratgeber`}
-            className="text-sm text-[#1a365d] hover:underline"
+            className="text-sm text-accent hover:underline font-body font-medium"
           >
             ← Alle Ratgeber zu {produktName}
           </a>

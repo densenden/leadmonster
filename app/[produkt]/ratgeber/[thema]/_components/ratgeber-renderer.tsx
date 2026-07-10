@@ -3,6 +3,7 @@
 // Unknown section types return null — no crash, no render.
 // This is a Server Component — no 'use client' directive needed.
 import { LeadForm } from '@/components/sections/LeadForm'
+import { resolveDatenschutzHref } from '@/lib/privacy/lead-consent'
 import { InlineMarkdown } from '@/components/util/InlineMarkdown'
 import { InfoBox } from '@/components/sections/InfoBox'
 import { renderMarkdown } from '@/lib/markdown/render'
@@ -112,6 +113,7 @@ function renderCta(
   articleSlug: string,
   produktId: string,
   zielgruppeTag: string,
+  datenschutzHref: string,
 ) {
   const intentTag = deriveIntentTag(articleSlug)
 
@@ -123,9 +125,11 @@ function renderCta(
         </h2>
       )}
       <LeadForm
+        formId="lead-form-ratgeber"
         produktId={produktId}
         zielgruppeTag={zielgruppeTag}
         intentTag={intentTag}
+        datenschutzHref={datenschutzHref}
       />
     </section>
   )
@@ -247,6 +251,8 @@ export function RatgeberRenderer({
   produktId,
   zielgruppeTag,
 }: RatgeberRendererProps) {
+  const datenschutzHref = resolveDatenschutzHref(produktSlug)
+
   return (
     <div>
       {sections.map((section, index) => {
@@ -258,7 +264,14 @@ export function RatgeberRenderer({
           case 'steps':
             return renderSteps(section, index)
           case 'cta':
-            return renderCta(section, index, articleSlug, produktId, zielgruppeTag)
+            return renderCta(
+              section,
+              index,
+              articleSlug,
+              produktId,
+              zielgruppeTag,
+              datenschutzHref,
+            )
           case 'related':
             return renderRelated(section, index, produktSlug)
           case 'image_text':

@@ -43,7 +43,15 @@ export interface ConvexaLeadPayload {
   Street: string
   Zip: string
   City: string
+  /** Combined "Straße, PLZ Ort" — easier Convexa form mapping than three fields. */
+  Address: string
   InsuredAmount: string
+
+  /** Human-readable waiting period, e.g. "12 Monate" (Migration 20260514000000). */
+  GewuenschteWartezeit: string
+
+  /** Monthly premium from calculator (Migration 20260706000000). */
+  MonatsbeitragEur: string
 
   /** JSON-serialisierte Restfelder aus filter_kontext (jsonb), `{}` when empty. */
   FilterKontext: string

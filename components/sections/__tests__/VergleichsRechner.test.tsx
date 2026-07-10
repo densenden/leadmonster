@@ -62,11 +62,27 @@ describe('VergleichsRechner — initial render', () => {
     expect(screen.getByTestId('vr-row-allianz')).toBeInTheDocument()
   })
 
+  it('shows tiny provider logos under anbieter names when assets exist', () => {
+    render(<VergleichsRechner {...DEFAULT_PROPS} />)
+    expect(screen.getAllByTestId('vr-logo-dela').length).toBeGreaterThan(0)
+    expect(screen.getAllByTestId('vr-logo-allianz').length).toBeGreaterThan(0)
+    expect(screen.queryByTestId('vr-logo-november')).not.toBeInTheDocument()
+    const logoBox = screen.getAllByTestId('vr-logo-dela')[0]
+    expect(logoBox.className).toContain('bg-white')
+  })
+
   it('zeigt Badges für DELA (alle drei)', () => {
     render(<VergleichsRechner {...DEFAULT_PROPS} />)
     expect(screen.getByTestId('vr-badge-dela-guenstigster')).toBeInTheDocument()
     expect(screen.getByTestId('vr-badge-dela-schnellster_schutz')).toBeInTheDocument()
     expect(screen.getByTestId('vr-badge-dela-bester_schutz')).toBeInTheDocument()
+  })
+
+  it('renders badges with colored background utility classes', () => {
+    render(<VergleichsRechner {...DEFAULT_PROPS} />)
+    expect(screen.getByTestId('vr-badge-dela-guenstigster').className).toContain('bg-brand-orange')
+    expect(screen.getByTestId('vr-badge-dela-schnellster_schutz').className).toContain('bg-brand-cyan')
+    expect(screen.getByTestId('vr-badge-dela-bester_schutz').className).toContain('bg-navy')
   })
 
   it('zeigt Beträge im de-DE-Format', () => {
@@ -210,6 +226,81 @@ describe('VergleichsRechner — defaultInteresse Prefill', () => {
       expect(textarea.value).toContain('Sterbegeld24Plus')
       expect(textarea.value).toContain('Beratungsanfrage')
     })
+  })
+})
+
+describe('VergleichsRechner — Wartezeit im Formular-Prefill', () => {
+  it('prefillt Wartezeit-Filter im Interesse-Text bei gesetzter Auswahl', async () => {
+    render(<VergleichsRechner {...DEFAULT_PROPS} produktName="Sterbegeld24Plus" />)
+
+    const wartezeitSelect = screen.getByTestId('vr-axis-wartezeit_monate')
+    fireEvent.change(wartezeitSelect, { target: { value: '12' } })
+    fireEvent.click(screen.getByTestId('vr-cta-global'))
+
+    await waitFor(() => {
+      const textarea = screen.getByLabelText(/Ihr Interesse/i) as HTMLTextAreaElement
+      expect(textarea.value).toContain('akzeptable Wartezeit: bis 12 Monate')
+    })
+  })
+
+  it('prefillt das Wartezeit-Dropdown im LeadForm aus dem Rechner-Filter', async () => {
+    render(<VergleichsRechner {...DEFAULT_PROPS} produktName="Sterbegeld24Plus" />)
+
+    fireEvent.change(screen.getByTestId('vr-axis-wartezeit_monate'), { target: { value: '12' } })
+    fireEvent.click(screen.getByTestId('vr-cta-global'))
+
+    await waitFor(() => {
+      const wartezeitField = document.getElementById(
+        'lead-form-vergleich-wartezeit',
+      ) as HTMLSelectElement
+      expect(wartezeitField?.value).toBe('12')
+    })
+  })
+
+  it('erbt Wartezeit aus der Tabellenzeile wenn Filter auf Egal steht', async () => {
+    render(<VergleichsRechner {...DEFAULT_PROPS} produktName="Sterbegeld24Plus" />)
+
+    fireEvent.click(screen.getByTestId('vr-cta-november'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('lead-form-vergleich-wartezeit-from-tarif')).toHaveTextContent(
+        '12 Monate',
+      )
+      expect(document.getElementById('lead-form-vergleich-wartezeit')).toBeNull()
+    })
+  })
+
+  it('zeigt Wartezeit-Dropdown nur beim globalen CTA', async () => {
+    render(<VergleichsRechner {...DEFAULT_PROPS} produktName="Sterbegeld24Plus" />)
+
+    fireEvent.click(screen.getByTestId('vr-cta-dela'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('lead-form-vergleich-wartezeit-from-tarif')).toBeInTheDocument()
+      expect(document.getElementById('lead-form-vergleich-wartezeit')).toBeNull()
+    })
+
+    fireEvent.click(screen.getByTestId('vr-cta-global'))
+
+    await waitFor(() => {
+      expect(document.getElementById('lead-form-vergleich-wartezeit')).toBeInTheDocument()
+    })
+  })
+})
+
+describe('VergleichsRechner — Schutz-Sterne', () => {
+  it('zeigt Schutz-Sterne für DELA (5 von 5 nach +1 Boost)', () => {
+    render(<VergleichsRechner {...DEFAULT_PROPS} />)
+    const stars = screen.getByTestId('vr-schutz-stars-dela')
+    expect(stars.textContent).toMatch(/★{5}/)
+  })
+})
+
+describe('VergleichsRechner — lesbare Tabellenzellen', () => {
+  it('formatiert Wartezeit-Spalte lesbar statt roher Zahl', () => {
+    render(<VergleichsRechner {...DEFAULT_PROPS} />)
+    expect(screen.getByTestId('vr-cell-dela-wartezeit_monate')).toHaveTextContent('Keine')
+    expect(screen.getByTestId('vr-cell-november-wartezeit_monate')).toHaveTextContent('12 Mon.')
   })
 })
 

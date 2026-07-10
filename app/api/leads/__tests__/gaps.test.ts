@@ -1,6 +1,7 @@
 // Gap-filling tests for POST /api/leads (Task Group 4).
 // Covers: rate limit window reset, optional telefon field, and complete payload.
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { COMPLETE_LEAD_PAYLOAD } from '@/components/sections/__tests__/lead-form-test-helpers'
 
 // ---------------------------------------------------------------------------
 // Mocks — all at module top level (hoisted by Vitest)
@@ -36,12 +37,7 @@ vi.mock('next/headers', () => ({
 // Helpers
 // ---------------------------------------------------------------------------
 
-const VALID_PAYLOAD = {
-  produktId: '987fcdeb-51a2-43d7-b456-426614174001',
-  zielgruppeTag: 'senioren_50plus',
-  intentTag: 'sicherheit',
-  email: 'gap@example.de',
-}
+const VALID_PAYLOAD = COMPLETE_LEAD_PAYLOAD
 
 function makeRequest(body: unknown, ip = '192.168.1.1'): Request {
   return new Request('http://localhost/api/leads', {
@@ -86,18 +82,17 @@ describe('POST /api/leads — gap tests', () => {
     expect(response.status).toBe(201)
   })
 
-  // ---------------------------------------------------------------------------
-  // Gap 2: Optional Telefon — submit without telefon field succeeds
-  // ---------------------------------------------------------------------------
-  it('Gap 2: submit without telefon field succeeds with HTTP 201', async () => {
+  // Gap 2: Missing telefon returns 422
+  it('Gap 2: submit without telefon field returns HTTP 422', async () => {
     const { POST } = await import('../route')
+    const { telefon: _omit, ...payloadWithoutTelefon } = VALID_PAYLOAD
 
-    const response = await POST(makeRequest(VALID_PAYLOAD) as never)
+    const response = await POST(makeRequest(payloadWithoutTelefon) as never)
 
-    expect(response.status).toBe(201)
+    expect(response.status).toBe(422)
     const body = await response.json()
-    expect(body.data.id).toBe('gap-lead-uuid')
-    expect(body.error).toBeNull()
+    expect(body.error.code).toBe('VALIDATION_ERROR')
+    expect(body.error.details.some((d: { field: string }) => d.field === 'telefon')).toBe(true)
   })
 
   // ---------------------------------------------------------------------------
@@ -107,9 +102,7 @@ describe('POST /api/leads — gap tests', () => {
     const { POST } = await import('../route')
     const fullPayload = {
       ...VALID_PAYLOAD,
-      vorname: 'Maria',
-      nachname: 'Muster',
-      telefon: '0151 9876543',
+      email: 'maria@example.de',
       interesse: 'Ich möchte mehr über Sofortschutz erfahren.',
     }
 
@@ -131,12 +124,6 @@ describe('POST /api/leads — gap tests', () => {
     const fullPayload = {
       ...VALID_PAYLOAD,
       email: 'christian-fields@example.de',
-      vorname: 'Maria',
-      nachname: 'Muster',
-      geburtsdatum: '1962-03-14',
-      strasse: 'Musterstraße 12',
-      plz: '80331',
-      ort: 'München',
       filterContext: {
         akzeptierte_wartezeit_monate: 12,
         sterbegeld_summe: 10000,

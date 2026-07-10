@@ -17,7 +17,7 @@ import {
 } from './prompt-builder'
 import { PageResponseSchemas } from './schemas'
 import { buildSchemaMarkup } from '@/lib/seo/schema'
-import { getTitleForSlug, normalizeRatgeberSections } from '@/lib/ratgeber/normalize'
+import { getHintForSlug, getTitleForSlug, normalizeRatgeberSections } from '@/lib/ratgeber/normalize'
 import type { GenerationResult, PageType, PageTypeError, PageTypeResult } from './types'
 
 // Fetch relevant knowledge base articles for a given product type and format
@@ -125,6 +125,60 @@ function resolveRatgeberTitleFromSections(
   return getTitleForSlug(slug)
 }
 
+async function upsertRatgeberRow(
+  supabase: ReturnType<typeof createAdminClient>,
+  produktId: string,
+  ratgeberSlug: string,
+  payload: {
+    title: string
+    meta_title: string
+    meta_desc: string
+    content: Json
+    schema_markup: Json
+  },
+): Promise<{ id: string }> {
+  const { data: existing } = await supabase
+    .from('generierter_content')
+    .select('status, published_at')
+    .eq('produkt_id', produktId)
+    .eq('page_type', 'ratgeber')
+    .eq('slug', ratgeberSlug)
+    .maybeSingle()
+
+  const keepPublished = existing?.status === 'publiziert'
+  const now = new Date().toISOString()
+
+  const { data: row, error: upsertError } = await supabase
+    .from('generierter_content')
+    .upsert(
+      {
+        produkt_id: produktId,
+        page_type: 'ratgeber',
+        slug: ratgeberSlug,
+        title: payload.title,
+        meta_title: payload.meta_title,
+        meta_desc: payload.meta_desc,
+        content: payload.content,
+        schema_markup: payload.schema_markup,
+        status: keepPublished ? 'publiziert' : 'entwurf',
+        published_at: keepPublished ? (existing?.published_at ?? now) : null,
+        generated_at: now,
+        updated_at: now,
+      },
+      { onConflict: 'produkt_id,page_type,slug' },
+    )
+    .select('id')
+    .single()
+
+  if (!row) {
+    throw new Error(
+      upsertError?.message ?? `generierter_content upsert returned no row for ratgeber/${ratgeberSlug}`,
+    )
+  }
+
+  return row
+}
+
 // Orchestrate all Claude content generation calls for a product.
 // Fetches product data, composes prompts, calls Claude for each page type,
 // validates the response JSON, and upserts rows to generierter_content.
@@ -201,6 +255,7 @@ export async function generateContent(
         const { system, user } = composePrompt('ratgeber', layers, {
           topicSlug: ratgeberSlug,
           topicTitle,
+          topicHint: getHintForSlug(ratgeberSlug) || undefined,
         })
         const raw = await callLLMWithRetry(system, user, 'ratgeber', produktId)
         const parsed = JSON.parse(raw) as Json
@@ -214,38 +269,20 @@ export async function generateContent(
         const canonicalUrl = `${baseUrl}/${produkt.slug}/ratgeber/${ratgeberSlug}`
         const schemaMarkup = buildSchemaMarkup('ratgeber', { canonicalUrl })
 
-        const { data: row, error: upsertError } = await supabase
-          .from('generierter_content')
-          .upsert(
-            {
-              produkt_id: produktId,
-              page_type: 'ratgeber',
-              slug: ratgeberSlug,
-              title: articleTitle,
-              meta_title: validated.meta_title,
-              meta_desc: validated.meta_desc,
-              content: {
-                sections: normalizedSections,
-                meta_title: validated.meta_title,
-                meta_desc: validated.meta_desc,
-                schema_markup: validated.schema_markup,
-              } as unknown as Json,
-              schema_markup: schemaMarkup as unknown as Json,
-              status: 'entwurf',
-              generated_at: new Date().toISOString(),
-            },
-            { onConflict: 'produkt_id,page_type,slug' },
-          )
-          .select('id')
-          .single()
+        const row = await upsertRatgeberRow(supabase, produktId, ratgeberSlug, {
+          title: articleTitle,
+          meta_title: validated.meta_title,
+          meta_desc: validated.meta_desc,
+          content: {
+            sections: normalizedSections,
+            meta_title: validated.meta_title,
+            meta_desc: validated.meta_desc,
+            schema_markup: validated.schema_markup,
+          } as unknown as Json,
+          schema_markup: schemaMarkup as unknown as Json,
+        })
 
-        if (row) {
-          success.push({ page_type: 'ratgeber', slug: ratgeberSlug, rowId: row.id })
-        } else {
-          throw new Error(
-            upsertError?.message ?? `generierter_content upsert returned no row for ratgeber/${ratgeberSlug}`,
-          )
-        }
+        success.push({ page_type: 'ratgeber', slug: ratgeberSlug, rowId: row.id })
       } catch (err: unknown) {
         failed.push({
           page_type: 'ratgeber',
@@ -378,6 +415,7 @@ export async function generateContent(
         const { system, user } = composePrompt('ratgeber', layers, {
           topicSlug: ratgeberSlug,
           topicTitle,
+          topicHint: getHintForSlug(ratgeberSlug) || undefined,
         })
         const raw = await callLLMWithRetry(system, user, 'ratgeber', produktId)
         const parsed = JSON.parse(raw) as Json
@@ -391,38 +429,20 @@ export async function generateContent(
         const canonicalUrl = `${baseUrl}/${produkt.slug}/ratgeber/${ratgeberSlug}`
         const schemaMarkup = buildSchemaMarkup('ratgeber', { canonicalUrl })
 
-        const { data: row, error: upsertError } = await supabase
-          .from('generierter_content')
-          .upsert(
-            {
-              produkt_id: produktId,
-              page_type: 'ratgeber',
-              slug: ratgeberSlug,
-              title: articleTitle,
-              meta_title: validated.meta_title,
-              meta_desc: validated.meta_desc,
-              content: {
-                sections: normalizedSections,
-                meta_title: validated.meta_title,
-                meta_desc: validated.meta_desc,
-                schema_markup: validated.schema_markup,
-              } as unknown as Json,
-              schema_markup: schemaMarkup as unknown as Json,
-              status: 'entwurf',
-              generated_at: new Date().toISOString(),
-            },
-            { onConflict: 'produkt_id,page_type,slug' },
-          )
-          .select('id')
-          .single()
+        const row = await upsertRatgeberRow(supabase, produktId, ratgeberSlug, {
+          title: articleTitle,
+          meta_title: validated.meta_title,
+          meta_desc: validated.meta_desc,
+          content: {
+            sections: normalizedSections,
+            meta_title: validated.meta_title,
+            meta_desc: validated.meta_desc,
+            schema_markup: validated.schema_markup,
+          } as unknown as Json,
+          schema_markup: schemaMarkup as unknown as Json,
+        })
 
-        if (row) {
-          success.push({ page_type: 'ratgeber', slug: ratgeberSlug, rowId: row.id })
-        } else {
-          throw new Error(
-            upsertError?.message ?? `generierter_content upsert returned no row for ratgeber/${ratgeberSlug}`,
-          )
-        }
+        success.push({ page_type: 'ratgeber', slug: ratgeberSlug, rowId: row.id })
       } catch (err: unknown) {
         failed.push({
           page_type: 'ratgeber',

@@ -3,6 +3,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { fillRequiredLeadFormFields } from './lead-form-test-helpers'
 import '@testing-library/jest-dom'
 import { TarifRechner } from '../TarifRechner'
 
@@ -129,6 +130,7 @@ describe('TarifRechner — CTA and LeadForm reveal (Step 2)', () => {
   })
 
   it('sends intent_tag="preis" in the fetch body when the LeadForm is submitted', async () => {
+    const user = userEvent.setup()
     const fetchMock = vi.fn().mockResolvedValue({ ok: true })
     vi.stubGlobal('fetch', fetchMock)
 
@@ -136,7 +138,7 @@ describe('TarifRechner — CTA and LeadForm reveal (Step 2)', () => {
 
     // Step 1: trigger result
     const select = screen.getByRole('combobox', { name: /Gewünschte Versicherungssumme/i })
-    await userEvent.selectOptions(select, '10000')
+    await user.selectOptions(select, '10000')
 
     await waitFor(() => {
       expect(
@@ -145,7 +147,7 @@ describe('TarifRechner — CTA and LeadForm reveal (Step 2)', () => {
     })
 
     // Step 2: click CTA to reveal form
-    await userEvent.click(
+    await user.click(
       screen.getByRole('button', { name: /Ihren genauen Beitrag jetzt anfragen/i })
     )
 
@@ -153,11 +155,10 @@ describe('TarifRechner — CTA and LeadForm reveal (Step 2)', () => {
       expect(screen.getByRole('button', { name: /Jetzt Angebot anfordern/i })).toBeInTheDocument()
     })
 
-    // Fill required email field and submit
-    const emailInput = screen.getByLabelText(/E-Mail-Adresse/i)
-    await userEvent.type(emailInput, 'test@example.de')
+    // Fill required fields and submit
+    await fillRequiredLeadFormFields(user)
 
-    await userEvent.click(screen.getByRole('button', { name: /Jetzt Angebot anfordern/i }))
+    await user.click(screen.getByRole('button', { name: /Jetzt Angebot anfordern/i }))
 
     // Verify the fetch was called with intent_tag: "preis" in the body
     await waitFor(() => {

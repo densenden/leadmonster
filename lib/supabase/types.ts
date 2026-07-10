@@ -161,6 +161,8 @@ export type Database = {
       }
       leads: {
         Row: {
+          akzeptierte_wartezeit_monate: number | null
+          berufsklasse: string | null
           confluence_page_id: string | null
           confluence_synced: boolean
           convexa_error: string | null
@@ -168,14 +170,25 @@ export type Database = {
           convexa_synced: boolean
           created_at: string
           email: string
+          filter_kontext: Json | null
+          geburtsdatum: string | null
           gewuenschter_anbieter: string | null
           id: string
           intent_tag: string | null
           interesse: string | null
+          marketing_consent: boolean
+          marketing_consent_at: string | null
+          monatsbeitrag_eur: number | null
           nachname: string | null
+          ort: string | null
+          plz: string | null
+          privacy_consent_at: string | null
+          privacy_policy_version: string | null
           produkt_id: string | null
           resend_sent: boolean
           source_url: string | null
+          sterbegeld_summe: number | null
+          strasse: string | null
           telefon: string | null
           utm_campaign: string | null
           utm_medium: string | null
@@ -184,6 +197,8 @@ export type Database = {
           zielgruppe_tag: string | null
         }
         Insert: {
+          akzeptierte_wartezeit_monate?: number | null
+          berufsklasse?: string | null
           confluence_page_id?: string | null
           confluence_synced?: boolean
           convexa_error?: string | null
@@ -191,14 +206,25 @@ export type Database = {
           convexa_synced?: boolean
           created_at?: string
           email: string
+          filter_kontext?: Json | null
+          geburtsdatum?: string | null
           gewuenschter_anbieter?: string | null
           id?: string
           intent_tag?: string | null
           interesse?: string | null
+          marketing_consent?: boolean
+          marketing_consent_at?: string | null
+          monatsbeitrag_eur?: number | null
           nachname?: string | null
+          ort?: string | null
+          plz?: string | null
+          privacy_consent_at?: string | null
+          privacy_policy_version?: string | null
           produkt_id?: string | null
           resend_sent?: boolean
           source_url?: string | null
+          sterbegeld_summe?: number | null
+          strasse?: string | null
           telefon?: string | null
           utm_campaign?: string | null
           utm_medium?: string | null
@@ -207,6 +233,8 @@ export type Database = {
           zielgruppe_tag?: string | null
         }
         Update: {
+          akzeptierte_wartezeit_monate?: number | null
+          berufsklasse?: string | null
           confluence_page_id?: string | null
           confluence_synced?: boolean
           convexa_error?: string | null
@@ -214,14 +242,25 @@ export type Database = {
           convexa_synced?: boolean
           created_at?: string
           email?: string
+          filter_kontext?: Json | null
+          geburtsdatum?: string | null
           gewuenschter_anbieter?: string | null
           id?: string
           intent_tag?: string | null
           interesse?: string | null
+          marketing_consent?: boolean
+          marketing_consent_at?: string | null
+          monatsbeitrag_eur?: number | null
           nachname?: string | null
+          ort?: string | null
+          plz?: string | null
+          privacy_consent_at?: string | null
+          privacy_policy_version?: string | null
           produkt_id?: string | null
           resend_sent?: boolean
           source_url?: string | null
+          sterbegeld_summe?: number | null
+          strasse?: string | null
           telefon?: string | null
           utm_campaign?: string | null
           utm_medium?: string | null

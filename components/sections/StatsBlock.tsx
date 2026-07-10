@@ -17,7 +17,7 @@ interface StatsBlockProps {
 
 export function StatsBlock({ headline, subline, items }: StatsBlockProps) {
   return (
-    <section className="py-[70px] px-6 bg-white">
+    <section className="py-section-sm md:py-section px-4 sm:px-6 bg-white">
       <div className="max-w-6xl mx-auto">
         {(headline || subline) && (
           <div className="text-center mb-12 max-w-2xl mx-auto">

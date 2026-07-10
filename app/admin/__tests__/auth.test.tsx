@@ -23,7 +23,12 @@ vi.mock('next/image', () => ({
 
 const mockGetUser = vi.fn()
 const mockSignInWithPassword = vi.fn()
+const mockResetPasswordForEmail = vi.fn()
 const mockSignOut = vi.fn()
+
+vi.mock('@/lib/supabase/auth-redirect-url', () => ({
+  getSupabaseEmailRedirectUrl: vi.fn(() => 'http://localhost:3000/auth/callback?next=/admin/login/update-password'),
+}))
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
@@ -41,6 +46,7 @@ vi.mock('@/lib/supabase/client', () => ({
   createClient: vi.fn(() => ({
     auth: {
       signInWithPassword: mockSignInWithPassword,
+      resetPasswordForEmail: mockResetPasswordForEmail,
       signOut: mockSignOut,
     },
   })),
@@ -114,6 +120,28 @@ describe('app/admin/login/page.tsx — login form', () => {
         email: 'admin@test.de',
         password: 'secret123',
       })
+    })
+  })
+
+  it('shows forgot-password form and sends reset email', async () => {
+    mockResetPasswordForEmail.mockResolvedValue({ error: null })
+
+    const { default: LoginPage } = await import('../login/page')
+    render(React.createElement(LoginPage))
+
+    fireEvent.click(screen.getByRole('button', { name: /Passwort vergessen/i }))
+    fireEvent.change(screen.getByLabelText(/E-Mail/i), {
+      target: { value: 'admin@test.de' },
+    })
+    fireEvent.submit(screen.getByRole('form', { name: /Passwort zurücksetzen/i }))
+
+    await waitFor(() => {
+      expect(mockResetPasswordForEmail).toHaveBeenCalledWith('admin@test.de', {
+        redirectTo: 'http://localhost:3000/auth/callback?next=/admin/login/update-password',
+      })
+      expect(
+        screen.getByText(/Wenn ein Konto mit dieser E-Mail existiert/i)
+      ).toBeDefined()
     })
   })
 

@@ -34,6 +34,14 @@ const config: Config = {
           secondary:'#f26522',
           dark:     '#1a3252',
           light:    '#e1f0fb',
+          orange:   '#f26522',
+          'orange-dark': '#d4511a',
+          cyan:     '#02a9e6',
+          link:     '#02a9e6',
+          neutral: {
+            base: '#666666',
+            muted: '#718096',
+          },
         },
         // ── Kept for backwards compat on product pages ─────────────────
         product: {
@@ -49,9 +57,9 @@ const config: Config = {
       },
 
       fontFamily: {
-        heading: ['var(--font-roboto)', 'Roboto', 'sans-serif'],
-        body:    ['var(--font-nunito)', 'Nunito Sans', 'sans-serif'],
-        sans:    ['var(--font-nunito)', 'Nunito Sans', 'sans-serif'],
+        heading: ['var(--font-heading)', 'Fraunces', 'Georgia', 'serif'],
+        body:    ['var(--font-body)', 'Quicksand', 'system-ui', 'sans-serif'],
+        sans:    ['var(--font-body)', 'Quicksand', 'system-ui', 'sans-serif'],
       },
 
       fontSize: {
@@ -59,6 +67,7 @@ const config: Config = {
         'h1-sm': ['28px', { lineHeight: '1.2',  fontWeight: '700' }],
         'h2': ['28px',  { lineHeight: '1.2',  fontWeight: '700' }],
         'h2-sm': ['22px', { lineHeight: '1.25', fontWeight: '700' }],
+        'h2-desktop': ['28px', { lineHeight: '1.2', fontWeight: '700' }],
         'h3': ['22px',  { lineHeight: '1.3',  fontWeight: '700' }],
         'h4': ['18px',  { lineHeight: '1.4',  fontWeight: '700' }],
         'h5': ['16px',  { lineHeight: '1.4',  fontWeight: '600' }],
@@ -89,6 +98,7 @@ const config: Config = {
         sm:  '0 1px 3px rgba(0,0,0,.08)',
         md:  '0 4px 12px rgba(0,0,0,.10)',
         lg:  '0 8px 24px rgba(0,0,0,.12)',
+        'ft-default': '0 4px 16px rgba(26, 50, 82, 0.08)',
       },
 
       keyframes: {

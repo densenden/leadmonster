@@ -8,8 +8,10 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/server'
 import { VergleichsRechner } from '@/components/sections/VergleichsRechner'
+import { resolveDatenschutzHref } from '@/lib/privacy/lead-consent'
 import { lookupVergleichTarife } from '@/lib/tarife/lookup'
 import { getProduktConfig } from '@/lib/tarife/produkt-config'
+import { resolveFilterAxes } from '@/lib/tarife/resolve-filter-axes'
 import { generateVergleichSchema } from '@/lib/seo/schema'
 
 export const revalidate = 3600
@@ -86,6 +88,7 @@ export default async function VergleichsRechnerPage({ params }: PageProps) {
   }
 
   const config = getProduktConfig(produkt.typ)
+  const filterAxes = resolveFilterAxes(produkt.typ, config.filter_axes)
   const initialData = await lookupVergleichTarife(
     produkt.id,
     config.default_age,
@@ -109,7 +112,7 @@ export default async function VergleichsRechnerPage({ params }: PageProps) {
       />
       <main className="max-w-6xl mx-auto px-4 md:px-8 lg:px-0 py-12">
         <nav aria-label="Breadcrumb" className="mb-6">
-          <ol className="flex items-center gap-2 text-sm text-gray-500">
+          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500">
             <li>
               <Link href="/" className="hover:text-[#1a3252]">
                 Startseite
@@ -146,6 +149,8 @@ export default async function VergleichsRechnerPage({ params }: PageProps) {
           intro="Tarife sortiert nach Beitrag — günstigster zuerst. Wählen Sie den passenden Anbieter und fordern Sie ein persönliches Angebot an."
           ctaLabel="Beratung zu allen Anbietern"
           initialData={initialData}
+          filterAxes={filterAxes}
+          datenschutzHref={resolveDatenschutzHref(params.produkt)}
         />
       </main>
     </>

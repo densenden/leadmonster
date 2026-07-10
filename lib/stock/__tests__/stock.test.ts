@@ -25,7 +25,7 @@ describe('parseUnsplashPhotoId', () => {
 
 describe('buildStockSearchQuery', () => {
   it('uses curated query for known slugs', () => {
-    expect(buildStockSearchQuery('was-ist-sterbegeld', 'Was ist Sterbegeld')).toContain('senior')
+    expect(buildStockSearchQuery('was-ist-sterbegeld', 'Was ist Sterbegeld')).toContain('documents')
   })
 
   it('falls back to slug words for unknown topics', () => {

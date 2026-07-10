@@ -10,6 +10,8 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { untyped } from '@/lib/supabase/untyped'
 import { tarifSchema, type TarifInput } from '@/lib/validation/tarife'
 import type { ActionResult } from '@/lib/supabase/types'
+import { wartezeitMonateFromBesonderheiten } from '@/lib/tarife/wartezeit-monate'
+import { berufsklasseNorm } from '@/lib/tarife/berufsklasse-norm'
 
 async function requireAuth() {
   const supabase = createAdminClient()
@@ -46,11 +48,11 @@ export async function upsertTarif(input: unknown): Promise<ActionResult & { id?:
     return refresh(parsed.data, { id: parsed.data.id })
   }
 
-  // Create or upsert via UNIQUE-Constraint (produkt_id, anbieter_name, alter_von, summe, berufsklasse)
+  // Create or upsert via partial UNIQUE index (berufsklasse_norm avoids NULL dupes)
   const { data, error } = await supabase
     .from('tarife')
     .upsert(row, {
-      onConflict: 'produkt_id,anbieter_name,alter_von,summe,berufsklasse',
+      onConflict: 'produkt_id,anbieter_name,alter_von,summe,berufsklasse_norm,wartezeit_monate',
     })
     .select('id')
     .maybeSingle()
@@ -82,6 +84,7 @@ export async function deleteTarif(id: string): Promise<ActionResult> {
 }
 
 function mapToDbRow(input: TarifInput) {
+  const besonderheiten = input.besonderheiten ?? {}
   return {
     produkt_id: input.produkt_id,
     anbieter_name: input.anbieter_name,
@@ -93,7 +96,9 @@ function mapToDbRow(input: TarifInput) {
     beitrag_high: input.beitrag_high,
     einheit: input.einheit,
     berufsklasse: input.berufsklasse,
-    besonderheiten: input.besonderheiten ?? {},
+    berufsklasse_norm: berufsklasseNorm(input.berufsklasse),
+    besonderheiten,
+    wartezeit_monate: wartezeitMonateFromBesonderheiten(besonderheiten),
   }
 }
 
@@ -206,6 +211,8 @@ export async function importTarifeCsv(
     beitrag_high: number
     einheit: string
     berufsklasse: string | null
+    berufsklasse_norm: string
+    wartezeit_monate: number
   }> = []
 
   parsed.forEach((r, idx) => {
@@ -240,6 +247,7 @@ export async function importTarifeCsv(
         anbieter_name: r.anbieter_name,
         tarif_name: r.tarif_name || null,
         besonderheiten,
+        wartezeit_monate: wartezeitMonateFromBesonderheiten(besonderheiten),
         alter_von: alter,
         alter_bis: alter,
         summe,
@@ -247,6 +255,7 @@ export async function importTarifeCsv(
         beitrag_high: beitrag,
         einheit: r.einheit || 'eur_summe',
         berufsklasse: r.berufsklasse || null,
+        berufsklasse_norm: berufsklasseNorm(r.berufsklasse || null),
       })
     } catch (err) {
       errors.push({ row: rowNo, message: err instanceof Error ? err.message : String(err) })
@@ -268,7 +277,7 @@ export async function importTarifeCsv(
     const { error: upsertError } = await supabase
       .from('tarife')
       .upsert(batch, {
-        onConflict: 'produkt_id,anbieter_name,alter_von,summe,berufsklasse',
+        onConflict: 'produkt_id,anbieter_name,alter_von,summe,berufsklasse_norm,wartezeit_monate',
       })
 
     if (upsertError) {

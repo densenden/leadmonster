@@ -3,14 +3,21 @@
 // Updates produkte.hero_image_url + hero_image_alt and writes the URL into the
 // hauptseite hero section if present.
 import { type NextRequest } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { generateImage } from '@/lib/openai/image-generator'
 import { buildHeroPrompt } from '@/lib/openai/hero-prompt'
 import { mergeStyleDescriptionIntoPrompt } from '@/lib/openai/style-reference'
+import { applyHeroImageToProdukt } from '@/lib/admin/apply-hero-image'
 
 const bodySchema = z.object({
   prompt: z.string().min(8).max(2000).optional(),
+  altText: z.string().min(2).max(200).optional(),
+})
+
+const patchSchema = z.object({
+  bildId: z.string().uuid(),
   altText: z.string().min(2).max(200).optional(),
 })
 
@@ -18,15 +25,86 @@ interface RouteContext {
   params: { id: string }
 }
 
-interface SectionLike {
-  type: string
-  [k: string]: unknown
+async function revalidateProduktPaths(supabase: ReturnType<typeof createAdminClient>, produktId: string) {
+  const { data: produkt } = await supabase
+    .from('produkte')
+    .select('slug')
+    .eq('id', produktId)
+    .maybeSingle()
+
+  revalidatePath(`/admin/produkte/${produktId}`)
+  if (produkt?.slug) {
+    revalidatePath(`/${produkt.slug}`)
+    revalidatePath('/')
+  }
+}
+
+export async function PATCH(request: NextRequest, { params }: RouteContext) {
+  const sessionClient = createClient()
+  const { data: authData } = await sessionClient.auth.getUser()
+  if (!authData.user) {
+    return Response.json({ data: null, error: { code: 'UNAUTHORIZED' } }, { status: 401 })
+  }
+
+  let body: unknown = {}
+  try {
+    body = await request.json()
+  } catch {
+    body = {}
+  }
+
+  const parsed = patchSchema.safeParse(body)
+  if (!parsed.success) {
+    return Response.json(
+      { data: null, error: { code: 'VALIDATION_ERROR', details: parsed.error.flatten().fieldErrors } },
+      { status: 422 },
+    )
+  }
+
+  const supabase = createAdminClient()
+  const { data: produkt } = await supabase
+    .from('produkte')
+    .select('id, name')
+    .eq('id', params.id)
+    .maybeSingle()
+
+  if (!produkt) {
+    return Response.json({ data: null, error: { code: 'NOT_FOUND' } }, { status: 404 })
+  }
+
+  const { data: bild } = await supabase
+    .from('bilder')
+    .select('id, url, alt_text')
+    .eq('id', parsed.data.bildId)
+    .maybeSingle()
+
+  if (!bild?.url) {
+    return Response.json({ data: null, error: { code: 'NOT_FOUND', message: 'Bild nicht gefunden' } }, { status: 404 })
+  }
+
+  const altText = parsed.data.altText?.trim() || bild.alt_text || `Hauptbild ${produkt.name}`
+
+  try {
+    await applyHeroImageToProdukt(supabase, produkt.id, bild.url, altText)
+    await revalidateProduktPaths(supabase, produkt.id)
+
+    return Response.json({
+      data: { url: bild.url, altText, bildId: bild.id },
+      error: null,
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unbekannter Fehler'
+    return Response.json(
+      { data: null, error: { code: 'UPDATE_FAILED', message } },
+      { status: 500 },
+    )
+  }
 }
 
 export async function POST(request: NextRequest, { params }: RouteContext) {
   const sessionClient = createClient()
-  const { data: { user } } = await sessionClient.auth.getUser()
-  if (!user) {
+  const { data: authData } = await sessionClient.auth.getUser()
+  if (!authData.user) {
     return Response.json({ data: null, error: { code: 'UNAUTHORIZED' } }, { status: 401 })
   }
 
@@ -98,34 +176,8 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       pageType: 'hauptseite',
     })
 
-    const { error: updateError } = await supabase
-      .from('produkte')
-      .update({ hero_image_url: out.url, hero_image_alt: altText })
-      .eq('id', produkt.id)
-    if (updateError) {
-      throw new Error(`produkte-Update fehlgeschlagen: ${updateError.message}`)
-    }
-
-    // Also push URL into the hauptseite hero section if it exists.
-    const { data: hauptseiteRow } = await supabase
-      .from('generierter_content')
-      .select('id, content')
-      .eq('produkt_id', produkt.id)
-      .eq('page_type', 'hauptseite')
-      .maybeSingle()
-
-    if (hauptseiteRow) {
-      const content = hauptseiteRow.content as { sections?: SectionLike[] } | null
-      if (content?.sections) {
-        const newSections = content.sections.map(s =>
-          s.type === 'hero' ? { ...s, image_url: out.url, image_alt: altText } : s,
-        )
-        await supabase
-          .from('generierter_content')
-          .update({ content: { ...content, sections: newSections } as unknown as never })
-          .eq('id', hauptseiteRow.id)
-      }
-    }
+    await applyHeroImageToProdukt(supabase, produkt.id, out.url, altText)
+    await revalidateProduktPaths(supabase, produkt.id)
 
     return Response.json({
       data: {

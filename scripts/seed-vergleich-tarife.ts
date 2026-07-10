@@ -21,6 +21,8 @@ import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
 import * as path from 'path'
 import * as fs from 'fs'
+import { wartezeitMonateFromBesonderheiten } from '../lib/tarife/wartezeit-monate'
+import { berufsklasseNorm } from '../lib/tarife/berufsklasse-norm'
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') })
 
@@ -153,11 +155,13 @@ async function main() {
     // Optionale Berufsklasse (Migration 20260504000000) — relevant für BU,
     // bei anderen Produkten typischerweise leer/NULL.
     const berufsklasse = r.berufsklasse && r.berufsklasse.trim() ? r.berufsklasse.trim() : null
+    const besonderheiten = r.besonderheiten_json ? JSON.parse(r.besonderheiten_json) : {}
     return {
       produkt_id: produkt.id,
       anbieter_name: r.anbieter_name,
       tarif_name: r.tarif_name || null,
-      besonderheiten: r.besonderheiten_json ? JSON.parse(r.besonderheiten_json) : {},
+      besonderheiten,
+      wartezeit_monate: wartezeitMonateFromBesonderheiten(besonderheiten),
       alter_von: alter,
       alter_bis: alter,
       summe: parseInt(r.summe_eur, 10),
@@ -165,18 +169,19 @@ async function main() {
       beitrag_high: beitrag,
       einheit,
       berufsklasse,
+      berufsklasse_norm: berufsklasseNorm(berufsklasse),
     }
   })
 
   // Chunked upsert: PostgREST hat ein Limit, daher in 200er-Chunks.
-  // UNIQUE-Constraint berücksichtigt seit Migration 20260504000000 die
-  // Berufsklasse als Bestandteil des Schlüssels.
+  // UNIQUE-Constraint berücksichtigt seit Migration 20260706000001 auch
+  // wartezeit_monate (mehrere Varianten pro Anbieter+Alter+Summe möglich).
   const CHUNK_SIZE = 200
   let inserted = 0
   for (let i = 0; i < upserts.length; i += CHUNK_SIZE) {
     const chunk = upserts.slice(i, i + CHUNK_SIZE)
     const { error } = await supabase.from('tarife').upsert(chunk, {
-      onConflict: 'produkt_id,anbieter_name,alter_von,summe,berufsklasse',
+      onConflict: 'produkt_id,anbieter_name,alter_von,summe,berufsklasse_norm,wartezeit_monate',
     })
     if (error) {
       console.error(`Upsert-Fehler bei Chunk ${i / CHUNK_SIZE + 1}:`, error.message)

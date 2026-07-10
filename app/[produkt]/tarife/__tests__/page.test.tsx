@@ -16,9 +16,21 @@ vi.mock('next/headers', () => ({
   cookies: vi.fn(() => ({ get: vi.fn(), set: vi.fn(), remove: vi.fn() })),
 }))
 
-// Mock TarifRechner — avoids importing client-component deps in a server test
-vi.mock('@/components/sections/TarifRechner', () => ({
-  TarifRechner: () => '<div data-testid="tarif-rechner" />',
+// Mock VergleichsRechner — avoids importing client-component deps in a server test
+vi.mock('@/components/sections/VergleichsRechner', () => ({
+  VergleichsRechner: () => '<div data-testid="vergleichs-rechner" />',
+}))
+
+vi.mock('@/lib/tarife/lookup', () => ({
+  lookupVergleichTarife: vi.fn().mockResolvedValue([]),
+}))
+
+vi.mock('@/lib/tarife/produkt-config-db', () => ({
+  getProduktConfigFromDb: vi.fn().mockResolvedValue({
+    default_age: 65,
+    default_summe: 8000,
+    filter_axes: [],
+  }),
 }))
 
 // Build a chainable Supabase query mock that resolves via .single()
@@ -57,7 +69,7 @@ function makeProduktRow(overrides: Record<string, unknown> = {}) {
 }
 
 function makeConfigRow() {
-  return { anbieter: ['Allianz', 'AXA', 'Generali'] }
+  return { zielgruppe: ['senioren_50plus'] }
 }
 
 function makeContentRow(overrides: Record<string, unknown> = {}) {
@@ -140,7 +152,7 @@ describe('TarifePage — generateMetadata', () => {
 
     expect(typeof metadata.title).toBe('string')
     expect(metadata.title as string).toContain('Sterbegeld24Plus')
-    expect(metadata.title as string).toContain('Tarifrechner')
+    expect(metadata.title as string).toContain('Tarife vergleichen')
     expect((metadata.title as string).length).toBeLessThanOrEqual(60)
   })
 

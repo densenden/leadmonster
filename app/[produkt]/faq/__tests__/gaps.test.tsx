@@ -58,6 +58,7 @@ function makeChain(finalResult: { data: unknown; error: unknown }) {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue(finalResult),
+    maybeSingle: vi.fn().mockResolvedValue(finalResult),
   }
 }
 

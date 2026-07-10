@@ -106,7 +106,7 @@ describe('Vergleich component', () => {
       />
     )
 
-    const disclaimer = screen.getByText(/Alle Angaben ohne Gewähr\. Stand: 02\.04\.2026\./)
+    const disclaimer = screen.getByText(/Werte aus interner Marktbeobachtung, Stand: 02\.04\.2026\./)
     expect(disclaimer).toBeDefined()
   })
 

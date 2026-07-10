@@ -16,7 +16,7 @@ interface ProcessStepsProps {
 
 export function ProcessSteps({ headline, subline, items }: ProcessStepsProps) {
   return (
-    <section className="py-[70px] px-6 bg-[#f8f8f8]">
+    <section className="py-section-sm md:py-section px-4 sm:px-6 bg-[#f8f8f8]">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12 max-w-2xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-[#1a365d] font-heading mb-3">

@@ -1,6 +1,4 @@
-// Tests für ProduktArchiveActions — Soft-Delete-UX.
-// Verifiziert die zwei Modi (Archivieren vs. Wiederherstellen + Endgültig löschen)
-// und stellt sicher, dass die korrekten HTTP-Methoden + Bodies gefeuert werden.
+// Tests for ProduktArchiveActions — hard delete only (status lives in ProduktStatusToggle).
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
@@ -20,71 +18,31 @@ beforeEach(() => {
   vi.stubGlobal('fetch', mockFetch)
 })
 
-describe('ProduktArchiveActions — status NICHT archiviert', () => {
-  it('zeigt nur einen "Archivieren"-Button für aktive Produkte', () => {
-    render(<ProduktArchiveActions id="p-1" name="Sterbegeld" status="aktiv" />)
-    expect(screen.getByText('Archivieren')).toBeInTheDocument()
-    expect(screen.queryByText('Wiederherstellen')).not.toBeInTheDocument()
-    expect(screen.queryByText('Endgültig löschen')).not.toBeInTheDocument()
+describe('ProduktArchiveActions — status not archived', () => {
+  it('renders nothing for active products', () => {
+    const { container } = render(
+      <ProduktArchiveActions id="p-1" name="Sterbegeld" status="aktiv" />,
+    )
+    expect(container).toBeEmptyDOMElement()
   })
 
-  it('zeigt "Archivieren" auch für entwurf-Produkte', () => {
-    render(<ProduktArchiveActions id="p-1" name="X" status="entwurf" />)
-    expect(screen.getByText('Archivieren')).toBeInTheDocument()
-  })
-
-  it('Klick auf Archivieren erfordert Bestätigung und sendet PATCH /status mit archiviert', async () => {
-    mockConfirm.mockReturnValueOnce(true)
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ data: { id: 'p-1', status: 'archiviert' }, error: null }),
-    })
-
-    render(<ProduktArchiveActions id="p-1" name="Sterbegeld" status="aktiv" />)
-    fireEvent.click(screen.getByText('Archivieren'))
-
-    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1))
-    expect(mockConfirm).toHaveBeenCalled()
-    const [url, init] = mockFetch.mock.calls[0]
-    expect(url).toBe('/api/admin/produkte/p-1/status')
-    expect((init as RequestInit).method).toBe('PATCH')
-    expect(JSON.parse((init as RequestInit).body as string)).toEqual({ status: 'archiviert' })
-    expect(mockRefresh).toHaveBeenCalled()
-  })
-
-  it('bricht Archivieren ab, wenn der User Cancel klickt', () => {
-    mockConfirm.mockReturnValueOnce(false)
-    render(<ProduktArchiveActions id="p-1" name="X" status="aktiv" />)
-    fireEvent.click(screen.getByText('Archivieren'))
-    expect(mockFetch).not.toHaveBeenCalled()
+  it('renders nothing for draft products', () => {
+    const { container } = render(
+      <ProduktArchiveActions id="p-1" name="X" status="entwurf" />,
+    )
+    expect(container).toBeEmptyDOMElement()
   })
 })
 
-describe('ProduktArchiveActions — status archiviert', () => {
-  it('zeigt zwei Buttons: Wiederherstellen + Endgültig löschen', () => {
+describe('ProduktArchiveActions — status archived', () => {
+  it('shows only the hard-delete button', () => {
     render(<ProduktArchiveActions id="p-1" name="X" status="archiviert" />)
-    expect(screen.getByText('Wiederherstellen')).toBeInTheDocument()
     expect(screen.getByText('Endgültig löschen')).toBeInTheDocument()
     expect(screen.queryByText('Archivieren')).not.toBeInTheDocument()
+    expect(screen.queryByText('Wiederherstellen')).not.toBeInTheDocument()
   })
 
-  it('Wiederherstellen sendet PATCH /status mit entwurf, ohne Confirm-Dialog', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ data: { id: 'p-1', status: 'entwurf' }, error: null }),
-    })
-
-    render(<ProduktArchiveActions id="p-1" name="X" status="archiviert" />)
-    fireEvent.click(screen.getByText('Wiederherstellen'))
-
-    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1))
-    expect(mockConfirm).not.toHaveBeenCalled()
-    const [url, init] = mockFetch.mock.calls[0]
-    expect(url).toBe('/api/admin/produkte/p-1/status')
-    expect(JSON.parse((init as RequestInit).body as string)).toEqual({ status: 'entwurf' })
-  })
-
-  it('Endgültig löschen erfordert Confirm und sendet DELETE', async () => {
+  it('hard delete requires confirm and sends DELETE', async () => {
     mockConfirm.mockReturnValueOnce(true)
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -99,16 +57,17 @@ describe('ProduktArchiveActions — status archiviert', () => {
     const [url, init] = mockFetch.mock.calls[0]
     expect(url).toBe('/api/admin/produkte/p-1')
     expect((init as RequestInit).method).toBe('DELETE')
+    expect(mockRefresh).toHaveBeenCalled()
   })
 
-  it('bricht Endgültig löschen ab, wenn Cancel', () => {
+  it('aborts hard delete when user cancels', () => {
     mockConfirm.mockReturnValueOnce(false)
     render(<ProduktArchiveActions id="p-1" name="X" status="archiviert" />)
     fireEvent.click(screen.getByText('Endgültig löschen'))
     expect(mockFetch).not.toHaveBeenCalled()
   })
 
-  it('zeigt Fehlermeldung, wenn DELETE 500 zurückgibt', async () => {
+  it('shows error when DELETE returns 500', async () => {
     mockConfirm.mockReturnValueOnce(true)
     mockFetch.mockResolvedValueOnce({
       ok: false,

@@ -53,6 +53,32 @@ const TITLE_BY_SLUG: Record<string, string> = {
     'Sterbegeld mit Bestatter-Treuhand kombinieren',
 }
 
+const HINT_BY_SLUG: Record<string, string> = {
+  'sterbegeld-mit-vorerkrankungen': 'Aufnahmegarantie, Wartezeit, was zu beachten ist.',
+  'sterbegeld-vs-bestattungsvorsorge': 'Vergleich beider Konzepte, Vor- und Nachteile.',
+  'wie-hoch-versicherungssumme': 'Orientierung an realen Bestattungskosten 2026.',
+  'sterbegeld-fuer-beamte': 'Besonderheit der Beamtenversorgung + ergänzende Privatpolice.',
+  'sterbegeld-kuendigen': 'Rückkaufswert, Wartezeit-Anrechnung, Beitragsfreistellung.',
+  'beerdigungskosten-2026': 'Sarg, Friedhof, Trauerfeier, Grabstein — reale Spannen.',
+  'sterbegeld-steuerfrei': 'Erbschaftsteuer, Bezugsberechtigung, Freibeträge.',
+  'sterbegeld-bei-suizid': 'Sensibles Thema, Karenzzeit, Klauseln, würdig formuliert.',
+  'sterbegeld-auszahlen-lassen': 'Auszahlungsweg an Hinterbliebene, Fristen, benötigte Unterlagen.',
+  'sterbegeld-vs-risikolebensversicherung': 'Wann welche, Kombination, Kostenrechnung.',
+  'sterbegeld-fuer-senioren-80plus': 'Aufnahmealter, höhere Beiträge, Aufnahmegarantie.',
+  'sterbegeld-ohne-gesundheitsfragen': 'Welche Anbieter, Wartezeit-Kompromiss, Sofortschutz Unfall.',
+  'sterbegeld-vs-sparplan': 'Rendite, Auszahlungssicherheit, Verfügbarkeit.',
+  'sterbegeld-und-pflegezusatz': 'Sinnvolle Bausteine für die Generation 60+, Konditionen.',
+  'sterbegeld-online-abschliessen': 'Schritte, Antrag, digitale Beratung mit Christian Wimmer.',
+  'sterbegeld-wartezeit-umgehen': 'Sofortschutz Unfall, Kombi-Tarife, transparente Aufklärung.',
+  'sterbegeld-fuer-buergergeld-empfaenger': 'Schonvermögen, anrechenbares Vermögen, Praxis-Tipps.',
+  'sterbegeld-bei-scheidung': 'Bezugsberechtigung ändern, Versorgungsausgleich.',
+  'sterbegeld-als-erbe-steuerlich': 'Erbschaftsteuer-Konstellationen, Freibetrag.',
+  'sterbegeld-mit-bestatter-treuhand-kombinieren':
+    'Vor-/Nachteile, Liquiditäts-Sicherheit, Anbieter-Auswahl.',
+  'warum-sinnvoll': 'Emotionale und finanzielle Gründe für Vorsorge ab 50.',
+  anbietervergleich: 'Kriterien für Tarifvergleich, Wartezeit, Gesundheitsfragen.',
+}
+
 function humanizeSlug(slug: string): string {
   return slug
     .split('-')
@@ -141,6 +167,28 @@ export function getTitleForSlug(slug: string): string {
   return TITLE_BY_SLUG[slug] ?? humanizeSlug(slug)
 }
 
+export function getHintForSlug(slug: string): string {
+  return HINT_BY_SLUG[slug] ?? ''
+}
+
+/** True when article lacks full pipeline sections or still has generic wrong copy. */
+export function needsRatgeberPipelineRegeneration(row: RatgeberRowLike): boolean {
+  const sections = normalizeRatgeberSections(row.content?.sections)
+  if (sections.length < 8) return true
+
+  const types = new Set(sections.map(s => s.type))
+  if (!types.has('image_text') || !types.has('quote') || !types.has('info_box')) {
+    return true
+  }
+
+  return sections.some(
+    s =>
+      s.type === 'body' &&
+      typeof s.heading === 'string' &&
+      s.heading.includes('Was ist eine Sterbegeldversicherung'),
+  )
+}
+
 /** Only Supabase-hosted images are trusted from DB JSON — hotlinked Unsplash URLs go stale. */
 export function isStoredCoverUrl(url: string | null | undefined): boolean {
   return isInternalImageUrl(url)
@@ -219,4 +267,30 @@ export function resolveRatgeberCover(
   }
 
   return { cover_image_url: null, cover_image_alt: null }
+}
+
+const RATGEBER_IMAGE_SECTION_TYPES = new Set(['intro', 'image_text'])
+
+/**
+ * Replace hotlinked Unsplash (or other external) section images with the curated
+ * cover for this slug. Supabase-hosted images are kept — only CDN hotlinks go stale.
+ */
+export function sanitizeRatgeberSectionImages(
+  slug: string | null | undefined,
+  sections: RatgeberSection[],
+): RatgeberSection[] {
+  const curated = getCuratedCoverForSlug(slug)
+  if (!curated) return sections
+
+  return sections.map(section => {
+    if (!RATGEBER_IMAGE_SECTION_TYPES.has(section.type)) return section
+    if (section.type !== 'intro' && section.type !== 'image_text') return section
+    const url = section.image_url
+    if (!url?.trim() || isInternalImageUrl(url)) return section
+    return {
+      ...section,
+      image_url: curated.cover_image_url,
+      image_alt: section.image_alt?.trim() ? section.image_alt : curated.cover_image_alt,
+    }
+  })
 }

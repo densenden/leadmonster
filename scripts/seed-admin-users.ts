@@ -29,7 +29,7 @@ function parseArg(name: string): string | undefined {
 
 const ADMIN_USERS = [
   {
-    email: 'kai.schmied@finanzteam-26.de',
+    email: 'kai.schmied@finanzteam26.de',
     displayName: 'Kai Schmied (Geschäftsleitung)',
   },
   {

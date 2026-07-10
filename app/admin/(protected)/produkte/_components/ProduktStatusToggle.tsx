@@ -1,14 +1,15 @@
 'use client'
 
 // Inline status switch for the admin product list.
-// Three-state pill: Entwurf · Aktiv · Archiviert.
+// Three-state pill: Entwurf · Aktiv · Archiviert — sole control for status on this page.
 // Click triggers PATCH /api/admin/produkte/[id]/status and a router.refresh().
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import type { ProduktStatus } from '@/lib/supabase/types'
 
 interface ProduktStatusToggleProps {
   produktId: string
+  produktName: string
   initialStatus: ProduktStatus
 }
 
@@ -28,14 +29,37 @@ const STYLE_ACTIVE: Record<ProduktStatus, string> = {
 
 const STYLE_INACTIVE = 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50 hover:text-gray-700'
 
-export function ProduktStatusToggle({ produktId, initialStatus }: ProduktStatusToggleProps) {
+function apiErrorMessage(
+  json: { error?: { code?: string; message?: string } },
+  httpStatus: number,
+): string {
+  return json.error?.message ?? json.error?.code ?? `Fehler ${httpStatus}`
+}
+
+export function ProduktStatusToggle({
+  produktId,
+  produktName,
+  initialStatus,
+}: ProduktStatusToggleProps) {
   const router = useRouter()
   const [status, setStatus] = useState<ProduktStatus>(initialStatus)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
+  useEffect(() => {
+    setStatus(initialStatus)
+  }, [initialStatus])
+
   function handleClick(next: ProduktStatus) {
     if (next === status || isPending) return
+
+    if (next === 'archiviert') {
+      const confirmed = window.confirm(
+        `Produkt "${produktName}" archivieren?\n\nDas Produkt verschwindet von der Startseite und der Sitemap, bleibt aber in der DB. Sie können es jederzeit über den Status wieder aktivieren.`,
+      )
+      if (!confirmed) return
+    }
+
     setError(null)
     const previous = status
     // Optimistisch wechseln, bei Fehler zurückrollen.
@@ -49,7 +73,7 @@ export function ProduktStatusToggle({ produktId, initialStatus }: ProduktStatusT
         })
         if (!res.ok) {
           const json = await res.json().catch(() => ({}))
-          setError(json.error?.message ?? `Fehler ${res.status}`)
+          setError(apiErrorMessage(json, res.status))
           setStatus(previous)
           return
         }

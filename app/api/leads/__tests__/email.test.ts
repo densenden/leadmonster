@@ -2,6 +2,7 @@
 // Validates non-blocking behaviour: email failures never block the 201 response,
 // and resend_sent flag is set only when both sends succeed.
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { COMPLETE_LEAD_PAYLOAD } from '@/components/sections/__tests__/lead-form-test-helpers'
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -57,14 +58,12 @@ const INSERTED_LEAD = {
 
 // Valid camelCase payload matching the new leadSchema.
 const VALID_PAYLOAD = {
+  ...COMPLETE_LEAD_PAYLOAD,
   produktId: PRODUKT_ID,
-  zielgruppeTag: 'senioren_50plus',
   intentTag: 'sofortschutz',
+  email: 'max@example.de',
   vorname: 'Max',
   nachname: 'Mustermann',
-  email: 'max@example.de',
-  telefon: '0151 1234567',
-  interesse: 'Sofortschutz',
 }
 
 function makeRequest(body: unknown): Request {

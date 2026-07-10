@@ -43,8 +43,19 @@ export function createClient() {
 // TODO: Encrypt wert column using AES/pgcrypto (Supabase Vault) before production deployment.
 export function createAdminClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY
+  if (!key) {
+    throw new Error(
+      'SUPABASE_SECRET_KEY (or SUPABASE_SERVICE_ROLE_KEY) is missing — admin DB queries cannot run.',
+    )
+  }
+  // Using the publishable/anon key here silently returns 0 rows because RLS is enabled on leads.
+  if (key.startsWith('sb_publishable_') || key === process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
+    throw new Error(
+      'SUPABASE_SECRET_KEY looks like a publishable key — set the service-role secret from Supabase Project Settings → API.',
+    )
+  }
   return createSupabaseClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    key!
+    key,
   )
 }

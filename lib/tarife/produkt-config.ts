@@ -50,9 +50,9 @@ export const PRODUKT_VERGLEICH_CONFIG: Record<ProduktTyp, ProduktVergleichConfig
     summen: [5000, 8000, 10000, 12500, 15000],
     default_summe: 8000,
     default_age: 65,
-    // Matches vergleich-tarife-seeds/sterbegeld.csv (geburtsjahr 1945–1970).
-    min_age: 56,
-    max_age: 81,
+    // Matches Hannoversche STG-Prämien 01.06.26 (geburtsjahr 1946–1986) + legacy CSV rows.
+    min_age: 40,
+    max_age: 86,
     summe_label: 'Wunschsumme',
     beitrag_label: 'Beitrag / Monat',
     summe_suffix: '€',
@@ -67,6 +67,7 @@ export const PRODUKT_VERGLEICH_CONFIG: Record<ProduktTyp, ProduktVergleichConfig
           { value: null, label: 'Egal' },
           { value: 0, label: 'Keine Wartezeit (mit Gesundheitsfragen)' },
           { value: 12, label: 'bis 12 Monate' },
+          { value: 24, label: 'bis 24 Monate' },
           { value: 36, label: 'bis 36 Monate' },
         ],
         default_value: null,

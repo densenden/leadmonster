@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Label } from '@/components/ui/Label'
 import { FieldError } from '@/components/ui/FieldError'
 import { readMarketingConsent } from '@/lib/cookies/consent'
+import { PRIVACY_POLICY_VERSION } from '@/lib/privacy/lead-consent'
 import { trackMetaLead } from '@/lib/tracking/meta-pixel'
 
 const BIRTHDATE_MIN = '1925-01-01'
@@ -65,6 +67,10 @@ export interface LeadFormProps {
   showWartezeitDropdown?: boolean
   /** Lesbarer Hinweis wenn Dropdown ausgeblendet (z. B. „6 Monate (LV1871-Tarif)“). */
   wartezeitFromTarifLabel?: string
+  /** Monatsbeitrag aus Rechner — wird als monatsbeitrag_eur an Convexa gesendet. */
+  defaultMonatsbeitrag?: number
+  /** Link to privacy policy — product-scoped or top-level `/datenschutz`. */
+  datenschutzHref?: string
 }
 
 function resolveInitialWartezeit(
@@ -91,6 +97,8 @@ export function LeadForm({
   wartezeitOptions,
   showWartezeitDropdown = true,
   wartezeitFromTarifLabel,
+  defaultMonatsbeitrag,
+  datenschutzHref = '/datenschutz',
 }: LeadFormProps) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
 
@@ -131,6 +139,9 @@ export function LeadForm({
   const [plzError, setPlzError] = useState('')
   const [ortError, setOrtError] = useState('')
   const [wartezeitError, setWartezeitError] = useState('')
+  const [privacyConsent, setPrivacyConsent] = useState(false)
+  const [marketingConsent, setMarketingConsent] = useState(false)
+  const [privacyConsentError, setPrivacyConsentError] = useState('')
 
   const [honeypot, setHoneypot] = useState('')
 
@@ -158,8 +169,16 @@ export function LeadForm({
     setPlzError('')
     setOrtError('')
     setWartezeitError('')
+    setPrivacyConsentError('')
 
     let hasError = false
+
+    if (!privacyConsent) {
+      setPrivacyConsentError(
+        'Bitte bestätigen Sie, dass Sie die Datenschutzerklärung gelesen haben.',
+      )
+      hasError = true
+    }
 
     if (!vorname.trim()) {
       setVornameError('Bitte geben Sie Ihren Vornamen ein.')
@@ -239,11 +258,17 @@ export function LeadForm({
       mergedFilterContext.akzeptierte_wartezeit_monate == null
     ) {
       mergedFilterContext.akzeptierte_wartezeit_monate = parsedWartezeit
-    } else if (
+    } else     if (
       typeof defaultWartezeitMonate === 'number' &&
       mergedFilterContext.akzeptierte_wartezeit_monate == null
     ) {
       mergedFilterContext.akzeptierte_wartezeit_monate = defaultWartezeitMonate
+    }
+    if (
+      typeof defaultMonatsbeitrag === 'number' &&
+      mergedFilterContext.monatsbeitrag_eur == null
+    ) {
+      mergedFilterContext.monatsbeitrag_eur = defaultMonatsbeitrag
     }
 
     const sourceUrl = typeof window !== 'undefined' ? window.location.href : undefined
@@ -272,14 +297,38 @@ export function LeadForm({
           interesse,
           sourceUrl,
           website: honeypot,
+          privacyConsent: true,
+          privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+          marketingConsent,
           filterContext:
             Object.keys(mergedFilterContext).length > 0 ? mergedFilterContext : undefined,
         }),
       })
 
-      if (res.ok) {
+      let payload: { data?: { id?: string } | null; error?: { code?: string; message?: string } } =
+        {}
+      try {
+        payload = await res.json()
+      } catch {
+        payload = {}
+      }
+
+      // Honeypot hits return HTTP 200 with id "bot" — must not show a fake success screen.
+      const savedLeadId = payload.data?.id
+      if (res.ok && savedLeadId && savedLeadId !== 'bot') {
         if (readMarketingConsent()) {
-          trackMetaLead(intentTag ?? zielgruppeTag)
+          const beitragRaw = mergedFilterContext.monatsbeitrag_eur
+          const beitragValue =
+            typeof beitragRaw === 'number'
+              ? beitragRaw
+              : typeof beitragRaw === 'string'
+                ? Number(beitragRaw)
+                : undefined
+          trackMetaLead({
+            contentName: intentTag ?? zielgruppeTag,
+            value: beitragValue != null && !Number.isNaN(beitragValue) ? beitragValue : undefined,
+            currency: 'EUR',
+          })
         }
         setStatus('success')
       } else {
@@ -294,7 +343,7 @@ export function LeadForm({
     return (
       <div
         role="status"
-        className="bg-white p-8 shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] rounded-none"
+        className="bg-white p-4 sm:p-8 shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] rounded-none"
       >
         <h3 className="font-heading font-bold text-[#1a365d] text-xl mb-3">
           Vielen Dank für Ihre Anfrage!
@@ -312,10 +361,13 @@ export function LeadForm({
     <form
       id={field('form')}
       onSubmit={handleSubmit}
-      className="bg-white shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08)] rounded-xl py-10 px-6 md:px-8"
+      className="bg-white shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08)] rounded-xl py-8 px-4 sm:py-10 sm:px-6 md:px-8"
       noValidate
     >
+      {/* Honeypot — no `name` attribute (autofill matches on name="website" otherwise).
+          readOnly until focus blocks most password-manager autofill without hurting bots. */}
       <div
+        aria-hidden="true"
         style={{
           position: 'absolute',
           left: '-9999px',
@@ -324,12 +376,17 @@ export function LeadForm({
           overflow: 'hidden',
         }}
       >
+        <label htmlFor={field('company')}>Firma</label>
         <input
+          id={field('company')}
           type="text"
-          name="website"
           tabIndex={-1}
           autoComplete="off"
+          data-lpignore="true"
+          data-1p-ignore
+          readOnly
           value={honeypot}
+          onFocus={e => e.currentTarget.removeAttribute('readonly')}
           onChange={e => setHoneypot(e.target.value)}
         />
       </div>
@@ -559,6 +616,69 @@ export function LeadForm({
             disabled={isLoading}
             rows={4}
           />
+        </div>
+
+        <div className="rounded-none border border-[#e5e5e5] bg-[#f8fafc] px-4 py-3 text-sm text-[#4a5568] leading-relaxed">
+          Ihre Angaben werden zur Bearbeitung Ihrer Anfrage an unser Beratungsteam
+          weitergeleitet (CRM-System Convexa). Sie erhalten eine Bestätigung per E-Mail.
+        </div>
+
+        <div>
+          <div className="flex items-start gap-3">
+            <input
+              id={field('privacy-consent')}
+              type="checkbox"
+              checked={privacyConsent}
+              onChange={e => {
+                setPrivacyConsent(e.target.checked)
+                if (e.target.checked) setPrivacyConsentError('')
+              }}
+              disabled={isLoading}
+              required
+              aria-required="true"
+              aria-describedby={field('privacy-consent-error')}
+              className="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-[#1a365d]"
+            />
+            <label
+              htmlFor={field('privacy-consent')}
+              className="text-sm text-[#333333] leading-relaxed cursor-pointer"
+            >
+              Ich habe die{' '}
+              <Link
+                href={datenschutzHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#02a9e6] hover:underline"
+              >
+                Datenschutzerklärung
+              </Link>{' '}
+              gelesen und willige ein, dass meine Daten zur Bearbeitung meiner
+              Versicherungsanfrage verarbeitet werden.{' '}
+              <span className="text-red-600" aria-hidden="true">
+                *
+              </span>
+            </label>
+          </div>
+          <FieldError id={field('privacy-consent-error')}>{privacyConsentError}</FieldError>
+        </div>
+
+        <div className="flex items-start gap-3">
+          <input
+            id={field('marketing-consent')}
+            type="checkbox"
+            checked={marketingConsent}
+            onChange={e => setMarketingConsent(e.target.checked)}
+            disabled={isLoading}
+            className="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-[#1a365d]"
+          />
+          <label
+            htmlFor={field('marketing-consent')}
+            className="text-sm text-[#333333] leading-relaxed cursor-pointer"
+          >
+            Ich bin damit einverstanden, telefonisch oder per E-Mail über ähnliche
+            Versicherungsangebote informiert zu werden.{' '}
+            <span className="text-[#888]">(optional)</span>
+          </label>
         </div>
 
         <button

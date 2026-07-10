@@ -3,6 +3,7 @@
 // Filter form uses GET navigation; pagination uses plain <a> links.
 // Re-sync is intentionally omitted: leads push to Convexa on submit, and any
 // failure is surfaced via the convexa_error column for ops to inspect.
+import Link from 'next/link'
 import { Badge } from '@/components/ui/Badge'
 
 // ---------------------------------------------------------------------------
@@ -33,6 +34,8 @@ interface LeadTableProps {
     produkt?: string
     convexa_synced?: string
     intent_tag?: string
+    von?: string
+    bis?: string
   }
 }
 
@@ -70,6 +73,8 @@ export function LeadTable({
     produkt: currentFilters.produkt,
     convexa_synced: currentFilters.convexa_synced,
     intent_tag: currentFilters.intent_tag,
+    von: currentFilters.von,
+    bis: currentFilters.bis,
   }
 
   const prevQuery = buildQueryString({ ...filterParams, page: currentPage - 1 })
@@ -131,6 +136,32 @@ export function LeadTable({
           </select>
         </div>
 
+        <div className="flex flex-col gap-1">
+          <label htmlFor="filter-von" className="text-xs font-medium text-[#666666]">
+            Von
+          </label>
+          <input
+            id="filter-von"
+            name="von"
+            type="date"
+            defaultValue={currentFilters.von ?? ''}
+            className="border border-gray-200 rounded-md px-2 py-1 text-sm bg-white text-[#333333] focus:outline-none focus:ring-1 focus:ring-[#abd5f4]"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="filter-bis" className="text-xs font-medium text-[#666666]">
+            Bis
+          </label>
+          <input
+            id="filter-bis"
+            name="bis"
+            type="date"
+            defaultValue={currentFilters.bis ?? ''}
+            className="border border-gray-200 rounded-md px-2 py-1 text-sm bg-white text-[#333333] focus:outline-none focus:ring-1 focus:ring-[#abd5f4]"
+          />
+        </div>
+
         <button
           type="submit"
           className="px-4 py-1.5 rounded-md bg-[#1a365d] text-white text-sm font-medium hover:bg-[#1a365d]/90 transition-colors"
@@ -172,6 +203,7 @@ export function LeadTable({
                     'Convexa Sync',
                     'Resend',
                     'Zeitstempel',
+                    '',
                   ].map((col) => (
                     <th
                       key={col}
@@ -190,7 +222,12 @@ export function LeadTable({
                     className="hover:bg-blue-50 transition-colors duration-150"
                   >
                     <td className="px-4 py-3 whitespace-nowrap text-[#333333]">
-                      {[lead.vorname, lead.nachname].filter(Boolean).join(' ') || '—'}
+                      <Link
+                        href={`/admin/leads/${lead.id}`}
+                        className="font-medium text-[#1a365d] hover:underline"
+                      >
+                        {[lead.vorname, lead.nachname].filter(Boolean).join(' ') || '—'}
+                      </Link>
                     </td>
 
                     <td className="px-4 py-3 text-[#333333]">{lead.email}</td>
@@ -225,6 +262,15 @@ export function LeadTable({
 
                     <td className="px-4 py-3 whitespace-nowrap text-[#666666]">
                       {formatTimestamp(lead.created_at)}
+                    </td>
+
+                    <td className="px-4 py-3 whitespace-nowrap text-right">
+                      <Link
+                        href={`/admin/leads/${lead.id}`}
+                        className="text-sm text-[#1a365d] hover:underline"
+                      >
+                        Details
+                      </Link>
                     </td>
                   </tr>
                 ))}

@@ -140,6 +140,7 @@ describe('buildPayload', () => {
     const keys = Object.keys(payload).sort()
 
     expect(keys).toEqual([
+      'Address',
       'AkzeptierteWartezeitMonate',
       'Berufsklasse',
       'Birthdate',
@@ -149,12 +150,14 @@ describe('buildPayload', () => {
       'FirstName',
       'FormPlacement',
       'FormVersion',
+      'GewuenschteWartezeit',
       'GewuenschterAnbieter',
       'InsuredAmount',
       'Intent',
       'Interest',
       'LastName',
       'LeadSource',
+      'MonatsbeitragEur',
       'Phone',
       'Product',
       'ProductSlug',
@@ -193,6 +196,8 @@ describe('buildPayload', () => {
       plz: '80331',
       ort: 'München',
       sterbegeld_summe: 10000,
+      akzeptierte_wartezeit_monate: 12,
+      monatsbeitrag_eur: 19.8,
       filter_kontext: { form_placement: 'tarifrechner' },
     } as Lead & Record<string, unknown>
     const { buildPayload } = await import('../client')
@@ -201,7 +206,11 @@ describe('buildPayload', () => {
     expect(payload.Street).toBe('Musterstraße 12')
     expect(payload.Zip).toBe('80331')
     expect(payload.City).toBe('München')
+    expect(payload.Address).toBe('Musterstraße 12, 80331 München')
     expect(payload.InsuredAmount).toBe('10000')
+    expect(payload.AkzeptierteWartezeitMonate).toBe('12')
+    expect(payload.GewuenschteWartezeit).toBe('12 Monate')
+    expect(payload.MonatsbeitragEur).toBe('19.80')
     expect(payload.FormPlacement).toBe('tarifrechner')
   })
 })

@@ -33,6 +33,7 @@ function makeChain(finalResult: { data: unknown; error: unknown }) {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue(finalResult),
+    maybeSingle: vi.fn().mockResolvedValue(finalResult),
   }
 }
 
@@ -56,6 +57,27 @@ function makeProduktRow() {
     name: 'Sterbegeld24Plus',
     domain: null,
     status: 'aktiv',
+  }
+}
+
+function makeHauptseiteFaqRow(itemCount = 10, status: string = 'publiziert') {
+  return {
+    title: 'Sterbegeld24Plus',
+    meta_title: 'Sterbegeldversicherung',
+    meta_desc: 'Alles rund um Sterbegeld.',
+    content: {
+      sections: [
+        {
+          type: 'faq',
+          items: Array.from({ length: itemCount }, (_, i) => ({
+            frage: `Homepage Frage ${i + 1}?`,
+            antwort: `Homepage Antwort ${i + 1}.`,
+          })),
+        },
+      ],
+    },
+    schema_markup: null,
+    status,
   }
 }
 
@@ -183,12 +205,13 @@ describe('FAQPage component', () => {
     })
   })
 
-  it('calls notFound() when no publiziert FAQ record exists for the slug', async () => {
+  it('calls notFound() when no FAQ items exist on dedicated page or hauptseite', async () => {
     let callCount = 0
     mockAdminFrom.mockImplementation(() => {
       callCount++
       if (callCount === 1) return makeChain({ data: makeProduktRow(), error: null })
-      return makeChain({ data: null, error: { code: 'PGRST116' } })
+      if (callCount === 2) return makeChain({ data: null, error: null })
+      return makeChain({ data: null, error: null })
     })
 
     const { default: FAQPage } = await import('../page')
@@ -196,6 +219,25 @@ describe('FAQPage component', () => {
       'NEXT_NOT_FOUND',
     )
     expect(mockNotFound).toHaveBeenCalled()
+  })
+
+  it('renders FAQ items from review hauptseite when dedicated FAQ page is missing', async () => {
+    let callCount = 0
+    mockAdminFrom.mockImplementation(() => {
+      callCount++
+      if (callCount === 1) return makeChain({ data: makeProduktRow(), error: null })
+      if (callCount === 2) return makeChain({ data: null, error: null })
+      if (callCount === 3) return makeChain({ data: null, error: null })
+      return makeChain({
+        data: makeHauptseiteFaqRow(10, 'review'),
+        error: null,
+      })
+    })
+
+    const { default: FAQPage } = await import('../page')
+    const result = await FAQPage({ params: { produkt: 'sterbegeld24plus' } })
+    expect(result).toBeDefined()
+    expect(mockNotFound).not.toHaveBeenCalled()
   })
 
   it('calls notFound() when product row is not found', async () => {

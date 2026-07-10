@@ -50,11 +50,33 @@ export function DatenschutzBlocks({ imprint, titleSuffix }: Props) {
       </Block>
 
       <Block heading="Erhebung und Verarbeitung personenbezogener Daten">
-        Wir erheben und verarbeiten personenbezogene Daten nur, soweit dies zur
-        Bereitstellung unserer Dienste erforderlich ist oder Sie eingewilligt haben.
-        Dies umfasst: Name, E-Mail-Adresse, Telefonnummer bei Anfragen über
-        Kontaktformulare und Lead-Formulare. Rechtsgrundlage: Art. 6 Abs. 1
-        lit. a (Einwilligung) und Art. 6 Abs. 1 lit. b DSGVO (Vertragsanbahnung).
+        <p>
+          Wir erheben und verarbeiten personenbezogene Daten nur, soweit dies zur
+          Bereitstellung unserer Dienste erforderlich ist oder Sie eingewilligt haben.
+        </p>
+        <p className="mt-3">
+          <strong>Lead- und Kontaktformulare</strong> erfassen: Vorname, Nachname,
+          E-Mail-Adresse, Telefonnummer, Geburtsdatum, Straße, PLZ, Ort sowie optional
+          Ihre Nachricht (Interesse/Frage) und Rechner-Eingaben (z.&nbsp;B. Wunschsumme,
+          akzeptable Wartezeit, gewünschter Anbieter).
+        </p>
+        <p className="mt-3">
+          <strong>Zweck:</strong> Bearbeitung Ihrer Versicherungsanfrage, Erstellung
+          eines unverbindlichen Angebots und Kontaktaufnahme durch unser Beratungsteam.
+          Die Daten werden an unser CRM-System (Convexa) übermittelt; Sie erhalten eine
+          Bestätigung per E-Mail (Resend).
+        </p>
+        <p className="mt-3">
+          <strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. a DSGVO (Einwilligung
+          über das Formular-Checkbox) und Art. 6 Abs. 1 lit. b DSGVO (Vertragsanbahnung).
+          Optionale werbliche Kontaktaufnahme nur bei gesonderter Einwilligung im Formular.
+        </p>
+        <p className="mt-3">
+          <strong>Speicherdauer:</strong> Lead-Daten werden für die Dauer der
+          Angebotsbearbeitung und darüber hinaus maximal drei Jahre nach dem letzten
+          Kontakt gespeichert, sofern keine gesetzlichen Aufbewahrungspflichten
+          entgegenstehen.
+        </p>
       </Block>
 
       {avs.length > 0 && (
@@ -89,9 +111,22 @@ export function DatenschutzBlocks({ imprint, titleSuffix }: Props) {
       </Block>
 
       <Block heading="Cookies und Tracking">
-        Diese Website verwendet ausschließlich technisch notwendige Cookies für
-        Session-Verwaltung. Es findet kein Tracking statt. UTM-Parameter werden zur
-        Quellen-Attribution unserer Lead-Formulare in aggregierter Form gespeichert.
+        <p>
+          Beim ersten Besuch können Sie über unseren Cookie-Hinweis wählen, ob wir
+          neben technisch notwendigen Cookies auch optionale Statistik-Cookies setzen
+          dürfen. Ihre Auswahl speichern wir für 180 Tage in einem Cookie
+          (<code className="text-xs bg-[#f7fafc] px-1 rounded">lm_consent</code>) und
+          im lokalen Speicher Ihres Browsers. Sie können Ihre Entscheidung jederzeit
+          über den Link „Cookie-Einstellungen“ im Footer ändern.
+        </p>
+        <p className="mt-3">
+          Technisch notwendige Cookies dienen der Session-Verwaltung und der
+          Speicherung Ihrer Cookie-Präferenz. Optionale Marketing-Cookies (Meta Pixel,
+          ID 374844728246470) werden nur nach Ihrer Einwilligung gesetzt und dienen
+          der Messung von Werbekampagnen auf Facebook und Instagram. UTM-Parameter
+          werden zur Quellen-Attribution unserer Lead-Formulare in aggregierter Form
+          gespeichert.
+        </p>
       </Block>
     </>
   )

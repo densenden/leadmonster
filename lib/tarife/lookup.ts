@@ -11,6 +11,8 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { untyped } from '@/lib/supabase/untyped'
 import { getAgeBracket as legacyGetBracket, type ProduktTyp } from '@/lib/tarif-data'
 import type { FilterAxis, FilterAxisValue } from './filter-config-schema'
+import { countSchutzStars } from './schutz-stars'
+import { resolveFilterAxes } from './resolve-filter-axes'
 
 export interface TarifBracketDb {
   alter_von: number
@@ -154,6 +156,10 @@ export async function lookupVergleichTarife(
       } else if (axis.type === 'enum_min') {
         query = query.gte(axis.key, v as number)
       }
+    } else if (axis.key === 'wartezeit_monate' && axis.type === 'enum_max') {
+      // Prefer dedicated column (Migration 20260706000001) — avoids PostgREST
+      // jsonb quirks and stale filter_axes option lists missing new values (e.g. 24).
+      query = query.lte('wartezeit_monate', v as number)
     } else {
       // source = 'besonderheiten' (jsonb).
       // PostgREST-Quirk: numerische Vergleiche auf `jsonb->key` sind
@@ -234,8 +240,7 @@ export function assignBadges(tarife: AnbieterTarif[]): AnbieterTarif[] {
 }
 
 function scoreSchutz(t: AnbieterTarif): number {
-  const b = t.besonderheiten
-  return (b.rueckholung ? 1 : 0) + (b.doppelte_unfall ? 1 : 0) + (b.lebenslang ? 1 : 0)
+  return countSchutzStars(t.besonderheiten, { includeWartezeit: false, includeGp: false })
 }
 
 /**
@@ -268,7 +273,7 @@ async function resolveFilterArgs(
 
     const { getProduktConfigFromDb } = await import('./produkt-config-db')
     const config = await getProduktConfigFromDb(produkt.typ as string)
-    const axes = config.filter_axes ?? []
+    const axes = resolveFilterAxes(produkt.typ as string, config.filter_axes)
 
     const values: Record<string, FilterAxisValue> = {}
     for (const axis of axes) {

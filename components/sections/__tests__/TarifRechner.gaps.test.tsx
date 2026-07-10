@@ -105,8 +105,14 @@ describe('LeadForm — backward compatibility without intentTag', () => {
 
     expect(screen.getByLabelText(/E-Mail-Adresse/i)).toBeInTheDocument()
 
-    const emailInput = screen.getByLabelText(/E-Mail-Adresse/i)
-    fireEvent.change(emailInput, { target: { value: 'test@example.de' } })
+    fireEvent.change(screen.getByLabelText(/Vorname/i), { target: { value: 'Max' } })
+    fireEvent.change(screen.getByLabelText(/Nachname/i), { target: { value: 'Test' } })
+    fireEvent.change(screen.getByLabelText(/E-Mail-Adresse/i), { target: { value: 'test@example.de' } })
+    fireEvent.change(screen.getByLabelText(/Telefonnummer/i), { target: { value: '0151 12345678' } })
+    fireEvent.change(screen.getByLabelText(/Geburtsdatum/i), { target: { value: '1960-05-15' } })
+    fireEvent.change(screen.getByLabelText(/Straße und Hausnummer/i), { target: { value: 'Teststr. 1' } })
+    fireEvent.change(screen.getByLabelText(/^PLZ/i), { target: { value: '80331' } })
+    fireEvent.change(screen.getByLabelText(/^Ort/i), { target: { value: 'München' } })
 
     fireEvent.click(screen.getByRole('button', { name: /Jetzt Angebot anfordern/i }))
 
@@ -124,36 +130,25 @@ describe('LeadForm — backward compatibility without intentTag', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Gap 5: Insurer badges — correct number rendered
+// Gap 5: Result card shows premium range without insurer name badges
 // ---------------------------------------------------------------------------
 
-describe('TarifRechner — insurer badges', () => {
-  it('renders exactly 3 badges even when more than 3 anbieter are provided', async () => {
+describe('TarifRechner — result card', () => {
+  it('does not render insurer name badges in the result card', async () => {
     render(
       <TarifRechner
         {...DEFAULT_PROPS}
         anbieter={['Allianz', 'AXA', 'Generali', 'HDI', 'Zurich']}
-      />
+      />,
     )
 
     const select = screen.getByRole('combobox', { name: /Gewünschte Versicherungssumme/i })
     fireEvent.change(select, { target: { value: '10000' } })
 
     await waitFor(() => {
-      const badgeContainer = screen.getByLabelText('Beispielanbieter')
-      const badges = badgeContainer.querySelectorAll('span')
-      expect(badges).toHaveLength(3)
+      expect(screen.getByTestId('premium-headline')).toBeInTheDocument()
     })
-  })
-
-  it('renders no badge row when anbieter array is empty', async () => {
-    render(<TarifRechner {...DEFAULT_PROPS} anbieter={[]} />)
-
-    const select = screen.getByRole('combobox', { name: /Gewünschte Versicherungssumme/i })
-    fireEvent.change(select, { target: { value: '10000' } })
-
-    await waitFor(() => {
-      expect(screen.queryByLabelText('Beispielanbieter')).not.toBeInTheDocument()
-    })
+    expect(screen.queryByLabelText('Beispielanbieter')).not.toBeInTheDocument()
+    expect(screen.queryByText('Allianz')).not.toBeInTheDocument()
   })
 })

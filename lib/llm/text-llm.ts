@@ -54,9 +54,14 @@ export async function resolveLLMConfig(): Promise<ResolvedLLMConfig> {
     // DB unavailable — fall through to env / default
   }
 
-  // Env override
-  provider = provider || process.env.AI_TEXT_PROVIDER
-  model = model || process.env.AI_TEXT_MODEL
+  // Explicit env override (CLI scripts, local dev) — wins over DB row.
+  if (process.env.AI_TEXT_PROVIDER?.trim()) {
+    provider = process.env.AI_TEXT_PROVIDER.trim()
+    if (process.env.AI_TEXT_MODEL?.trim()) model = process.env.AI_TEXT_MODEL.trim()
+  } else {
+    provider = provider || process.env.AI_TEXT_PROVIDER
+    model = model || process.env.AI_TEXT_MODEL
+  }
 
   if (provider && model) {
     const match = LLM_OPTIONS.find(o => o.provider === provider && o.model === model)

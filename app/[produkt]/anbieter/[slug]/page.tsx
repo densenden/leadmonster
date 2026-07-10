@@ -7,6 +7,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { loadAnbieterDetail, loadAnbieterForProdukt, slugifyAnbieter } from '@/lib/anbieter/load'
 import { BesonderheitenTable, BesonderheitenFaqList } from '@/components/sections/Besonderheiten'
 import { LeadForm } from '@/components/sections/LeadForm'
+import { resolveDatenschutzHref } from '@/lib/privacy/lead-consent'
 import { combineSchemas, buildBreadcrumbSchema } from '@/lib/seo/schema'
 
 export const revalidate = 3600
@@ -107,8 +108,8 @@ export default async function AnbieterPage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: combined }}
       />
 
-      <main className="max-w-4xl mx-auto px-6 py-12">
-        <nav aria-label="Breadcrumb" className="mb-6 text-sm text-[#666]">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 md:py-12">
+        <nav aria-label="Breadcrumb" className="mb-6 text-sm text-[#666] flex flex-wrap items-center gap-x-2 gap-y-1">
           <Link href={`/${params.produkt}`} className="hover:text-[#02a9e6]">{produkt.name}</Link>
           <span className="mx-2">›</span>
           <Link href={`/${params.produkt}/vergleichsrechner`} className="hover:text-[#02a9e6]">Anbieter-Vergleich</Link>
@@ -144,9 +145,11 @@ export default async function AnbieterPage({ params }: PageProps) {
             mit allen anderen am Markt aktiven Tarifen.
           </p>
           <LeadForm
+            formId="lead-form-anbieter"
             produktId={produkt.id}
             zielgruppeTag="senioren_50plus"
             intentTag="preis"
+            datenschutzHref={resolveDatenschutzHref(params.produkt)}
           />
         </section>
 

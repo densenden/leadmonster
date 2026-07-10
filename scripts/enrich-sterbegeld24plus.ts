@@ -60,8 +60,8 @@ const IMAGE_SPECS: ImageSpec[] = [
     alt: 'Senior plant ruhig die finanzielle Vorsorge — Hände am Küchentisch',
     slot: 'blog_cover',
     pageType: 'ratgeber_was_ist',
-    // Pair of hands holding tea at table, soft warm light
-    stockId: 'photo-1567096038228-7d57aacd33b1',
+    // Documents and pen — same curated cover as was-ist-sterbegeld slug
+    stockId: 'photo-1450101499163-c8848c66ca85',
   },
   {
     key: 'ratgeber_fuer_wen',
@@ -323,7 +323,7 @@ async function main() {
         detail: 'Frei wählbar, an Bestattungskosten anpassbar.',
       },
       {
-        value: 'ab 9,99 €',
+        value: 'ab 6,97 €',
         label: 'Monatsbeitrag',
         detail: 'Lebenslang konstant — keine Erhöhungen im Alter.',
       },

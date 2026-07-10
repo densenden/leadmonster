@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LeadForm } from '../LeadForm'
+import { fillRequiredLeadFormFields } from './lead-form-test-helpers'
 
 const DEFAULT_PROPS = {
   produktId: 'prod-uuid-001',
@@ -32,11 +33,7 @@ describe('LeadForm — gap tests', () => {
 
     render(<LeadForm {...DEFAULT_PROPS} />)
 
-    // Fill all five visible fields
-    await user.type(screen.getByLabelText(/Vorname/i), 'Maria')
-    await user.type(screen.getByLabelText(/Nachname/i), 'Muster')
-    await user.type(screen.getByLabelText(/E-Mail-Adresse/i), 'maria@example.de')
-    await user.type(screen.getByLabelText(/Telefonnummer/i), '0151 12345678')
+    await fillRequiredLeadFormFields(user)
     await user.type(screen.getByLabelText(/Ihr Interesse/i), 'Ich hätte gerne mehr Informationen.')
 
     // Submit
@@ -71,13 +68,48 @@ describe('LeadForm — gap tests', () => {
 
     render(<LeadForm {...DEFAULT_PROPS} />)
 
-    // Type an invalid email
+    await user.type(screen.getByLabelText(/Vorname/i), 'Anna')
+    await user.type(screen.getByLabelText(/Nachname/i), 'Test')
     await user.type(screen.getByLabelText(/E-Mail-Adresse/i), 'not-an-email')
+    await user.type(screen.getByLabelText(/Telefonnummer/i), '0151 12345678')
+    await user.type(screen.getByLabelText(/Geburtsdatum/i), '1960-05-15')
+    await user.type(screen.getByLabelText(/Straße und Hausnummer/i), 'Teststr. 1')
+    await user.type(screen.getByLabelText(/^PLZ/i), '80331')
+    await user.type(screen.getByLabelText(/^Ort/i), 'München')
     await user.click(screen.getByRole('button', { name: /Jetzt Angebot anfordern/i }))
 
     await waitFor(() => {
       expect(
         screen.getByText('Bitte geben Sie eine gültige E-Mail-Adresse ein.'),
+      ).toBeDefined()
+    })
+
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  // ---------------------------------------------------------------------------
+  // Gap 5b: Missing privacy consent shows German error, no fetch called
+  // ---------------------------------------------------------------------------
+  it('Gap 5b: missing privacy consent shows German error, no fetch called', async () => {
+    const user = userEvent.setup()
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<LeadForm {...DEFAULT_PROPS} />)
+
+    await user.type(screen.getByLabelText(/Vorname/i), 'Anna')
+    await user.type(screen.getByLabelText(/Nachname/i), 'Test')
+    await user.type(screen.getByLabelText(/E-Mail-Adresse/i), 'anna@example.de')
+    await user.type(screen.getByLabelText(/Telefonnummer/i), '0151 12345678')
+    await user.type(screen.getByLabelText(/Geburtsdatum/i), '1960-05-15')
+    await user.type(screen.getByLabelText(/Straße und Hausnummer/i), 'Teststr. 1')
+    await user.type(screen.getByLabelText(/^PLZ/i), '80331')
+    await user.type(screen.getByLabelText(/^Ort/i), 'München')
+    await user.click(screen.getByRole('button', { name: /Jetzt Angebot anfordern/i }))
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Bitte bestätigen Sie, dass Sie die Datenschutzerklärung gelesen haben/i),
       ).toBeDefined()
     })
 
@@ -93,7 +125,7 @@ describe('LeadForm — gap tests', () => {
 
     render(<LeadForm {...DEFAULT_PROPS} />)
 
-    await user.type(screen.getByLabelText(/E-Mail-Adresse/i), 'anna@example.de')
+    await fillRequiredLeadFormFields(user)
     await user.click(screen.getByRole('button', { name: /Jetzt Angebot anfordern/i }))
 
     await waitFor(() => {

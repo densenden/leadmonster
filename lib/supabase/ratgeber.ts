@@ -42,7 +42,7 @@ export interface RatgeberListItem {
  * Fetch all published ratgeber rows for the given product slug.
  *
  * Joins produkte + generierter_content on produkt_id.
- * Produkt status = 'aktiv', content status = 'publiziert'.
+ * Content status = 'publiziert'. Product may be aktiv or archiviert (same as Hauptseite).
  * Results are ordered by generated_at ascending so older articles appear first.
  */
 export async function fetchAllRatgeberForProdukt(
@@ -56,7 +56,6 @@ export async function fetchAllRatgeberForProdukt(
     .eq('page_type', 'ratgeber')
     .eq('status', 'publiziert')
     .eq('produkte.slug', produktSlug)
-    .eq('produkte.status', 'aktiv')
     .order('generated_at', { ascending: true })
 
   if (error || !data) {
@@ -100,7 +99,6 @@ export async function fetchRatgeberBySlug(
     .eq('slug', thema)
     .eq('status', 'publiziert')
     .eq('produkte.slug', produktSlug)
-    .eq('produkte.status', 'aktiv')
     .single()
 
   if (error || !data) {
@@ -140,7 +138,7 @@ export interface RatgeberStaticParam {
 /**
  * Fetch all { produkt, thema } param pairs for statically pre-building article pages.
  *
- * Produkt status = 'aktiv', content status = 'publiziert'.
+ * Content status = 'publiziert' (product aktiv or archiviert).
  */
 export async function fetchAllPublishedRatgeberParams(): Promise<RatgeberStaticParam[]> {
   const supabase = createAdminClient()
@@ -150,7 +148,6 @@ export async function fetchAllPublishedRatgeberParams(): Promise<RatgeberStaticP
     .select('slug, produkte!inner(slug, status)')
     .eq('page_type', 'ratgeber')
     .eq('status', 'publiziert')
-    .eq('produkte.status', 'aktiv')
 
   if (error || !data) {
     if (error) {

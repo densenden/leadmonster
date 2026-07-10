@@ -3,7 +3,8 @@
 // letzteres rendert das Root-Produkt (sterbegeld24plus) unter `/`. Daher sind
 // `homePath` und `legalPathPrefix` als Props variabel.
 import Link from 'next/link'
-import { MonsterLogo } from '@/components/MonsterLogo'
+import { CookieSettingsLink } from '@/components/cookies/CookieSettingsLink'
+import { MobileNavDrawer } from '@/components/layout/MobileNavDrawer'
 import { NavbarLogoMark } from '@/components/NavbarLogoMark'
 import { LEGAL_NAME } from '@/lib/seo/organization'
 
@@ -50,12 +51,20 @@ export function ProduktChrome({
   const home = homePath ?? `/${slug}`
   const legalPrefix = legalPathPrefix ?? `/${slug}`
 
+  const mobileNavLinks = [
+    { href: `/${slug}/tarife`, label: 'Tarifrechner' },
+    { href: `/${slug}/vergleich`, label: 'Vergleich' },
+    { href: `/${slug}/faq`, label: 'FAQ' },
+    { href: `/${slug}/ratgeber`, label: 'Ratgeber' },
+    { href: '/blog', label: 'Blog' },
+  ]
+
   return (
-    <div style={{ '--accent': accentColor } as React.CSSProperties}>
+    <div style={{ '--accent': accentColor } as React.CSSProperties} className="overflow-x-hidden">
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-[#e2e8f0]">
-        <div className="max-w-[1200px] mx-auto px-6 py-3 flex items-center justify-between">
-          <Link href={home} className="flex items-center gap-2 shrink-0">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+          <Link href={home} className="flex items-center gap-2 min-w-0 shrink-0">
             <NavbarLogoMark
               visible={navbarLogoVisible}
               customUrl={navbarLogoUrl}
@@ -63,76 +72,100 @@ export function ProduktChrome({
               accentColor={accentColor}
               productName={name}
             />
-            <div className="flex flex-col items-start text-left leading-tight">
-              <span className="font-heading font-bold text-base text-[#1a365d] tracking-tight">
+            <div className="flex flex-col items-start text-left leading-tight min-w-0">
+              <span className="font-heading font-bold text-lg sm:text-[1.2rem] text-navy tracking-tight truncate max-w-[min(100%,14rem)] sm:max-w-none">
                 {name}
               </span>
               {brandSubline && (
-                <span className="font-body text-sm font-light text-[#718096] mt-0.5">{brandSubline}</span>
+                <span className="hidden sm:block font-body text-sm font-normal text-muted mt-0.5 line-clamp-1">
+                  {brandSubline}
+                </span>
               )}
             </div>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-5 font-body text-base font-light text-[#4a5568]">
-            <Link href={`/${slug}/tarife`} className="hover:text-[#02a9e6] transition-colors">Tarifrechner</Link>
-            <Link href={`/${slug}/vergleich`} className="hover:text-[#02a9e6] transition-colors">Vergleich</Link>
-            <Link href={`/${slug}/faq`} className="hover:text-[#02a9e6] transition-colors">FAQ</Link>
-            <Link href="/blog" className="hover:text-[#02a9e6] transition-colors">Blog</Link>
+          <nav className="hidden md:flex items-center gap-5 font-body text-base font-medium text-body shrink-0">
+            <Link href={`/${slug}/tarife`} className="hover:text-accent transition-colors">
+              Tarifrechner
+            </Link>
+            <Link href={`/${slug}/vergleich`} className="hover:text-accent transition-colors">
+              Vergleich
+            </Link>
+            <Link href={`/${slug}/faq`} className="hover:text-accent transition-colors">
+              FAQ
+            </Link>
+            <Link href={`/${slug}/ratgeber`} className="hover:text-accent transition-colors">
+              Ratgeber
+            </Link>
+            <Link href="/blog" className="hover:text-accent transition-colors">
+              Blog
+            </Link>
             <Link
               href="#formular"
-              className="inline-flex items-center px-5 py-2 rounded-md font-body text-base font-semibold border-[1.5px] transition-all duration-200"
-              style={{ borderColor: accentColor, color: accentColor }}
+              className="inline-flex items-center min-h-[44px] px-5 py-2 rounded-lg font-body text-base font-bold border-[1.5px] border-accent text-accent bg-transparent hover:bg-accent hover:text-white transition-all duration-200"
             >
               Angebot anfordern
             </Link>
           </nav>
 
-          {/* Mobile nav — compact icon row */}
-          <nav className="flex md:hidden items-center gap-3 font-body text-sm font-normal text-[#4a5568]">
-            <Link href={`/${slug}/tarife`} className="hover:text-[#02a9e6] transition-colors">Rechner</Link>
-            <Link href={`/${slug}/vergleich`} className="hover:text-[#02a9e6] transition-colors">Vergleich</Link>
-            <Link href={`/${slug}/faq`} className="hover:text-[#02a9e6] transition-colors">FAQ</Link>
-            <Link
-              href="#formular"
-              className="px-3 py-1.5 rounded font-body text-sm font-semibold border-[1.5px] transition-all duration-200"
-              style={{ borderColor: accentColor, color: accentColor }}
-            >
-              Anfragen
-            </Link>
-          </nav>
+          <MobileNavDrawer
+            links={mobileNavLinks}
+            cta={{ href: '#formular', label: 'Angebot anfordern' }}
+            ctaClassName="border-accent text-accent hover:bg-accent hover:text-white"
+          />
         </div>
       </header>
 
       {children}
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="bg-[#1a3252] text-white/70 py-12 mt-16">
-        <div className="max-w-[1200px] mx-auto px-6">
+      <footer className="bg-[#1a3252] text-white/70 py-10 md:py-12 mt-12 md:mt-16">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
           {/* Logo row — uses produkt name as wordmark */}
           <div className="flex justify-center mb-6">
-            <MonsterLogo color="#fff" showText text={name} textColor="white" size={34} />
+            <div className="flex items-center gap-3">
+              {navbarLogoVisible && navbarLogoUrl?.trim() ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={navbarLogoUrl.trim()}
+                  alt={navbarLogoAlt?.trim() || name}
+                  className="h-[34px] w-auto max-w-[140px] object-contain shrink-0"
+                />
+              ) : null}
+              <span className="font-heading font-bold text-lg sm:text-xl text-white tracking-tight text-center">
+                {name}
+              </span>
+            </div>
           </div>
           {/* Legal links */}
-          <div className="flex flex-wrap justify-center gap-6 font-body text-sm font-light mb-6">
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 font-body text-sm font-light mb-6">
             {[
-              { href: `${legalPrefix}/impressum`,   label: 'Impressum' },
+              { href: `${legalPrefix}/impressum`, label: 'Impressum' },
               { href: `${legalPrefix}/datenschutz`, label: 'Datenschutz' },
-              { href: `${legalPrefix}/kontakt`,     label: 'Kontakt' },
-              { href: `${legalPrefix}/agb`,         label: 'AGB' },
-            ].map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className="hover:text-white transition-colors"
-              >
-                {label}
-              </Link>
-            ))}
+              { href: null, label: 'cookie-settings' },
+              { href: `${legalPrefix}/kontakt`, label: 'Kontakt' },
+              { href: `${legalPrefix}/agb`, label: 'AGB' },
+            ].map(({ href, label }) =>
+              label === 'cookie-settings' ? (
+                <CookieSettingsLink
+                  key="cookie-settings"
+                  className="hover:text-white transition-colors min-h-[44px] inline-flex items-center"
+                />
+              ) : (
+                <Link
+                  key={href!}
+                  href={href!}
+                  className="hover:text-white transition-colors min-h-[44px] inline-flex items-center"
+                >
+                  {label}
+                </Link>
+              ),
+            )}
             <a
               href="https://finanzteam26.de"
               target="_blank"
               rel="noopener"
-              className="hover:text-white transition-colors"
+              className="hover:text-white transition-colors min-h-[44px] inline-flex items-center"
             >
               Unternehmen
             </a>

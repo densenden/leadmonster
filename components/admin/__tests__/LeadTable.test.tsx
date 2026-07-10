@@ -150,6 +150,23 @@ describe('LeadTable — empty state', () => {
   })
 })
 
+describe('LeadTable — row links', () => {
+  it('links the name and Details action to the lead detail page', () => {
+    render(
+      React.createElement(LeadTable, {
+        ...DEFAULT_PROPS,
+        leads: [makeLead({ id: 'lead-42' })],
+      }),
+    )
+
+    const detailLinks = Array.from(document.querySelectorAll('a')).filter(
+      (a) => a.getAttribute('href') === '/admin/leads/lead-42',
+    )
+    expect(detailLinks.length).toBe(2)
+    expect(detailLinks.some((a) => a.textContent?.trim() === 'Details')).toBe(true)
+  })
+})
+
 describe('LeadTable — pagination', () => {
   it('renders "Zurück" link absent on page 1', () => {
     render(

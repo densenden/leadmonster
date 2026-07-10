@@ -107,7 +107,8 @@ export function Vergleich({ anbieter, produktName, generatedAt }: VergleichProps
       </table>
 
       <p className="mt-2 text-sm text-gray-500 px-4 pb-3">
-        Alle Angaben ohne Gewähr. Stand: {generatedAt}.
+        Werte aus interner Marktbeobachtung, Stand: {generatedAt}. Verbindliches Angebot nach
+        Anfrage. Alle Angaben ohne Gewähr.
       </p>
     </div>
   )

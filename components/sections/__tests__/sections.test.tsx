@@ -34,7 +34,42 @@ describe('Hero', () => {
     expect(html).toContain('href="#formular"')
   })
 
-  it('CTA href starts with # (anchor scroll, no page reload)', () => {
+  it('renders inviting variant with price badge and benefits', () => {
+    const html = renderToString(
+      Hero({
+        variant: 'inviting',
+        headline: 'Vorsorge mit Herz — Sterbegeldversicherung für Ihre Liebsten',
+        subline: 'Finde in unter **60 Sekunden** heraus.',
+        cta_text: 'Jetzt Beitrag berechnen',
+        cta_anchor: '/sterbegeld24plus/tarife',
+        price_from: '6,97€',
+        benefits: ['Keine Gesundheitsfragen'],
+      }),
+    )
+
+    expect(html).toContain('Vorsorge mit Herz')
+    expect(html).toContain('6,97€')
+    expect(html).toContain('Keine Gesundheitsfragen')
+    expect(html).toContain('href="/sterbegeld24plus/tarife"')
+  })
+
+  it('renders markdown links in inviting headline', () => {
+    const html = renderToString(
+      Hero({
+        variant: 'inviting',
+        headline: '[Sterbegeldversicherung](/sterbegeld24plus/ratgeber/was-ist-sterbegeld) für Senioren ab 50',
+        subline: 'Subline',
+        cta_text: 'CTA',
+        cta_anchor: '#formular',
+      }),
+    )
+
+    expect(html).toContain('href="/sterbegeld24plus/ratgeber/was-ist-sterbegeld"')
+    expect(html).toContain('Sterbegeldversicherung')
+    expect(html).not.toContain('VERSICHERUNG')
+    expect(html).not.toContain('](/')
+  })
+  it('classic CTA href starts with # (anchor scroll, no page reload)', () => {
     const html = renderToString(
       Hero({
         headline: 'Headline',
@@ -44,7 +79,6 @@ describe('Hero', () => {
       }),
     )
 
-    // Extract all href attributes and verify none cause page navigation
     const hrefMatch = html.match(/href="([^"]+)"/)
     expect(hrefMatch?.[1]).toMatch(/^#/)
   })
@@ -93,5 +127,17 @@ describe('TrustBar', () => {
 
   it('renders zero items without throwing when passed an empty array', () => {
     expect(() => renderToString(TrustBar({ items: [] }))).not.toThrow()
+  })
+
+  it('uses responsive wrapping classes for long value text', () => {
+    const html = renderToString(
+      TrustBar({
+        items: [{ value: 'Über 20 Jahre im Versicherungsbereich', label: 'Jahre Erfahrung' }],
+      }),
+    )
+
+    expect(html).toContain('break-words')
+    expect(html).toContain('text-base')
+    expect(html).toContain('grid-cols-1')
   })
 })

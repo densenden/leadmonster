@@ -90,7 +90,8 @@ export function BesonderheitenTable({ aggregat }: Props) {
       <h2 className="px-6 pt-5 pb-3 text-xl font-bold text-[#1a3252]">
         Was leistet die {name}-Versicherung{tarifLabel} — Komplett-Übersicht
       </h2>
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[280px]">
         <thead className="bg-gray-50 border-y border-gray-200">
           <tr>
             <th className="text-left px-6 py-2 text-xs uppercase tracking-wider text-[#999]">Eigenschaft</th>
@@ -125,6 +126,7 @@ export function BesonderheitenTable({ aggregat }: Props) {
           </tr>
         </tbody>
       </table>
+      </div>
     </section>
   )
 }

@@ -1,10 +1,19 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo } from 'react'
+import {
+  SCHUTZ_STARS_MAX,
+  displaySchutzStars,
+  type SchutzBesonderheiten,
+} from '@/lib/tarife/schutz-stars'
 import type { AnbieterTarif, AnbieterBadge } from '@/lib/tarife/lookup'
 import { getProduktConfig } from '@/lib/tarife/produkt-config'
+import { resolveFilterAxes } from '@/lib/tarife/resolve-filter-axes'
 import type { FilterAxis, FilterAxisValue } from '@/lib/tarife/filter-config-schema'
+import { AnbieterLogo } from '@/components/anbieter/AnbieterLogo'
 import { LeadForm } from '@/components/sections/LeadForm'
+import { readMarketingConsent } from '@/lib/cookies/consent'
+import { trackMetaViewContent } from '@/lib/tracking/meta-pixel'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -31,6 +40,8 @@ export interface VergleichsRechnerProps {
    *  gesetzt, fällt die Komponente auf die Code-Defaults aus `getProduktConfig`
    *  zurück. */
   filterAxes?: FilterAxis[]
+  /** Link to privacy policy for embedded LeadForm. */
+  datenschutzHref?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -47,7 +58,7 @@ const BADGE_LABEL: Record<AnbieterBadge, string> = {
 
 const BADGE_STYLES: Record<AnbieterBadge, string> = {
   guenstigster: 'bg-brand-orange text-white',
-  bester_schutz: 'bg-[#1a3252] text-white',
+  bester_schutz: 'bg-navy text-white',
   schnellster_schutz: 'bg-brand-cyan text-white',
 }
 
@@ -64,6 +75,11 @@ function formatBeitrag(value: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
+}
+
+function formatWartezeitMonths(months: number): string {
+  if (months === 0) return 'Keine Wartezeit'
+  return `${months} Monate`
 }
 
 function formatSumme(value: number): string {
@@ -91,6 +107,72 @@ function buildLeadFormFilterContext(
   return out
 }
 
+/** Table column label — filter select label can differ (e.g. "Akzeptable Wartezeit"). */
+function getAxisColumnLabel(axis: FilterAxis): string {
+  if (axis.key === 'wartezeit_monate') return 'Wartezeit'
+  return axis.label
+}
+
+/** Human-readable cell value for filter-axis columns in the results table. */
+function formatAxisCellValue(axis: FilterAxis, raw: unknown): string {
+  if (raw === undefined || raw === null) return '—'
+  if (axis.key === 'wartezeit_monate' && typeof raw === 'number') {
+    if (raw === 0) return 'Keine'
+    return `${raw} Mon.`
+  }
+  return String(raw)
+}
+
+/** Label of the currently selected filter option (e.g. Wartezeit preference). */
+function getSelectedFilterLabel(
+  axes: FilterAxis[],
+  values: Record<string, FilterAxisValue>,
+): string | null {
+  for (const axis of axes) {
+    const v = values[axis.key]
+    if (v === null || v === undefined) continue
+    const opt = axis.options.find(o => o.value === v)
+    if (opt) return opt.label
+  }
+  return null
+}
+
+function SchutzStars({
+  anbieterName,
+  tarifName,
+  besonderheiten,
+  slug,
+  showTestId = true,
+}: {
+  anbieterName: string
+  tarifName?: string | null
+  besonderheiten: SchutzBesonderheiten
+  slug: string
+  showTestId?: boolean
+}) {
+  const filled = displaySchutzStars(anbieterName, besonderheiten, tarifName)
+  const empty = SCHUTZ_STARS_MAX - filled
+  return (
+    <span
+      className="inline-flex items-center gap-0.5 text-xl leading-none tracking-tight"
+      role="img"
+      aria-label={`Schutzumfang: ${filled} von ${SCHUTZ_STARS_MAX} Sternen`}
+      {...(showTestId ? { 'data-testid': `vr-schutz-stars-${slug}` } : {})}
+    >
+      {Array.from({ length: filled }, (_, i) => (
+        <span key={`f-${i}`} className="text-[#d4af37]" aria-hidden="true">
+          ★
+        </span>
+      ))}
+      {Array.from({ length: empty }, (_, i) => (
+        <span key={`e-${i}`} className="text-[#cbd5e0]" aria-hidden="true">
+          ☆
+        </span>
+      ))}
+    </span>
+  )
+}
+
 /** Baut den vorbefüllten Interesse-Text für die LeadForm. */
 function buildInteresseText(args: {
   produktName?: string
@@ -100,16 +182,18 @@ function buildInteresseText(args: {
   jahr: number
   summe: number
   summeSuffix: string
+  wartezeitLabel?: string | null
 }): string {
   const altersText = `Geburtsjahr ${args.jahr} (${CURRENT_YEAR - args.jahr} Jahre)`
   const summeText = `${formatSumme(args.summe)} ${args.summeSuffix}`
+  const wartezeitText = args.wartezeitLabel ? `, akzeptable Wartezeit: ${args.wartezeitLabel}` : ''
   if (args.anbieter) {
     const tarif = args.tarifName ? ` (${args.tarifName})` : ''
     const beitrag = args.beitrag ? `, ca. ${formatBeitrag(args.beitrag)} €/Monat` : ''
-    return `Anfrage zum Anbieter ${args.anbieter}${tarif}. ${altersText}, ${summeText}${beitrag}. Bitte um persönliche Beratung.`
+    return `Anfrage zum Anbieter ${args.anbieter}${tarif}. ${altersText}, ${summeText}${wartezeitText}${beitrag}. Bitte um persönliche Beratung.`
   }
   const produkt = args.produktName ? ` für die ${args.produktName}` : ''
-  return `Beratungsanfrage${produkt}. ${altersText}, ${summeText}. Bitte um persönlichen Vergleich aller Anbieter.`
+  return `Beratungsanfrage${produkt}. ${altersText}, ${summeText}${wartezeitText}. Bitte um persönlichen Vergleich aller Anbieter.`
 }
 
 // ---------------------------------------------------------------------------
@@ -139,12 +223,13 @@ export function VergleichsRechner({
   ctaLabel = 'Beratung anfordern',
   initialData,
   filterAxes,
+  datenschutzHref = '/datenschutz',
 }: VergleichsRechnerProps) {
   const config = useMemo(() => getProduktConfig(produktTyp), [produktTyp])
-  // Filter-Achsen vom Server-Wrapper haben Vorrang vor den Code-Defaults.
+  // Filter-Achsen: Server-Wrapper > Code-Default; leeres DB-Array darf nicht alles ausblenden.
   const axes = useMemo<FilterAxis[]>(
-    () => filterAxes ?? config.filter_axes ?? [],
-    [filterAxes, config.filter_axes],
+    () => resolveFilterAxes(produktTyp, filterAxes),
+    [filterAxes, produktTyp],
   )
 
   const [geburtsjahr, setGeburtsjahr] = useState(CURRENT_YEAR - config.default_age)
@@ -160,6 +245,7 @@ export function VergleichsRechner({
   const [loading, setLoading] = useState(false)
   const [activeAnbieter, setActiveAnbieter] = useState<string | null>(null)
   const leadFormRef = useRef<HTMLDivElement>(null)
+  const viewContentTracked = useRef(false)
 
   const age = CURRENT_YEAR - geburtsjahr
 
@@ -212,6 +298,17 @@ export function VergleichsRechner({
     }
   }, [produktId, age, summe, filterQuery])
 
+  // Meta ViewContent — once per mount when tariff table has rows (marketing consent only).
+  useEffect(() => {
+    if (viewContentTracked.current || results.length === 0 || loading) return
+    if (!readMarketingConsent()) return
+    viewContentTracked.current = true
+    trackMetaViewContent({
+      contentName: 'vergleichsrechner',
+      contentCategory: produktTyp ?? 'sterbegeld',
+    })
+  }, [results.length, loading, produktTyp])
+
   // Scroll to LeadForm when revealed.
   useEffect(() => {
     if (activeAnbieter !== null && leadFormRef.current) {
@@ -223,6 +320,32 @@ export function VergleichsRechner({
 
   // Default-Text für die LeadForm — basiert auf aktueller Auswahl.
   const activeRow = activeAnbieter ? results.find(r => r.anbieter_name === activeAnbieter) : null
+  const wartezeitLabel = useMemo(
+    () => getSelectedFilterLabel(axes, filterValues),
+    [axes, filterValues],
+  )
+  const selectedWartezeitMonate = useMemo(() => {
+    const raw = filterValues.wartezeit_monate
+    return typeof raw === 'number' ? raw : undefined
+  }, [filterValues.wartezeit_monate])
+  const wartezeitFormOptions = useMemo(() => {
+    const axis = axes.find(a => a.key === 'wartezeit_monate')
+    return (axis?.options ?? []).filter(
+      (o): o is { value: number; label: string } => typeof o.value === 'number',
+    )
+  }, [axes])
+  /** Filter selection first; when „Egal“, inherit Wartezeit from clicked table row. */
+  const inheritedWartezeitMonate = useMemo(() => {
+    if (typeof selectedWartezeitMonate === 'number') return selectedWartezeitMonate
+    const rowMonths = activeRow?.besonderheiten?.wartezeit_monate
+    return typeof rowMonths === 'number' ? rowMonths : undefined
+  }, [selectedWartezeitMonate, activeRow])
+  const leadFormKey = `${activeAnbieter ?? 'global'}-${geburtsjahr}-${summe}-${inheritedWartezeitMonate ?? 'any'}`
+  const isGlobalLeadCta = activeAnbieter === ''
+  const wartezeitFromTarifLabel =
+    !isGlobalLeadCta && inheritedWartezeitMonate != null
+      ? `${formatWartezeitMonths(inheritedWartezeitMonate)}${activeAnbieter ? ` (${activeAnbieter}-Tarif)` : ''}`
+      : undefined
   const defaultInteresse = useMemo(() => {
     if (activeAnbieter === null) return undefined
     return buildInteresseText({
@@ -233,14 +356,23 @@ export function VergleichsRechner({
       jahr: geburtsjahr,
       summe,
       summeSuffix: config.summe_suffix,
+      wartezeitLabel,
     })
-  }, [activeAnbieter, activeRow, geburtsjahr, summe, produktName, config.summe_suffix])
+  }, [
+    activeAnbieter,
+    activeRow,
+    geburtsjahr,
+    summe,
+    produktName,
+    config.summe_suffix,
+    wartezeitLabel,
+  ])
 
   return (
     <section
       id="vergleichsrechner"
       aria-label="Anbieter-Vergleichsrechner"
-      className="py-16 bg-white"
+      className="py-10 md:py-16 bg-white"
     >
       <div className="max-w-5xl mx-auto px-4 md:px-6">
         <h2 className="font-heading font-bold text-[#1a3252] text-h2-desktop mb-3">
@@ -249,14 +381,11 @@ export function VergleichsRechner({
         <p className="font-body text-[#666666] text-base mb-8">{intro}</p>
 
         {/* Eingabe-Block */}
-        <div className="bg-white shadow-ft-default rounded-xl p-6 md:p-8 mb-6">
+        <div className="bg-white shadow-ft-default rounded-xl p-4 sm:p-6 md:p-8 mb-6">
           {inputHint && (
             <p className="font-body text-sm text-brand-neutral-base mb-4">{inputHint}</p>
           )}
-          <div
-            className="grid gap-6"
-            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
               <label
                 htmlFor="vr-geburtsjahr"
@@ -352,7 +481,95 @@ export function VergleichsRechner({
                 : 'Für diese Kombination liegen aktuell keine Anbietertarife vor. Bitte fordern Sie ein persönliches Angebot an.'}
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              {/* Mobile: stacked cards */}
+              <div className="md:hidden divide-y divide-gray-100" data-testid="vr-cards">
+                {results.map(tarif => {
+                  const slug = slugifyAnbieter(tarif.anbieter_name)
+                  return (
+                    <article
+                      key={tarif.anbieter_name}
+                      className="p-4 sm:p-5"
+                      data-testid={`vr-row-${slug}`}
+                    >
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="min-w-0">
+                          <h3 className="font-heading font-bold text-[#1a3252] text-base">
+                            {tarif.anbieter_name}
+                          </h3>
+                          <AnbieterLogo
+                            anbieterName={tarif.anbieter_name}
+                            testId={`vr-logo-${slug}`}
+                          />
+                          {tarif.tarif_name && (
+                            <p className="text-sm text-[#666666] truncate">{tarif.tarif_name}</p>
+                          )}
+                        </div>
+                        <p className="shrink-0 text-lg font-bold text-brand-orange whitespace-nowrap">
+                          {formatBeitrag(tarif.beitrag_eur)} &euro;
+                        </p>
+                      </div>
+
+                      <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-3">
+                        {axes
+                          .filter(a => a.show_as_column)
+                          .map(a => {
+                            const raw =
+                              a.source === 'besonderheiten'
+                                ? (tarif.besonderheiten as Record<string, unknown>)[a.key]
+                                : (tarif as unknown as Record<string, unknown>)[a.key]
+                            return (
+                              <div key={a.key} data-testid={`vr-cell-${slug}-${a.key}`}>
+                                <dt className="text-[#999] text-xs">{getAxisColumnLabel(a)}</dt>
+                                <dd className="font-medium text-[#1a3252]">
+                                  {formatAxisCellValue(a, raw)}
+                                </dd>
+                              </div>
+                            )
+                          })}
+                        <div>
+                          <dt className="text-[#999] text-xs">Schutz</dt>
+                          <dd>
+                            <SchutzStars
+                              anbieterName={tarif.anbieter_name}
+                              tarifName={tarif.tarif_name}
+                              besonderheiten={tarif.besonderheiten}
+                              slug={slug}
+                            />
+                          </dd>
+                        </div>
+                      </dl>
+
+                      {tarif.badges.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {tarif.badges.map(badge => (
+                            <span
+                              key={badge}
+                              className={`text-xs sm:text-sm font-body font-bold px-2.5 py-1 rounded-sm shadow-sm ${BADGE_STYLES[badge]}`}
+                              data-testid={`vr-badge-${slug}-${badge}`}
+                            >
+                              {badge === 'bester_schutz' ? '★ ' : ''}
+                              {BADGE_LABEL[badge]}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => setActiveAnbieter(tarif.anbieter_name)}
+                        className="w-full bg-brand-orange text-white font-body font-bold text-sm min-h-[44px] px-4 py-2.5 rounded-none hover:bg-brand-orange-dark transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-link"
+                        data-testid={`vr-cta-${slug}`}
+                      >
+                        {tarif.anbieter_name} anfragen
+                      </button>
+                    </article>
+                  )
+                })}
+              </div>
+
+              {/* Desktop: full table */}
+              <div className="hidden md:block overflow-x-auto">
               <table className="min-w-full" data-testid="vr-table">
                 <caption className="sr-only">Anbieter-Vergleich — sortiert nach Beitrag aufsteigend</caption>
                 <thead>
@@ -374,9 +591,12 @@ export function VergleichsRechner({
                           scope="col"
                           className="px-4 py-3 text-left text-sm font-medium whitespace-nowrap"
                         >
-                          {a.label}
+                          {getAxisColumnLabel(a)}
                         </th>
                       ))}
+                    <th scope="col" className="px-4 py-3 text-left text-sm font-medium whitespace-nowrap">
+                      Schutz
+                    </th>
                     <th scope="col" className="px-4 py-3 text-left text-sm font-medium">
                       Auszeichnungen
                     </th>
@@ -392,13 +612,18 @@ export function VergleichsRechner({
                       <tr
                         key={tarif.anbieter_name}
                         className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                        data-testid={`vr-row-${slug}`}
                       >
                         <th
                           scope="row"
                           className="px-4 py-3 text-left text-sm font-semibold text-[#1a3252] whitespace-nowrap"
                         >
-                          {tarif.anbieter_name}
+                          <div className="flex flex-col items-start">
+                            {tarif.anbieter_name}
+                            <AnbieterLogo
+                              anbieterName={tarif.anbieter_name}
+                              testId={`vr-logo-${slug}`}
+                            />
+                          </div>
                         </th>
                         <td className="px-4 py-3 text-sm text-[#666666]">
                           {tarif.tarif_name ?? '—'}
@@ -416,23 +641,29 @@ export function VergleichsRechner({
                             return (
                               <td
                                 key={a.key}
-                                className="px-4 py-3 text-sm text-[#666] whitespace-nowrap"
-                                data-testid={`vr-cell-${slug}-${a.key}`}
+                                className="px-4 py-3 text-sm font-medium text-[#1a3252] whitespace-nowrap"
                               >
-                                {raw === undefined || raw === null
-                                  ? '—'
-                                  : String(raw)}
+                                {formatAxisCellValue(a, raw)}
                               </td>
                             )
                           })}
                         <td className="px-4 py-3">
-                          <div className="flex flex-wrap gap-1.5">
+                          <SchutzStars
+                            anbieterName={tarif.anbieter_name}
+                            tarifName={tarif.tarif_name}
+                            besonderheiten={tarif.besonderheiten}
+                            slug={slug}
+                            showTestId={false}
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-2">
                             {tarif.badges.map(badge => (
                               <span
                                 key={badge}
-                                className={`text-xs font-body font-bold px-2 py-1 ${BADGE_STYLES[badge]}`}
-                                data-testid={`vr-badge-${slug}-${badge}`}
+                                className={`text-sm font-body font-bold px-3 py-1.5 rounded-sm shadow-sm ${BADGE_STYLES[badge]}`}
                               >
+                                {badge === 'bester_schutz' ? '★ ' : ''}
                                 {BADGE_LABEL[badge]}
                               </span>
                             ))}
@@ -442,8 +673,7 @@ export function VergleichsRechner({
                           <button
                             type="button"
                             onClick={() => setActiveAnbieter(tarif.anbieter_name)}
-                            className="bg-brand-orange text-white font-body font-bold text-sm min-h-[40px] px-4 py-2 rounded-none hover:bg-brand-orange-dark transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-link whitespace-nowrap"
-                            data-testid={`vr-cta-${slug}`}
+                            className="bg-brand-orange text-white font-body font-bold text-sm min-h-[44px] px-4 py-2 rounded-none hover:bg-brand-orange-dark transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-link whitespace-nowrap"
                           >
                             {tarif.anbieter_name} anfragen
                           </button>
@@ -453,7 +683,8 @@ export function VergleichsRechner({
                   })}
                 </tbody>
               </table>
-            </div>
+              </div>
+            </>
           )}
         </div>
 
@@ -493,7 +724,8 @@ export function VergleichsRechner({
         >
           {activeAnbieter !== null && (
             <LeadForm
-              key={activeAnbieter || 'global'}
+              key={leadFormKey}
+              formId="lead-form-vergleich"
               produktId={produktId}
               zielgruppeTag={zielgruppeTag}
               intentTag={intentTag}
@@ -501,6 +733,12 @@ export function VergleichsRechner({
               defaultInteresse={defaultInteresse}
               filterContext={buildLeadFormFilterContext(axes, filterValues)}
               defaultSumme={summe}
+              defaultWartezeitMonate={inheritedWartezeitMonate}
+              defaultMonatsbeitrag={activeRow?.beitrag_eur}
+              wartezeitOptions={wartezeitFormOptions}
+              showWartezeitDropdown={isGlobalLeadCta}
+              wartezeitFromTarifLabel={wartezeitFromTarifLabel}
+              datenschutzHref={datenschutzHref}
             />
           )}
         </div>
