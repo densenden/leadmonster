@@ -64,7 +64,8 @@ export function DatenschutzBlocks({ imprint, titleSuffix }: Props) {
           <strong>Zweck:</strong> Bearbeitung Ihrer Versicherungsanfrage, Erstellung
           eines unverbindlichen Angebots und Kontaktaufnahme durch unser Beratungsteam.
           Die Daten werden an unser CRM-System (Convexa) übermittelt; Sie erhalten eine
-          Bestätigung per E-Mail (Resend).
+          Bestätigung per E-Mail (Resend); Kontaktaufnahme durch unser Beratungsteam
+          per Telefon oder WhatsApp.
         </p>
         <p className="mt-3">
           <strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. a DSGVO (Einwilligung

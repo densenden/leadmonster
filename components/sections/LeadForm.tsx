@@ -620,7 +620,8 @@ export function LeadForm({
 
         <div className="rounded-none border border-[#e5e5e5] bg-[#f8fafc] px-4 py-3 text-sm text-[#4a5568] leading-relaxed">
           Ihre Angaben werden zur Bearbeitung Ihrer Anfrage an unser Beratungsteam
-          weitergeleitet (CRM-System Convexa). Sie erhalten eine Bestätigung per E-Mail.
+          weitergeleitet (CRM-System Convexa). Sie erhalten eine Bestätigung per E-Mail;
+          unser Team meldet sich zusätzlich telefonisch oder per WhatsApp bei Ihnen.
         </div>
 
         <div>
