@@ -45,6 +45,7 @@ const LEAD_SELECT = `
   privacy_policy_version,
   marketing_consent,
   marketing_consent_at,
+  client_ip,
   created_at,
   produkte(name, slug, typ)
 `

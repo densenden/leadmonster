@@ -39,7 +39,7 @@ export default async function LeadsPage({
   let query = supabase
     .from('leads')
     .select(
-      'id, vorname, nachname, email, intent_tag, convexa_synced, convexa_lead_id, convexa_error, resend_sent, created_at, produkte(name)',
+      'id, vorname, nachname, email, intent_tag, convexa_synced, convexa_lead_id, convexa_error, resend_sent, privacy_consent_at, client_ip, created_at, produkte(name)',
       { count: 'exact' },
     )
     .order('created_at', { ascending: false })

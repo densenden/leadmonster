@@ -141,6 +141,7 @@ export interface LeadDetailData {
   privacy_policy_version: string | null
   marketing_consent: boolean
   marketing_consent_at: string | null
+  client_ip: string | null
   created_at: string
   produkte: { name: string; slug: string; typ: string } | null
 }
@@ -327,6 +328,7 @@ export function LeadDetailView({
                   : 'Nein'
               }
             />
+            <DetailRow label="Client-IP" value={display(lead.client_ip)} />
           </DetailSection>
 
           <DetailSection title="Tracking & Sync">

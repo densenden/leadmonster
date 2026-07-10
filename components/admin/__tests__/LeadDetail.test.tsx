@@ -38,6 +38,7 @@ function makeLead(overrides: Partial<LeadDetailData> = {}): LeadDetailData {
     privacy_policy_version: '2026-07-10',
     marketing_consent: false,
     marketing_consent_at: null,
+    client_ip: '203.0.113.7',
     created_at: '2026-04-01T10:00:00.000Z',
     produkte: { name: 'Sterbegeld24Plus', slug: 'sterbegeld24plus', typ: 'sterbegeld' },
     ...overrides,

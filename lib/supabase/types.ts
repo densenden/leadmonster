@@ -168,6 +168,7 @@ export type Database = {
           convexa_error: string | null
           convexa_lead_id: string | null
           convexa_synced: boolean
+          client_ip: string | null
           created_at: string
           email: string
           filter_kontext: Json | null
@@ -199,6 +200,7 @@ export type Database = {
         Insert: {
           akzeptierte_wartezeit_monate?: number | null
           berufsklasse?: string | null
+          client_ip?: string | null
           confluence_page_id?: string | null
           confluence_synced?: boolean
           convexa_error?: string | null
@@ -235,6 +237,7 @@ export type Database = {
         Update: {
           akzeptierte_wartezeit_monate?: number | null
           berufsklasse?: string | null
+          client_ip?: string | null
           confluence_page_id?: string | null
           confluence_synced?: boolean
           convexa_error?: string | null

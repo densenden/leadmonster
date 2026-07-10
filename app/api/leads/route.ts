@@ -170,6 +170,7 @@ export async function POST(request: NextRequest) {
   insertAsRecord.plz = parsed.data.plz
   insertAsRecord.ort = parsed.data.ort
   if (parsed.data.sourceUrl) insertAsRecord.source_url = parsed.data.sourceUrl
+  if (ip !== 'unknown') insertAsRecord.client_ip = ip
 
   const consentAt = new Date().toISOString()
   insertAsRecord.privacy_consent_at = consentAt

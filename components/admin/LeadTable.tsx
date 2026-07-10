@@ -20,6 +20,8 @@ interface LeadRow {
   convexa_lead_id: string | null
   convexa_error: string | null
   resend_sent: boolean
+  privacy_consent_at: string | null
+  client_ip: string | null
   created_at: string
   produkte: { name: string } | null
 }
@@ -200,9 +202,11 @@ export function LeadTable({
                     'E-Mail',
                     'Produkt',
                     'Intent',
+                    'Einwilligung',
+                    'IP',
                     'Convexa Sync',
                     'Resend',
-                    'Zeitstempel',
+                    'Eingang',
                     '',
                   ].map((col) => (
                     <th
@@ -238,6 +242,16 @@ export function LeadTable({
 
                     <td className="px-4 py-3">
                       <Badge variant="neutral">{lead.intent_tag ?? '—'}</Badge>
+                    </td>
+
+                    <td className="px-4 py-3 whitespace-nowrap text-[#666666]">
+                      {lead.privacy_consent_at
+                        ? formatTimestamp(lead.privacy_consent_at)
+                        : '—'}
+                    </td>
+
+                    <td className="px-4 py-3 whitespace-nowrap font-mono text-xs text-[#666666]">
+                      {lead.client_ip ?? '—'}
                     </td>
 
                     <td className="px-4 py-3">
