@@ -9,18 +9,9 @@ import { FieldError } from '@/components/ui/FieldError'
 import { readMarketingConsent } from '@/lib/cookies/consent'
 import { PRIVACY_POLICY_VERSION } from '@/lib/privacy/lead-consent'
 import { trackMetaLead } from '@/lib/tracking/meta-pixel'
-import { TurnstileField } from '@/components/sections/TurnstileField'
-import { HCaptchaField } from '@/components/sections/HCaptchaField'
-import type { CaptchaProvider } from '@/lib/captcha/types'
-import {
-  formatGermanBirthdateInput,
-  parseGermanBirthdateToIso,
-} from '@/lib/utils/date'
 
 const BIRTHDATE_MIN = '1925-01-01'
 const BIRTHDATE_MAX = '2010-12-31'
-const BIRTHDATE_MIN_DE = '01.01.1925'
-const BIRTHDATE_MAX_DE = '31.12.2010'
 
 /** Maps formId prefixes to a stable Convexa FormPlacement value. */
 const FORM_PLACEMENT_BY_ID: Record<string, string> = {
@@ -111,18 +102,6 @@ export function LeadForm({
 }: LeadFormProps) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [awaitingEmailConfirm, setAwaitingEmailConfirm] = useState(false)
-  // Never assume enabled from env alone — Admin can turn captcha off in DB without redeploy.
-  const [captchaEnabled, setCaptchaEnabled] = useState(false)
-  const [captchaProvider, setCaptchaProvider] = useState<CaptchaProvider>('turnstile')
-  const [captchaSiteKey, setCaptchaSiteKey] = useState<string | null>(null)
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
-  /** True when widget failed to load — hard-fail: block submit. */
-  const [captchaUnavailable, setCaptchaUnavailable] = useState(false)
-  const [captchaResetSignal, setCaptchaResetSignal] = useState(0)
-  /** ISO timestamp when the form mounted — used for min dwell time on the server. */
-  const [formLoadedAt] = useState(() => new Date().toISOString())
-  const [captchaError, setCaptchaError] = useState('')
-  const [formError, setFormError] = useState('')
 
   const [vorname, setVorname] = useState('')
   const [nachname, setNachname] = useState('')
@@ -136,43 +115,6 @@ export function LeadForm({
   const [wartezeitMonate, setWartezeitMonate] = useState(() =>
     resolveInitialWartezeit(defaultWartezeitMonate, filterContext),
   )
-
-  // Always ask the server if captcha is on — Admin toggle + provider in einstellungen wins.
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadConfig() {
-      try {
-        const res = await fetch('/api/captcha/config')
-        if (cancelled || !res || !res.ok) return
-        const data = (await res.json()) as {
-          enabled?: boolean
-          provider?: CaptchaProvider
-          siteKey?: string | null
-        }
-        if (cancelled) return
-        if (data.enabled && data.siteKey) {
-          setCaptchaEnabled(true)
-          setCaptchaProvider(data.provider === 'hcaptcha' ? 'hcaptcha' : 'turnstile')
-          setCaptchaSiteKey(data.siteKey)
-          setCaptchaUnavailable(false)
-        } else {
-          setCaptchaEnabled(false)
-          setCaptchaToken(null)
-          setCaptchaSiteKey(null)
-        }
-      } catch {
-        // Captcha stays off if config endpoint fails — honeypot + rate limit still apply.
-        if (!cancelled) setCaptchaEnabled(false)
-      }
-    }
-
-    void loadConfig()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   // Keep calculator prefill in sync when parent remounts or filter values change.
   useEffect(() => {
@@ -207,13 +149,12 @@ export function LeadForm({
   const field = (name: string) => `${formId}-${name}`
 
   function validateGeburtsdatum(value: string): string {
-    if (!value.trim()) return 'Bitte geben Sie Ihr Geburtsdatum ein.'
-    const iso = parseGermanBirthdateToIso(value)
-    if (!iso) {
-      return 'Bitte geben Sie Ihr Geburtsdatum als TT.MM.JJJJ ein.'
+    if (!value) return 'Bitte geben Sie Ihr Geburtsdatum ein.'
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return 'Bitte geben Sie ein gültiges Geburtsdatum ein.'
     }
-    if (iso < BIRTHDATE_MIN || iso > BIRTHDATE_MAX) {
-      return `Geburtsdatum muss zwischen ${BIRTHDATE_MIN_DE} und ${BIRTHDATE_MAX_DE} liegen.`
+    if (value < BIRTHDATE_MIN || value > BIRTHDATE_MAX) {
+      return `Geburtsdatum muss zwischen ${BIRTHDATE_MIN.split('-').reverse().join('.')} und ${BIRTHDATE_MAX.split('-').reverse().join('.')} liegen.`
     }
     return ''
   }
@@ -230,8 +171,6 @@ export function LeadForm({
     setOrtError('')
     setWartezeitError('')
     setPrivacyConsentError('')
-    setCaptchaError('')
-    setFormError('')
 
     let hasError = false
 
@@ -240,19 +179,6 @@ export function LeadForm({
         'Bitte bestätigen Sie, dass Sie die Datenschutzerklärung gelesen haben.',
       )
       hasError = true
-    }
-
-    // Hard-fail: captcha must load AND produce a token before submit.
-    if (captchaEnabled) {
-      if (captchaUnavailable) {
-        setCaptchaError(
-          'Sicherheitscheck konnte nicht geladen werden. Bitte Seite neu laden.',
-        )
-        hasError = true
-      } else if (!captchaToken) {
-        setCaptchaError('Bitte bestätigen Sie, dass Sie kein Roboter sind.')
-        hasError = true
-      }
     }
 
     if (!vorname.trim()) {
@@ -279,9 +205,8 @@ export function LeadForm({
     }
 
     const birthError = validateGeburtsdatum(geburtsdatum)
-    const geburtsdatumIso = parseGermanBirthdateToIso(geburtsdatum)
-    if (birthError || !geburtsdatumIso) {
-      setGeburtsdatumError(birthError || 'Bitte geben Sie Ihr Geburtsdatum als TT.MM.JJJJ ein.')
+    if (birthError) {
+      setGeburtsdatumError(birthError)
       hasError = true
     }
 
@@ -322,8 +247,6 @@ export function LeadForm({
     }
 
     if (hasError) return
-    // After validation, ISO date is always present.
-    if (!geburtsdatumIso) return
 
     setStatus('loading')
 
@@ -368,16 +291,13 @@ export function LeadForm({
           nachname: nachname.trim(),
           email,
           telefon: telefon.trim(),
-          // API expects ISO YYYY-MM-DD; UI shows German TT.MM.JJJJ.
-          geburtsdatum: geburtsdatumIso,
+          geburtsdatum,
           strasse: strasse.trim(),
           plz: plz.trim(),
           ort: ort.trim(),
           interesse,
           sourceUrl,
           website: honeypot,
-          turnstileToken: captchaToken ?? undefined,
-          formLoadedAt,
           privacyConsent: true,
           privacyPolicyVersion: PRIVACY_POLICY_VERSION,
           marketingConsent,
@@ -417,32 +337,9 @@ export function LeadForm({
         setStatus('success')
       } else {
         setStatus('error')
-        setCaptchaToken(null)
-        setCaptchaResetSignal(n => n + 1)
-        const apiMessage = payload.error?.message
-        if (
-          payload.error?.code === 'CAPTCHA_REQUIRED' ||
-          payload.error?.code === 'CAPTCHA_FAILED' ||
-          payload.error?.code === 'TOO_FAST'
-        ) {
-          setCaptchaError(
-            apiMessage ?? 'Captcha-Prüfung fehlgeschlagen. Bitte erneut bestätigen.',
-          )
-        }
-        setFormError(
-          apiMessage ??
-            (payload.error?.code === 'VALIDATION_ERROR'
-              ? 'Eingaben ungültig. Bitte Felder prüfen und erneut senden.'
-              : 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut oder kontaktieren Sie uns direkt.'),
-        )
       }
     } catch {
       setStatus('error')
-      setCaptchaToken(null)
-      setCaptchaResetSignal(n => n + 1)
-      setFormError(
-        'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut oder kontaktieren Sie uns direkt.',
-      )
     }
   }
 
@@ -599,25 +496,18 @@ export function LeadForm({
           </Label>
           <Input
             id={field('geburtsdatum')}
-            type="text"
-            inputMode="numeric"
+            type="date"
             autoComplete="bday"
-            placeholder="TT.MM.JJJJ"
-            maxLength={10}
+            min={BIRTHDATE_MIN}
+            max={BIRTHDATE_MAX}
             value={geburtsdatum}
-            onChange={e => setGeburtsdatum(formatGermanBirthdateInput(e.target.value))}
+            onChange={e => setGeburtsdatum(e.target.value)}
             required
             aria-required="true"
-            aria-describedby={`${field('geburtsdatum-hint')} ${field('geburtsdatum-error')}`}
+            aria-describedby={field('geburtsdatum-error')}
             disabled={isLoading}
             invalid={Boolean(geburtsdatumError)}
           />
-          <p
-            id={field('geburtsdatum-hint')}
-            className="mt-1 text-sm text-[#666666] font-body"
-          >
-            Bitte als Tag.Monat.Jahr eingeben, z.&nbsp;B. 15.05.1960
-          </p>
           <FieldError id={field('geburtsdatum-error')}>{geburtsdatumError}</FieldError>
         </div>
 
@@ -736,8 +626,8 @@ export function LeadForm({
 
         <div className="rounded-none border border-[#e5e5e5] bg-[#f8fafc] px-4 py-3 text-sm text-[#4a5568] leading-relaxed">
           Ihre Angaben werden zur Bearbeitung Ihrer Anfrage an unser Beratungsteam
-          weitergeleitet (CRM-System Convexa). Unser Team meldet sich telefonisch oder
-          per WhatsApp bei Ihnen.
+          weitergeleitet (CRM-System Convexa). Sie erhalten eine Bestätigung per E-Mail;
+          unser Team meldet sich zusätzlich telefonisch oder per WhatsApp bei Ihnen.
         </div>
 
         <div>
@@ -798,37 +688,6 @@ export function LeadForm({
           </label>
         </div>
 
-        {captchaEnabled && captchaSiteKey && (
-          <div>
-            {captchaProvider === 'hcaptcha' ? (
-              <HCaptchaField
-                siteKey={captchaSiteKey}
-                onTokenChange={token => {
-                  setCaptchaToken(token)
-                  if (token) setCaptchaError('')
-                }}
-                onAvailabilityChange={available => {
-                  setCaptchaUnavailable(!available)
-                }}
-                resetSignal={captchaResetSignal}
-              />
-            ) : (
-              <TurnstileField
-                siteKey={captchaSiteKey}
-                onTokenChange={token => {
-                  setCaptchaToken(token)
-                  if (token) setCaptchaError('')
-                }}
-                onAvailabilityChange={available => {
-                  setCaptchaUnavailable(!available)
-                }}
-                resetSignal={captchaResetSignal}
-              />
-            )}
-            <FieldError id={field('captcha-error')}>{captchaError}</FieldError>
-          </div>
-        )}
-
         <button
           type="submit"
           disabled={isLoading}
@@ -862,8 +721,8 @@ export function LeadForm({
 
         {status === 'error' && (
           <p role="alert" className="text-red-600 text-sm text-center">
-            {formError ||
-              'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut oder kontaktieren Sie uns direkt.'}
+            Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut oder kontaktieren Sie uns
+            direkt.
           </p>
         )}
       </div>

@@ -14,20 +14,10 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/server'
 import type { TablesInsert } from '@/lib/supabase/types'
-import { isConvexaSyncEnabled, pushLeadToConvexa } from '@/lib/convexa/client'
+import { pushLeadToConvexa } from '@/lib/convexa/client'
 import { PRIVACY_POLICY_VERSION } from '@/lib/privacy/lead-consent'
-import { isResendEnabled, sendLeadConfirmation } from '@/lib/resend/mailer'
+import { isResendEnabled, sendLeadConfirmation, sendSalesNotification } from '@/lib/resend/mailer'
 import { buildEmailConfirmUrl, createEmailConfirmToken } from '@/lib/leads/email-confirm'
-import { verifyCaptchaToken } from '@/lib/captcha/verify'
-import { checkFormDwellTime } from '@/lib/captcha/form-timing'
-import {
-  FORM_SESSION_COOKIE,
-  readCookieValue,
-  verifyFormSessionToken,
-} from '@/lib/captcha/form-session'
-import { getCaptchaServerConfig } from '@/lib/captcha/config'
-import { saveBotAttempt } from '@/lib/leads/save-bot-attempt'
-import { collectSpamSignals } from '@/lib/leads/spam-signals'
 
 // IP-based rate limiting: max 3 submissions per IP per 60-minute window.
 // Module-level Map persists across requests within the same server process.
@@ -68,10 +58,6 @@ const leadSchema = z.object({
   ort: z.string().min(1, 'Ort ist erforderlich').max(100),
   sourceUrl: z.string().url().max(500).optional(),
   website: z.string().optional(), // honeypot — any non-empty value triggers silent rejection
-  /** Captcha token (Turnstile or hCaptcha). hCaptcha tokens are often >2k chars. */
-  turnstileToken: z.string().max(8192).optional(),
-  /** ISO timestamp when the form mounted in the browser (anti-bot dwell check). */
-  formLoadedAt: z.string().max(40).optional(),
   privacyConsent: z.literal(true, {
     message: 'Datenschutz-Einwilligung ist erforderlich',
   }),
@@ -93,34 +79,6 @@ const KNOWN_LEAD_FIELDS: ReadonlyArray<string> = [
   'sterbegeld_summe',
   'monatsbeitrag_eur',
 ]
-
-/** Full form snapshot for quarantine — enables Admin „Als Lead freigeben“. Never store captcha tokens. */
-function buildQuarantinePayload(
-  data: z.infer<typeof leadSchema>,
-  extra: Record<string, unknown> = {},
-): Record<string, unknown> {
-  return {
-    intentTag: data.intentTag,
-    formPlacement: data.formPlacement,
-    sourceUrl: data.sourceUrl,
-    zielgruppeTag: data.zielgruppeTag,
-    gewuenschterAnbieter: data.gewuenschterAnbieter,
-    vorname: data.vorname,
-    nachname: data.nachname,
-    email: data.email,
-    telefon: data.telefon,
-    interesse: data.interesse,
-    geburtsdatum: data.geburtsdatum,
-    strasse: data.strasse,
-    plz: data.plz,
-    ort: data.ort,
-    formLoadedAt: data.formLoadedAt,
-    privacyPolicyVersion: data.privacyPolicyVersion,
-    marketingConsent: data.marketingConsent,
-    filterContext: data.filterContext,
-    ...extra,
-  }
-}
 
 export async function POST(request: NextRequest) {
   // 1. CSRF check — must run first, before rate limiting and validation.
@@ -180,172 +138,16 @@ export async function POST(request: NextRequest) {
   }
 
   // 4. Honeypot silent rejection — any non-empty website value means bot.
-  // Quarantine in lead_bot_attempts (no Convexa sync). Still return 200 so bots learn nothing.
+  // Return 200 to avoid tipping off automated scanners; do not write to DB.
   if (parsed.data.website) {
-    console.warn('[api/leads] Honeypot triggered — submission quarantined', {
+    console.warn('[api/leads] Honeypot triggered — submission discarded', {
       email: parsed.data.email,
       sourceUrl: parsed.data.sourceUrl,
-    })
-    await saveBotAttempt({
-      reason: 'honeypot',
-      produktId: parsed.data.produktId,
-      email: parsed.data.email,
-      vorname: parsed.data.vorname,
-      nachname: parsed.data.nachname,
-      telefon: parsed.data.telefon,
-      sourceUrl: parsed.data.sourceUrl,
-      clientIp: ip,
-      userAgent: request.headers.get('user-agent'),
-      payload: buildQuarantinePayload(parsed.data, { website: parsed.data.website }),
     })
     return Response.json({ data: { id: 'bot' } }, { status: 200 })
   }
 
-  // 5. Captcha (Turnstile or hCaptcha) — hard-require token when enabled.
-  const captcha = await verifyCaptchaToken(parsed.data.turnstileToken, ip)
-  if (!captcha.ok) {
-    await saveBotAttempt({
-      reason: captcha.code === 'CAPTCHA_REQUIRED' ? 'captcha_required' : 'captcha_failed',
-      produktId: parsed.data.produktId,
-      email: parsed.data.email,
-      vorname: parsed.data.vorname,
-      nachname: parsed.data.nachname,
-      telefon: parsed.data.telefon,
-      sourceUrl: parsed.data.sourceUrl,
-      clientIp: ip,
-      userAgent: request.headers.get('user-agent'),
-      // Intentionally omit captcha token — one-time secret, not useful in quarantine.
-      payload: buildQuarantinePayload(parsed.data, { captchaCode: captcha.code }),
-    })
-    return Response.json(
-      {
-        data: null,
-        error: { code: captcha.code, message: captcha.message },
-      },
-      { status: 403 },
-    )
-  }
-
-  // 5b. Server-signed form session + client dwell — only when captcha is on.
-  // Cookie is the real clock (formLoadedAt alone is forgeable by bots).
-  const captchaConfig = await getCaptchaServerConfig()
-  if (captchaConfig.enabled) {
-    const sessionToken = readCookieValue(
-      request.headers.get('cookie'),
-      FORM_SESSION_COOKIE,
-    )
-    const session = verifyFormSessionToken(sessionToken)
-    if (!session.ok) {
-      console.warn('[api/leads] Form session rejected — quarantined', {
-        email: parsed.data.email,
-        code: session.code,
-        dwellMs: session.dwellMs,
-      })
-      await saveBotAttempt({
-        reason: session.code === 'TOO_FAST' ? 'too_fast' : 'form_session_invalid',
-        produktId: parsed.data.produktId,
-        email: parsed.data.email,
-        vorname: parsed.data.vorname,
-        nachname: parsed.data.nachname,
-        telefon: parsed.data.telefon,
-        sourceUrl: parsed.data.sourceUrl,
-        clientIp: ip,
-        userAgent: request.headers.get('user-agent'),
-        payload: buildQuarantinePayload(parsed.data, {
-          sessionCode: session.code,
-          dwellMs: session.dwellMs,
-        }),
-      })
-      return Response.json(
-        {
-          data: null,
-          error: { code: session.code, message: session.message },
-        },
-        { status: 403 },
-      )
-    }
-
-    // Extra belt: client-reported dwell (catches odd clients; cookie already checked).
-    const timing = checkFormDwellTime(parsed.data.formLoadedAt)
-    if (!timing.ok) {
-      console.warn('[api/leads] Form submitted too fast — quarantined', {
-        email: parsed.data.email,
-        dwellMs: timing.dwellMs,
-      })
-      await saveBotAttempt({
-        reason: 'too_fast',
-        produktId: parsed.data.produktId,
-        email: parsed.data.email,
-        vorname: parsed.data.vorname,
-        nachname: parsed.data.nachname,
-        telefon: parsed.data.telefon,
-        sourceUrl: parsed.data.sourceUrl,
-        clientIp: ip,
-        userAgent: request.headers.get('user-agent'),
-        payload: buildQuarantinePayload(parsed.data, { dwellMs: timing.dwellMs }),
-      })
-      return Response.json(
-        {
-          data: null,
-          error: { code: timing.code, message: timing.message },
-        },
-        { status: 403 },
-      )
-    }
-  }
-
-  // 5c. Spam heuristics — Sterbegeld bots: young birth year OR VergleichsRechner defaults.
-  const filterCtx = parsed.data.filterContext ?? {}
-  const sterbegeldSummeRaw = filterCtx.sterbegeld_summe
-  const sterbegeldSumme =
-    typeof sterbegeldSummeRaw === 'number'
-      ? sterbegeldSummeRaw
-      : typeof sterbegeldSummeRaw === 'string' && sterbegeldSummeRaw.trim() !== ''
-        ? Number(sterbegeldSummeRaw)
-        : null
-  const wartezeitRaw = filterCtx.akzeptierte_wartezeit_monate
-  const akzeptierteWartezeitMonate =
-    typeof wartezeitRaw === 'number'
-      ? wartezeitRaw
-      : typeof wartezeitRaw === 'string' && wartezeitRaw.trim() !== ''
-        ? Number(wartezeitRaw)
-        : null
-
-  const spamHits = collectSpamSignals({
-    geburtsdatum: parsed.data.geburtsdatum,
-    interesse: parsed.data.interesse,
-    sterbegeldSumme: Number.isFinite(sterbegeldSumme as number) ? (sterbegeldSumme as number) : null,
-    akzeptierteWartezeitMonate: Number.isFinite(akzeptierteWartezeitMonate as number)
-      ? (akzeptierteWartezeitMonate as number)
-      : null,
-    formPlacement: parsed.data.formPlacement,
-  })
-  if (spamHits.length > 0) {
-    console.warn('[api/leads] Spam heuristic hit — quarantined', {
-      email: parsed.data.email,
-      codes: spamHits.map(h => h.code),
-    })
-    await saveBotAttempt({
-      reason: 'spam_heuristic',
-      produktId: parsed.data.produktId,
-      email: parsed.data.email,
-      vorname: parsed.data.vorname,
-      nachname: parsed.data.nachname,
-      telefon: parsed.data.telefon,
-      sourceUrl: parsed.data.sourceUrl,
-      clientIp: ip,
-      userAgent: request.headers.get('user-agent'),
-      payload: buildQuarantinePayload(parsed.data, {
-        signals: spamHits,
-        sterbegeldSumme,
-        akzeptierteWartezeitMonate,
-      }),
-    })
-    // Silent 200 — same as honeypot so farms learn less.
-    return Response.json({ data: { id: 'bot' } }, { status: 200 })
-  }
-
-  // 6. DB insert using service role client (never the anon client).
+  // 5. DB insert using service role client (never the anon client).
   const supabase = createAdminClient()
   const insertPayload: TablesInsert<'leads'> = {
     produkt_id: parsed.data.produktId,
@@ -432,7 +234,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // 7. Post-save work — wrapped in try/catch so any downstream failure is logged
+  // 6. Post-save work — wrapped in try/catch so any downstream failure is logged
   // but never converts a successful save into an HTTP 500.
   let emailConfirmation = false
   try {
@@ -449,8 +251,8 @@ export async function POST(request: NextRequest) {
     const { data: fullLead } = await supabase.from('leads').select('*').eq('id', lead.id).single()
 
     if (fullLead) {
-      // Email confirm is on: send the link only. Convexa and the sales mail
-      // run after the visitor clicks, in confirmLeadByToken.
+      // Customer mail is only the confirm link. Convexa and the internal
+      // "Neuer Lead" mail wait until the visitor clicks that link.
       if (await isResendEnabled()) {
         const token = createEmailConfirmToken()
         await supabase
@@ -470,8 +272,7 @@ export async function POST(request: NextRequest) {
           emailConfirmation = true
           await supabase.from('leads').update({ resend_sent: true }).eq('id', lead.id)
         }
-      } else if (await isConvexaSyncEnabled()) {
-        // No confirm mail: push to Convexa right away, same as before the switch.
+      } else {
         try {
           const result = await pushLeadToConvexa(fullLead, {
             produktName,
@@ -493,6 +294,18 @@ export async function POST(request: NextRequest) {
             .from('leads')
             .update({ convexa_synced: false, convexa_error: msg })
             .eq('id', lead.id)
+        }
+
+        const [confirmationSent, notificationSent] = await Promise.all([
+          sendLeadConfirmation(fullLead),
+          sendSalesNotification(fullLead, produktName),
+        ])
+
+        if (!confirmationSent) console.error(`[api/leads] Confirmation email failed lead=${lead.id}`)
+        if (!notificationSent) console.error(`[api/leads] Sales notification email failed lead=${lead.id}`)
+
+        if (confirmationSent && notificationSent) {
+          await supabase.from('leads').update({ resend_sent: true }).eq('id', lead.id)
         }
       }
     }
