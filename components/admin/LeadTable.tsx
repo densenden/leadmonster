@@ -17,11 +17,7 @@ interface LeadRow {
   email: string
   intent_tag: string | null
   convexa_synced: boolean
-  convexa_lead_id: string | null
   convexa_error: string | null
-  resend_sent: boolean
-  privacy_consent_at: string | null
-  client_ip: string | null
   created_at: string
   produkte: { name: string } | null
 }
@@ -198,15 +194,12 @@ export function LeadTable({
               <thead className="bg-gray-50">
                 <tr>
                   {[
+                    'Eingang',
                     'Name',
                     'E-Mail',
                     'Produkt',
                     'Intent',
-                    'Einwilligung',
-                    'IP',
-                    'Convexa Sync',
-                    'Resend',
-                    'Eingang',
+                    'Convexa',
                     '',
                   ].map((col) => (
                     <th
@@ -225,6 +218,10 @@ export function LeadTable({
                     key={lead.id}
                     className="hover:bg-blue-50 transition-colors duration-150"
                   >
+                    <td className="px-4 py-3 whitespace-nowrap text-[#666666]">
+                      {formatTimestamp(lead.created_at)}
+                    </td>
+
                     <td className="px-4 py-3 whitespace-nowrap text-[#333333]">
                       <Link
                         href={`/admin/leads/${lead.id}`}
@@ -244,16 +241,6 @@ export function LeadTable({
                       <Badge variant="neutral">{lead.intent_tag ?? '—'}</Badge>
                     </td>
 
-                    <td className="px-4 py-3 whitespace-nowrap text-[#666666]">
-                      {lead.privacy_consent_at
-                        ? formatTimestamp(lead.privacy_consent_at)
-                        : '—'}
-                    </td>
-
-                    <td className="px-4 py-3 whitespace-nowrap font-mono text-xs text-[#666666]">
-                      {lead.client_ip ?? '—'}
-                    </td>
-
                     <td className="px-4 py-3">
                       <Badge variant={lead.convexa_synced ? 'success' : 'danger'}>
                         {lead.convexa_synced ? 'Ja' : 'Nein'}
@@ -266,16 +253,6 @@ export function LeadTable({
                           Fehler
                         </span>
                       ) : null}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <Badge variant={lead.resend_sent ? 'success' : 'neutral'}>
-                        {lead.resend_sent ? 'Ja' : 'Nein'}
-                      </Badge>
-                    </td>
-
-                    <td className="px-4 py-3 whitespace-nowrap text-[#666666]">
-                      {formatTimestamp(lead.created_at)}
                     </td>
 
                     <td className="px-4 py-3 whitespace-nowrap text-right">
