@@ -19,5 +19,6 @@ While `resend_enabled` is off, nothing promises a mail, and Convexa still runs r
 
 - After submit, the thank-you text mentions the confirm link.
 - The mail contains `E-Mail-Adresse bestätigen`.
+- The link host is the public site `https://www.sterbegeld24plus.de`, never a `*.vercel.app` hostname.
 - Before the click, `email_confirmed_at` is empty and `convexa_synced` stays false.
 - After the click, `email_confirmed_at` is set and Convexa runs.

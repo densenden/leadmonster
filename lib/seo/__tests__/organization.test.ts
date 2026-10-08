@@ -64,6 +64,11 @@ describe('resolveBaseUrl', () => {
     process.env.NEXT_PUBLIC_BASE_URL = 'https://from-env.com'
     expect(resolveBaseUrl('per-product.de')).toBe('https://per-product.de')
   })
+
+  it('ignores a vercel.app env and uses the public domain', () => {
+    process.env.NEXT_PUBLIC_BASE_URL = 'https://leadmonster.vercel.app'
+    expect(resolveBaseUrl()).toBe(DEFAULT_BASE_URL)
+  })
 })
 
 describe('Constants', () => {
