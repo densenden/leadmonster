@@ -60,6 +60,26 @@ export function formatConvexaMonatsbeitrag(value: unknown): string {
 
 const DEFAULT_BASE_URL = 'https://api.convexa.app'
 
+/** Parses einstellungen boolean flags stored as 'true' / 'false' strings. */
+function parseSettingsBool(value: string | null | undefined): boolean {
+  const v = value?.trim().toLowerCase()
+  return v === 'true' || v === '1' || v === 'yes'
+}
+
+/**
+ * Master switch from admin settings. Missing row or empty value = sync OFF.
+ * Leads are still saved locally; Convexa push runs only when this returns true.
+ */
+export async function isConvexaSyncEnabled(): Promise<boolean> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('einstellungen')
+    .select('wert')
+    .eq('schluessel', 'convexa_sync_enabled')
+    .maybeSingle()
+  return parseSettingsBool((data as { wert?: string | null } | null)?.wert)
+}
+
 interface TokenResolution {
   baseUrl: string
   formToken: string
@@ -242,6 +262,10 @@ export async function pushLeadToConvexa(
  * Push erneut. Speichert Erfolg/Fehler in der DB.
  */
 export async function resyncPendingLeads(opts?: { limit?: number; ids?: string[] }) {
+  if (!(await isConvexaSyncEnabled())) {
+    return { ok: 0, fail: 0, total: 0, disabled: true as const }
+  }
+
   const supabase = createAdminClient()
   const limit = opts?.limit ?? 50
 
