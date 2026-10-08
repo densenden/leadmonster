@@ -27,7 +27,7 @@ describe('LeadForm — gap tests', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ data: { id: 'e2e-lead-uuid' }, error: null }),
+        json: async () => ({ data: { id: 'e2e-lead-uuid', emailConfirmation: true }, error: null }),
       }),
     )
 
@@ -44,16 +44,19 @@ describe('LeadForm — gap tests', () => {
       expect(screen.getByText('Vielen Dank für Ihre Anfrage!')).toBeDefined()
     })
     expect(
-      screen.getByText(/Wir melden uns innerhalb von 24 Stunden bei Ihnen./i),
+      screen.getByText(/Bitte bestätigen Sie Ihre E-Mail-Adresse/i),
     ).toBeDefined()
 
     // The form must not be in the DOM
     expect(screen.queryByRole('button')).toBeNull()
 
-    // Fetch was called once with correct headers
+    // Fetch was called for submit (and optionally Turnstile config)
     const fetchMock = vi.mocked(fetch)
-    expect(fetchMock).toHaveBeenCalledOnce()
-    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit]
+    const leadCalls = fetchMock.mock.calls.filter(
+      ([url]) => typeof url === 'string' && url.includes('/api/leads'),
+    )
+    expect(leadCalls.length).toBe(1)
+    const [url, options] = leadCalls[0] as [string, RequestInit]
     expect(url).toBe('/api/leads')
     expect((options.headers as Record<string, string>)['X-Requested-With']).toBe('XMLHttpRequest')
   })
@@ -72,7 +75,7 @@ describe('LeadForm — gap tests', () => {
     await user.type(screen.getByLabelText(/Nachname/i), 'Test')
     await user.type(screen.getByLabelText(/E-Mail-Adresse/i), 'not-an-email')
     await user.type(screen.getByLabelText(/Telefonnummer/i), '0151 12345678')
-    await user.type(screen.getByLabelText(/Geburtsdatum/i), '1960-05-15')
+    await user.type(screen.getByLabelText(/Geburtsdatum/i), '15051960')
     await user.type(screen.getByLabelText(/Straße und Hausnummer/i), 'Teststr. 1')
     await user.type(screen.getByLabelText(/^PLZ/i), '80331')
     await user.type(screen.getByLabelText(/^Ort/i), 'München')
@@ -84,7 +87,11 @@ describe('LeadForm — gap tests', () => {
       ).toBeDefined()
     })
 
-    expect(fetchMock).not.toHaveBeenCalled()
+    expect(
+      fetchMock.mock.calls.filter(
+        ([url]) => typeof url === 'string' && url.includes('/api/leads'),
+      ),
+    ).toHaveLength(0)
   })
 
   // ---------------------------------------------------------------------------
@@ -101,7 +108,7 @@ describe('LeadForm — gap tests', () => {
     await user.type(screen.getByLabelText(/Nachname/i), 'Test')
     await user.type(screen.getByLabelText(/E-Mail-Adresse/i), 'anna@example.de')
     await user.type(screen.getByLabelText(/Telefonnummer/i), '0151 12345678')
-    await user.type(screen.getByLabelText(/Geburtsdatum/i), '1960-05-15')
+    await user.type(screen.getByLabelText(/Geburtsdatum/i), '15051960')
     await user.type(screen.getByLabelText(/Straße und Hausnummer/i), 'Teststr. 1')
     await user.type(screen.getByLabelText(/^PLZ/i), '80331')
     await user.type(screen.getByLabelText(/^Ort/i), 'München')
@@ -113,7 +120,11 @@ describe('LeadForm — gap tests', () => {
       ).toBeDefined()
     })
 
-    expect(fetchMock).not.toHaveBeenCalled()
+    expect(
+      fetchMock.mock.calls.filter(
+        ([url]) => typeof url === 'string' && url.includes('/api/leads'),
+      ),
+    ).toHaveLength(0)
   })
 
   // ---------------------------------------------------------------------------

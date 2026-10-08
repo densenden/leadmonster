@@ -22,6 +22,27 @@ function getResendFromAddress(): string | null {
   return from || null
 }
 
+/** Parses einstellungen boolean flags stored as 'true' / 'false' strings. */
+function parseSettingsBool(value: string | null | undefined): boolean {
+  const v = value?.trim().toLowerCase()
+  return v === 'true' || v === '1' || v === 'yes'
+}
+
+/**
+ * Master switch from admin settings. Missing row or empty value = mails OFF.
+ * Confirmation + sales notification run only when this returns true.
+ * Independent from Convexa sync.
+ */
+export async function isResendEnabled(): Promise<boolean> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('einstellungen')
+    .select('wert')
+    .eq('schluessel', 'resend_enabled')
+    .maybeSingle()
+  return parseSettingsBool((data as { wert?: string | null } | null)?.wert)
+}
+
 async function dispatchResendEmail(
   payload: { to: string; subject: string; html: string },
   logLabel: string,
@@ -111,18 +132,30 @@ async function fetchEmailTemplate(
 
 // Sends a German-language confirmation email to the lead.
 // Returns true on success, false on any error — never throws.
-export async function sendLeadConfirmation(lead: Lead): Promise<boolean> {
+export async function sendLeadConfirmation(
+  lead: Lead,
+  options?: { confirmUrl?: string },
+): Promise<boolean> {
   try {
     const template = await fetchEmailTemplate(lead.produkt_id, 'confirmation')
+    const confirmUrl = options?.confirmUrl?.trim()
+    const confirmBlock = confirmUrl
+      ? `<p>Bitte bestätigen Sie Ihre E-Mail-Adresse, damit wir Ihre Anfrage bearbeiten können:</p>
+<p><a href="${confirmUrl}" style="display:inline-block;background:#1a365d;color:#fff;text-decoration:none;padding:12px 18px;font-weight:bold">E-Mail-Adresse bestätigen</a></p>
+<p style="color:#666;font-size:14px">Der Link ist 72 Stunden gültig. Ohne Klick können wir die Anfrage nicht bearbeiten.</p>`
+      : ''
 
-    const subject = template?.betreff ?? `Ihre Anfrage ist bei uns eingegangen`
+    const subject = confirmUrl
+      ? 'Bitte bestätigen Sie Ihre E-Mail-Adresse'
+      : (template?.betreff ?? `Ihre Anfrage ist bei uns eingegangen`)
 
     // Fallback HTML uses inline CSS only for maximum email client compatibility.
     const html =
-      template?.html_body ??
-      `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto;padding:20px">
+      template?.html_body && !confirmUrl
+      ? template.html_body
+      : `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto;padding:20px">
 <h2 style="color:#1a365d">Vielen Dank, ${lead.vorname ?? 'geschätzte/r Interessent/in'}!</h2>
-<p>Ihre Anfrage ist bei uns eingegangen. Wir melden uns innerhalb von 24 Stunden bei Ihnen.</p>
+${confirmBlock || '<p>Ihre Anfrage ist bei uns eingegangen. Wir melden uns innerhalb von 24 Stunden bei Ihnen.</p>'}
 <table style="border-collapse:collapse;width:100%;margin:16px 0">
 <tr style="background:#f5f5f5"><th style="padding:8px;border:1px solid #ddd;text-align:left">Feld</th><th style="padding:8px;border:1px solid #ddd;text-align:left">Ihre Angabe</th></tr>
 <tr><td style="padding:8px;border:1px solid #ddd">Vorname</td><td style="padding:8px;border:1px solid #ddd">${lead.vorname ?? ''}</td></tr>
@@ -163,6 +196,12 @@ export async function sendSalesNotification(lead: Lead, produktName: string): Pr
 
     if (!salesEmail) {
       console.error('[mailer] No sales_notification_email configured — skipping notification')
+      return false
+    }
+
+    // The "Neuer Lead" mail is internal. Never send it to the person who filled the form.
+    if (salesEmail.trim().toLowerCase() === lead.email.trim().toLowerCase()) {
+      console.error('[mailer] Sales notification skipped — recipient is the lead email')
       return false
     }
 

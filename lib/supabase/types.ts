@@ -171,6 +171,9 @@ export type Database = {
           client_ip: string | null
           created_at: string
           email: string
+          email_confirm_expires_at: string | null
+          email_confirm_token_hash: string | null
+          email_confirmed_at: string | null
           filter_kontext: Json | null
           geburtsdatum: string | null
           gewuenschter_anbieter: string | null
@@ -208,6 +211,9 @@ export type Database = {
           convexa_synced?: boolean
           created_at?: string
           email: string
+          email_confirm_expires_at?: string | null
+          email_confirm_token_hash?: string | null
+          email_confirmed_at?: string | null
           filter_kontext?: Json | null
           geburtsdatum?: string | null
           gewuenschter_anbieter?: string | null
@@ -245,6 +251,9 @@ export type Database = {
           convexa_synced?: boolean
           created_at?: string
           email?: string
+          email_confirm_expires_at?: string | null
+          email_confirm_token_hash?: string | null
+          email_confirmed_at?: string | null
           filter_kontext?: Json | null
           geburtsdatum?: string | null
           gewuenschter_anbieter?: string | null
@@ -274,6 +283,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "leads_produkt_id_fkey"
+            columns: ["produkt_id"]
+            isOneToOne: false
+            referencedRelation: "produkte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_bot_attempts: {
+        Row: {
+          client_ip: string | null
+          created_at: string
+          email: string | null
+          id: string
+          nachname: string | null
+          payload: Json
+          produkt_id: string | null
+          reason: string
+          recovered_at: string | null
+          recovered_lead_id: string | null
+          source_url: string | null
+          telefon: string | null
+          user_agent: string | null
+          vorname: string | null
+        }
+        Insert: {
+          client_ip?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nachname?: string | null
+          payload?: Json
+          produkt_id?: string | null
+          reason: string
+          recovered_at?: string | null
+          recovered_lead_id?: string | null
+          source_url?: string | null
+          telefon?: string | null
+          user_agent?: string | null
+          vorname?: string | null
+        }
+        Update: {
+          client_ip?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nachname?: string | null
+          payload?: Json
+          produkt_id?: string | null
+          reason?: string
+          recovered_at?: string | null
+          recovered_lead_id?: string | null
+          source_url?: string | null
+          telefon?: string | null
+          user_agent?: string | null
+          vorname?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_bot_attempts_produkt_id_fkey"
             columns: ["produkt_id"]
             isOneToOne: false
             referencedRelation: "produkte"

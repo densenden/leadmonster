@@ -51,9 +51,11 @@ vi.mock('@/lib/supabase/server', () => ({
 
 // Mock Convexa — succeeds and returns a known lead id.
 const mockPushLeadToConvexa = vi.fn().mockResolvedValue({ id: 'convexa-lead-abc', status: 'created' })
+const mockIsConvexaSyncEnabled = vi.fn().mockResolvedValue(true)
 
 vi.mock('@/lib/convexa/client', () => ({
   pushLeadToConvexa: mockPushLeadToConvexa,
+  isConvexaSyncEnabled: mockIsConvexaSyncEnabled,
 }))
 
 // Mock Resend mailer — both sends succeed by default.
@@ -61,8 +63,26 @@ const mockSendLeadConfirmation = vi.fn().mockResolvedValue(true)
 const mockSendSalesNotification = vi.fn().mockResolvedValue(true)
 
 vi.mock('@/lib/resend/mailer', () => ({
+  isResendEnabled: vi.fn().mockResolvedValue(true),
   sendLeadConfirmation: mockSendLeadConfirmation,
   sendSalesNotification: mockSendSalesNotification,
+}))
+
+vi.mock('@/lib/captcha/verify', () => ({
+  verifyCaptchaToken: vi.fn().mockResolvedValue({ ok: true }),
+}))
+
+vi.mock('@/lib/captcha/config', () => ({
+  getCaptchaServerConfig: vi.fn().mockResolvedValue({
+    enabled: false,
+    provider: 'turnstile',
+    siteKey: null,
+    secretKey: null,
+  }),
+}))
+
+vi.mock('@/lib/leads/save-bot-attempt', () => ({
+  saveBotAttempt: vi.fn().mockResolvedValue(undefined),
 }))
 
 // Mock next/headers — required because lib/supabase/server imports cookies().
@@ -192,19 +212,33 @@ describe('Lead flow integration — Task 7.9', () => {
   // post-save block. Post-save work is now awaited inside the request, so no
   // microtask flush is needed.
   // -------------------------------------------------------------------------
-  it('Test 3: convexa_synced and resend_sent flags are updated after post-save', async () => {
+  it('Test 3: confirm mail is sent and Convexa waits for the click', async () => {
+    const { POST } = await import('../route')
+    const response = await POST(makeRequest(VALID_PAYLOAD) as never)
+    const body = await response.json()
+
+    expect(mockSendLeadConfirmation).toHaveBeenCalledOnce()
+    expect(mockSendLeadConfirmation).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ confirmUrl: expect.stringContaining('/anfrage/bestaetigen?token=') }),
+    )
+    expect(mockSendSalesNotification).not.toHaveBeenCalled()
+    expect(mockPushLeadToConvexa).not.toHaveBeenCalled()
+    expect(body.data.emailConfirmation).toBe(true)
+    expect(updateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ resend_sent: true }),
+    )
+  })
+
+  it('Test 4: skips Convexa push when sync switch is OFF', async () => {
+    mockIsConvexaSyncEnabled.mockResolvedValueOnce(false)
+
     const { POST } = await import('../route')
     await POST(makeRequest(VALID_PAYLOAD) as never)
 
-    expect(mockPushLeadToConvexa).toHaveBeenCalledOnce()
-    expect(mockSendLeadConfirmation).toHaveBeenCalledOnce()
-    expect(mockSendSalesNotification).toHaveBeenCalledOnce()
-
-    expect(updateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ convexa_synced: true, convexa_lead_id: 'convexa-lead-abc' }),
-    )
-    expect(updateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ resend_sent: true }),
+    expect(mockPushLeadToConvexa).not.toHaveBeenCalled()
+    expect(updateSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ convexa_synced: true }),
     )
   })
 })
