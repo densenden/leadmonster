@@ -34,6 +34,8 @@ function makeLead(overrides: Partial<LeadDetailData> = {}): LeadDetailData {
     convexa_lead_id: null,
     convexa_error: 'CONVEXA_NETWORK_ERROR',
     resend_sent: true,
+    email_confirmed_at: null,
+    email_confirm_expires_at: '2099-01-01T10:00:00.000Z',
     privacy_consent_at: '2026-04-01T10:00:00.000Z',
     privacy_policy_version: '2026-07-10',
     marketing_consent: false,
@@ -91,6 +93,20 @@ describe('LeadDetailView', () => {
     expect(screen.getByText('374844728246470')).toBeDefined()
     expect(screen.getByText('ViewContent')).toBeDefined()
     expect(screen.getByText(/content_name/)).toBeDefined()
+  })
+
+  it('shows that the customer confirm click is still open', () => {
+    renderView()
+    expect(screen.getAllByText('Klick steht aus').length).toBeGreaterThan(0)
+  })
+
+  it('shows the confirm time after the customer clicked', () => {
+    renderView({
+      email_confirmed_at: '2026-10-08T18:02:00.000Z',
+      email_confirm_expires_at: null,
+    })
+    expect(screen.getByText('E-Mail bestätigt')).toBeDefined()
+    expect(screen.queryByText('Klick steht aus')).toBeNull()
   })
 
   it('links back to the leads overview', () => {

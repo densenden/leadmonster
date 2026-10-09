@@ -21,5 +21,6 @@ While `resend_enabled` is off, nothing promises a mail, and Convexa still runs r
 - The mail contains `E-Mail-Adresse bestätigen`.
 - The link host is the public site `https://www.sterbegeld24plus.de`, never a `*.vercel.app` hostname.
 - Before the click, `email_confirmed_at` is empty and `convexa_synced` stays false.
+- The lead detail page shows “Klick steht aus” in DSGVO / Einwilligung until the customer clicks. After the click it shows the confirm time.
 - After the click, `email_confirmed_at` is set and Convexa runs.
 - No "Neuer Lead" mail is sent, before or after the click.

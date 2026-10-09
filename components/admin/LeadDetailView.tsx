@@ -52,6 +52,20 @@ function formatEurDecimal(amount: number): string {
   })} €`
 }
 
+function emailConfirmLabel(lead: LeadDetailData): { text: string; pending: boolean } {
+  if (lead.email_confirmed_at) {
+    return { text: `Ja — ${formatTimestamp(lead.email_confirmed_at)}`, pending: false }
+  }
+  if (lead.email_confirm_expires_at) {
+    const expired = new Date(lead.email_confirm_expires_at).getTime() < Date.now()
+    return {
+      text: expired ? 'Klick steht aus — Link abgelaufen' : 'Klick steht aus',
+      pending: true,
+    }
+  }
+  return { text: '—', pending: false }
+}
+
 function display(value: string | number | null | undefined): string {
   if (value === null || value === undefined || value === '') return '—'
   return String(value)
@@ -137,6 +151,8 @@ export interface LeadDetailData {
   convexa_lead_id: string | null
   convexa_error: string | null
   resend_sent: boolean
+  email_confirmed_at: string | null
+  email_confirm_expires_at: string | null
   privacy_consent_at: string | null
   privacy_policy_version: string | null
   marketing_consent: boolean
@@ -184,6 +200,7 @@ export function LeadDetailView({
       : null
 
   const convexaEntries = Object.entries(convexaPayload).sort(([a], [b]) => a.localeCompare(b))
+  const emailConfirm = emailConfirmLabel(lead)
 
   return (
     <div className="space-y-6">
@@ -202,8 +219,12 @@ export function LeadDetailView({
             <Badge variant={lead.convexa_synced ? 'success' : 'danger'}>
               Convexa: {lead.convexa_synced ? 'Sync OK' : 'Nicht sync'}
             </Badge>
-            <Badge variant={lead.resend_sent ? 'success' : 'neutral'}>
-              E-Mail: {lead.resend_sent ? 'Gesendet' : 'Offen'}
+            <Badge variant={emailConfirm.pending ? 'info' : lead.email_confirmed_at ? 'success' : lead.resend_sent ? 'success' : 'neutral'}>
+              {emailConfirm.pending
+                ? 'Klick steht aus'
+                : lead.email_confirmed_at
+                  ? 'E-Mail bestätigt'
+                  : `E-Mail: ${lead.resend_sent ? 'Gesendet' : 'Offen'}`}
             </Badge>
           </div>
         </div>
@@ -306,6 +327,16 @@ export function LeadDetailView({
           </DetailSection>
 
           <DetailSection title="DSGVO / Einwilligung">
+            <DetailRow
+              label="E-Mail-Bestätigung"
+              value={
+                emailConfirm.pending ? (
+                  <span className="font-medium text-blue-800">{emailConfirm.text}</span>
+                ) : (
+                  emailConfirm.text
+                )
+              }
+            />
             <DetailRow
               label="Datenschutz-Einwilligung"
               value={

@@ -41,6 +41,8 @@ const LEAD_SELECT = `
   convexa_lead_id,
   convexa_error,
   resend_sent,
+  email_confirmed_at,
+  email_confirm_expires_at,
   privacy_consent_at,
   privacy_policy_version,
   marketing_consent,
