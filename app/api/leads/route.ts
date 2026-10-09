@@ -16,7 +16,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import type { TablesInsert } from '@/lib/supabase/types'
 import { pushLeadToConvexa } from '@/lib/convexa/client'
 import { PRIVACY_POLICY_VERSION } from '@/lib/privacy/lead-consent'
-import { isResendEnabled, sendLeadConfirmation, sendSalesNotification } from '@/lib/resend/mailer'
+import { isResendEnabled, sendLeadConfirmation } from '@/lib/resend/mailer'
 import { buildEmailConfirmUrl, createEmailConfirmToken } from '@/lib/leads/email-confirm'
 
 // IP-based rate limiting: max 3 submissions per IP per 60-minute window.
@@ -296,15 +296,9 @@ export async function POST(request: NextRequest) {
             .eq('id', lead.id)
         }
 
-        const [confirmationSent, notificationSent] = await Promise.all([
-          sendLeadConfirmation(fullLead),
-          sendSalesNotification(fullLead, produktName),
-        ])
-
+        const confirmationSent = await sendLeadConfirmation(fullLead)
         if (!confirmationSent) console.error(`[api/leads] Confirmation email failed lead=${lead.id}`)
-        if (!notificationSent) console.error(`[api/leads] Sales notification email failed lead=${lead.id}`)
-
-        if (confirmationSent && notificationSent) {
+        if (confirmationSent) {
           await supabase.from('leads').update({ resend_sent: true }).eq('id', lead.id)
         }
       }

@@ -10,7 +10,7 @@ A form submit saves the lead. It does not prove the inbox is real. Email confirm
 While `resend_enabled` is on:
 
 1. The thank-you screen tells the visitor to open the mail and click.
-2. Convexa and the sales mail wait for that click.
+2. Convexa waits for that click. The internal "Neuer Lead" mail is off.
 3. The link lasts 72 hours. The database stores only a hash of the token.
 
 While `resend_enabled` is off, nothing promises a mail, and Convexa still runs right after save.
@@ -22,3 +22,4 @@ While `resend_enabled` is off, nothing promises a mail, and Convexa still runs r
 - The link host is the public site `https://www.sterbegeld24plus.de`, never a `*.vercel.app` hostname.
 - Before the click, `email_confirmed_at` is empty and `convexa_synced` stays false.
 - After the click, `email_confirmed_at` is set and Convexa runs.
+- No "Neuer Lead" mail is sent, before or after the click.

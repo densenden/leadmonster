@@ -195,85 +195,56 @@ describe('sendSalesNotification', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
-    vi.stubEnv('RESEND_API_KEY', 're_test_key')
-    vi.stubEnv('RESEND_FROM_ADDRESS', 'noreply@verified.example.de')
   })
 
-  afterEach(() => {
-    vi.unstubAllEnvs()
-  })
-
-  it('uses DB email_sequenzen template when a matching [BENACHRICHTIGUNG] row is found', async () => {
-    const dbTemplate = {
-      betreff: '[BENACHRICHTIGUNG] Neuer Lead eingegangen',
-      html_body: '<p>DB template content</p>',
-      delay_hours: 0,
-    }
-
-    mockFrom.mockImplementation((table: string) => {
-      if (table === 'email_sequenzen') return makeEmailSeqChain([dbTemplate])
-      if (table === 'einstellungen') {
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          maybeSingle: vi.fn().mockResolvedValue({
-            data: { schluessel: 'sales_notification_email', wert: 'sales@team.de' },
-            error: null,
-          }),
-        }
-      }
-      return {
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ error: null }),
-      }
-    })
-    mockEmailsSend.mockResolvedValue({ data: { id: 'sent-id' }, error: null })
-
+  it('does not send the internal Neuer Lead mail', async () => {
     const { sendSalesNotification } = await import('@/lib/resend/mailer')
     const result = await sendSalesNotification(SAMPLE_LEAD, 'Sterbegeld24Plus')
 
-    expect(result).toBe(true)
-    expect(mockEmailsSend).toHaveBeenCalledWith(
-      expect.objectContaining({
-        subject: '[BENACHRICHTIGUNG] Neuer Lead eingegangen',
-        html: '<p>DB template content</p>',
-        to: 'sales@team.de',
+    expect(result).toBe(false)
+    expect(mockEmailsSend).not.toHaveBeenCalled()
+  })
+})
+
+describe('isResendEnabled', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.resetModules()
+  })
+
+  it('returns false when setting is missing', async () => {
+    mockFrom.mockImplementation(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    }))
+    const { isResendEnabled } = await import('@/lib/resend/mailer')
+    await expect(isResendEnabled()).resolves.toBe(false)
+  })
+
+  it('returns false when setting is "false"', async () => {
+    mockFrom.mockImplementation(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: { wert: 'false' },
+        error: null,
       }),
-    )
+    }))
+    const { isResendEnabled } = await import('@/lib/resend/mailer')
+    await expect(isResendEnabled()).resolves.toBe(false)
   })
 
-  it('uses hardcoded fallback template when no DB row found', async () => {
-    mockFrom.mockImplementation((table: string) => {
-      if (table === 'email_sequenzen') return makeEmailSeqChain([])
-      if (table === 'einstellungen') {
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          maybeSingle: vi.fn().mockResolvedValue({
-            data: { schluessel: 'sales_notification_email', wert: 'sales@team.de' },
-            error: null,
-          }),
-        }
-      }
-      return {
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ error: null }),
-      }
-    })
-    mockEmailsSend.mockResolvedValue({ data: { id: 'sent-id' }, error: null })
-
-    const { sendSalesNotification } = await import('@/lib/resend/mailer')
-    const result = await sendSalesNotification(SAMPLE_LEAD, 'Sterbegeld24Plus')
-
-    expect(result).toBe(true)
-
-    // Fallback subject includes vorname, nachname and produkt name
-    const callArgs = mockEmailsSend.mock.calls[0][0]
-    expect(callArgs.subject).toContain('Max')
-    expect(callArgs.subject).toContain('Mustermann')
-    expect(callArgs.subject).toContain('Sterbegeld24Plus')
-
-    // Fallback HTML is not the DB template
-    expect(callArgs.html).not.toBe('<p>DB template content</p>')
+  it('returns true when setting is "true"', async () => {
+    mockFrom.mockImplementation(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: { wert: 'true' },
+        error: null,
+      }),
+    }))
+    const { isResendEnabled } = await import('@/lib/resend/mailer')
+    await expect(isResendEnabled()).resolves.toBe(true)
   })
 })

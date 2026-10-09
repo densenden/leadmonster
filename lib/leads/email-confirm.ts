@@ -1,9 +1,9 @@
 // Email confirmation for a new lead.
-// The visitor gets a link. Convexa and the sales mail wait until they click.
+// The visitor gets a link. Convexa waits until they click.
+// The internal Neuer Lead mail is not sent.
 import { createHash, randomBytes } from 'crypto'
 import { createAdminClient } from '@/lib/supabase/server'
 import { isConvexaSyncEnabled, pushLeadToConvexa } from '@/lib/convexa/client'
-import { sendSalesNotification } from '@/lib/resend/mailer'
 import { resolveBaseUrl } from '@/lib/seo/organization'
 import type { Lead } from '@/lib/supabase/types'
 
@@ -106,9 +106,4 @@ async function pushConfirmedLead(lead: Lead): Promise<void> {
     }
   }
 
-  const { data: fresh } = await supabase.from('leads').select('*').eq('id', lead.id).single()
-  if (fresh) {
-    const sent = await sendSalesNotification(fresh as Lead, produktName)
-    if (!sent) console.error(`[email-confirm] Sales mail failed lead=${lead.id}`)
-  }
 }

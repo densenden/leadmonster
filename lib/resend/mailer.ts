@@ -177,71 +177,9 @@ ${confirmBlock || '<p>Ihre Anfrage ist bei uns eingegangen. Wir melden uns inner
   }
 }
 
-// Sends a German-language internal notification about a new lead to the sales team.
-// The sales notification recipient is resolved from the einstellungen DB table first,
-// then falls back to process.env.SALES_NOTIFICATION_EMAIL.
-// Returns true on success, false on any error — never throws.
-export async function sendSalesNotification(lead: Lead, produktName: string): Promise<boolean> {
-  try {
-    const supabase = createAdminClient()
-
-    const { data: settings } = await supabase
-      .from('einstellungen')
-      .select('schluessel, wert')
-      .eq('schluessel', 'sales_notification_email')
-      .maybeSingle()
-
-    const salesEmail =
-      (settings?.wert || process.env.SALES_NOTIFICATION_EMAIL) as string | undefined
-
-    if (!salesEmail) {
-      console.error('[mailer] No sales_notification_email configured — skipping notification')
-      return false
-    }
-
-    // The "Neuer Lead" mail is internal. Never send it to the person who filled the form.
-    if (salesEmail.trim().toLowerCase() === lead.email.trim().toLowerCase()) {
-      console.error('[mailer] Sales notification skipped — recipient is the lead email')
-      return false
-    }
-
-    const template = await fetchEmailTemplate(lead.produkt_id, 'notification')
-
-    const subject =
-      template?.betreff ??
-      `Neuer Lead: ${lead.vorname ?? ''} ${lead.nachname ?? ''} — ${produktName}`
-
-    // Convexa-Link wird gerendert, wenn die Convexa-Lead-ID gesetzt ist.
-    const convexaLink = lead.convexa_lead_id
-      ? `<p><a href="https://app.convexa.app/leads/${lead.convexa_lead_id}" style="color:#1a365d">Lead in Convexa öffnen</a></p>`
-      : ''
-
-    // Fallback HTML uses inline CSS only for maximum email client compatibility.
-    // intent_tag and zielgruppe_tag are rendered with font-weight:bold for quick scanning.
-    const html =
-      template?.html_body ??
-      `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto;padding:20px">
-<h2 style="color:#1a365d">Neuer Lead: ${lead.vorname ?? ''} ${lead.nachname ?? ''}</h2>
-<p>Produkt: <strong>${produktName}</strong></p>
-${convexaLink}
-<table style="border-collapse:collapse;width:100%;margin:16px 0">
-<tr style="background:#1a365d;color:white"><th style="padding:8px;border:1px solid #ddd;text-align:left">Feld</th><th style="padding:8px;border:1px solid #ddd;text-align:left">Wert</th></tr>
-<tr><td style="padding:8px;border:1px solid #ddd">Vorname</td><td style="padding:8px;border:1px solid #ddd">${lead.vorname ?? ''}</td></tr>
-<tr><td style="padding:8px;border:1px solid #ddd">Nachname</td><td style="padding:8px;border:1px solid #ddd">${lead.nachname ?? ''}</td></tr>
-<tr><td style="padding:8px;border:1px solid #ddd">E-Mail</td><td style="padding:8px;border:1px solid #ddd">${lead.email}</td></tr>
-<tr><td style="padding:8px;border:1px solid #ddd">Telefon</td><td style="padding:8px;border:1px solid #ddd">${lead.telefon ?? ''}</td></tr>
-<tr><td style="padding:8px;border:1px solid #ddd">Interesse</td><td style="padding:8px;border:1px solid #ddd">${lead.interesse ?? ''}</td></tr>
-<tr><td style="padding:8px;border:1px solid #ddd">Zielgruppe</td><td style="padding:8px;border:1px solid #ddd;font-weight:bold">${lead.zielgruppe_tag ?? ''}</td></tr>
-<tr><td style="padding:8px;border:1px solid #ddd">Intent</td><td style="padding:8px;border:1px solid #ddd;font-weight:bold">${lead.intent_tag ?? ''}</td></tr>
-</table>
-</body></html>`
-
-    return await dispatchResendEmail(
-      { to: salesEmail, subject, html },
-      'sendSalesNotification',
-    )
-  } catch (error) {
-    console.error('[mailer] sendSalesNotification failed:', error)
-    return false
-  }
+// Internal "Neuer Lead" mail is turned off.
+// The lead still lands in the admin list, and Convexa still runs after the confirm click.
+// The customer confirm mail is sendLeadConfirmation and is unchanged.
+export async function sendSalesNotification(_lead: Lead, _produktName: string): Promise<boolean> {
+  return false
 }
