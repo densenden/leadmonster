@@ -3,9 +3,11 @@
 // component behavior when no result is available.
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import { TarifRechner } from '../TarifRechner'
 import { LeadForm } from '../LeadForm'
+import { fillRequiredLeadFormFields } from './lead-form-test-helpers'
 
 const DEFAULT_PROPS = {
   produktTyp: 'sterbegeld' as const,
@@ -97,7 +99,11 @@ describe('TarifRechner — no result available', () => {
 
 describe('LeadForm — backward compatibility without intentTag', () => {
   it('renders and submits correctly when intentTag is not provided', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    const user = userEvent.setup()
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { id: 'new-lead-id' }, error: null }),
+    })
     vi.stubGlobal('fetch', fetchMock)
 
     // Render without intentTag — should not throw a TypeScript or runtime error
@@ -105,27 +111,23 @@ describe('LeadForm — backward compatibility without intentTag', () => {
 
     expect(screen.getByLabelText(/E-Mail-Adresse/i)).toBeInTheDocument()
 
-    fireEvent.change(screen.getByLabelText(/Vorname/i), { target: { value: 'Max' } })
-    fireEvent.change(screen.getByLabelText(/Nachname/i), { target: { value: 'Test' } })
-    fireEvent.change(screen.getByLabelText(/E-Mail-Adresse/i), { target: { value: 'test@example.de' } })
-    fireEvent.change(screen.getByLabelText(/Telefonnummer/i), { target: { value: '0151 12345678' } })
-    fireEvent.change(screen.getByLabelText(/Geburtsdatum/i), { target: { value: '1960-05-15' } })
-    fireEvent.change(screen.getByLabelText(/Straße und Hausnummer/i), { target: { value: 'Teststr. 1' } })
-    fireEvent.change(screen.getByLabelText(/^PLZ/i), { target: { value: '80331' } })
-    fireEvent.change(screen.getByLabelText(/^Ort/i), { target: { value: 'München' } })
-
-    fireEvent.click(screen.getByRole('button', { name: /Jetzt Angebot anfordern/i }))
+    await fillRequiredLeadFormFields(user)
+    await user.click(screen.getByRole('button', { name: /Jetzt Angebot anfordern/i }))
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalled()
+      expect(
+        fetchMock.mock.calls.some(
+          ([url]) => typeof url === 'string' && url.includes('/api/leads'),
+        ),
+      ).toBe(true)
     })
 
-    // Verify the body was sent (intentTag will be undefined → serialized as absent from JSON)
-    const callArgs = fetchMock.mock.calls[0]
-    const body = JSON.parse(callArgs[1].body)
-    // When intentTag is undefined, JSON.stringify omits the key entirely or sets it to undefined
-    // Either way the form submission must succeed without throwing
+    const leadCall = fetchMock.mock.calls.find(
+      ([url]) => typeof url === 'string' && url.includes('/api/leads'),
+    )
+    const body = JSON.parse(leadCall![1].body)
     expect(body.produktId).toBe('prod-uuid-001')
+    expect(body.geburtsdatum).toBe('1960-05-15')
   })
 })
 

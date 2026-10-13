@@ -37,9 +37,9 @@ function buildBuilder(table: string) {
     return {
       select: () => ({
         in: async () => ({ data: state.einstellungenRows, error: null }),
-        eq: () => ({
+        eq: (_col: string, key: string) => ({
           maybeSingle: async () => {
-            const r = state.einstellungenRows.find(x => x.schluessel === 'convexa_base_url')
+            const r = state.einstellungenRows.find(x => x.schluessel === key)
             return { data: r ?? null, error: null }
           },
         }),
@@ -327,5 +327,29 @@ describe('pushLeadToConvexa — Token-Resolver-Hierarchie', () => {
 
     const url = fetchSpy.mock.calls[0]![0] as string
     expect(url).toContain('/submissions/token-from-env')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// isConvexaSyncEnabled — admin master switch
+// ---------------------------------------------------------------------------
+
+describe('isConvexaSyncEnabled', () => {
+  it('returns false when setting is missing', async () => {
+    state.einstellungenRows = []
+    const { isConvexaSyncEnabled } = await import('../client')
+    await expect(isConvexaSyncEnabled()).resolves.toBe(false)
+  })
+
+  it('returns false when setting is "false"', async () => {
+    state.einstellungenRows = [{ schluessel: 'convexa_sync_enabled', wert: 'false' }]
+    const { isConvexaSyncEnabled } = await import('../client')
+    await expect(isConvexaSyncEnabled()).resolves.toBe(false)
+  })
+
+  it('returns true when setting is "true"', async () => {
+    state.einstellungenRows = [{ schluessel: 'convexa_sync_enabled', wert: 'true' }]
+    const { isConvexaSyncEnabled } = await import('../client')
+    await expect(isConvexaSyncEnabled()).resolves.toBe(true)
   })
 })

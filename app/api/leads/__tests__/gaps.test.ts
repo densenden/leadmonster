@@ -22,11 +22,30 @@ vi.mock('@/lib/supabase/server', () => ({
 
 vi.mock('@/lib/convexa/client', () => ({
   pushLeadToConvexa: vi.fn().mockResolvedValue({ id: 'convexa-gap-001', status: 'created' }),
+  isConvexaSyncEnabled: vi.fn().mockResolvedValue(true),
 }))
 
 vi.mock('@/lib/resend/mailer', () => ({
+  isResendEnabled: vi.fn().mockResolvedValue(true),
   sendLeadConfirmation: vi.fn().mockResolvedValue(true),
   sendSalesNotification: vi.fn().mockResolvedValue(true),
+}))
+
+vi.mock('@/lib/captcha/verify', () => ({
+  verifyCaptchaToken: vi.fn().mockResolvedValue({ ok: true }),
+}))
+
+vi.mock('@/lib/captcha/config', () => ({
+  getCaptchaServerConfig: vi.fn().mockResolvedValue({
+    enabled: false,
+    provider: 'turnstile',
+    siteKey: null,
+    secretKey: null,
+  }),
+}))
+
+vi.mock('@/lib/leads/save-bot-attempt', () => ({
+  saveBotAttempt: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('next/headers', () => ({

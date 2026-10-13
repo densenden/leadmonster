@@ -499,11 +499,11 @@ export function ProduktForm({ mode, initialData, typOptions }: ProduktFormProps)
             />
             <div>
               <label htmlFor="navbar_logo_visible" className="text-sm font-medium text-[#333333]">
-                Logo in der Navbar anzeigen
+                Icon in der Navbar anzeigen
               </label>
               <p className="text-xs text-[#666666]">
-                Standard: ausgeblendet. Wenn an und kein eigenes Bild hochgeladen:
-                farbiges Monster-Maskottchen. Upload im Panel unterhalb des Formulars.
+                Standard: ausgeblendet. Wenn an und kein Upload: Kreis mit Anfangsbuchstaben.
+                Quadratisches Icon optional im Panel unterhalb des Formulars.
               </p>
             </div>
           </div>

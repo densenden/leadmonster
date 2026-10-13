@@ -6,6 +6,10 @@ export const ACCENT_DEFAULTS: Record<string, string> = {
   pflege:     '#02a9e6',   // cyan — care, clarity
   leben:      '#1a3252',   // navy — security, stability
   unfall:     '#d4511a',   // deep orange — urgency, protection
+  bu:         '#1a365d',   // dark navy — income protection
+  kinder:     '#02a9e6',   // cyan — family / care
+  erbschaft:  '#d4af37',   // gold — wealth / inheritance
+  spezial:    '#718096',   // grey — placeholder niche
 }
 
 // Returns the resolved accent color: explicit override > type default > brand cyan.

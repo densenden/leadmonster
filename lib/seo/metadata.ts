@@ -5,6 +5,7 @@
 // `'%s | LeadMonster'` template — product subsites must NOT show LeadMonster
 // branding. Same applies to openGraph.siteName (set to product name).
 import type { Metadata } from 'next'
+import { buildProduktFaviconPath, FAVICON_SIZES } from '@/lib/branding/favicon'
 import { resolveBaseUrl } from './organization'
 
 export interface ProduktMetadataInput {
@@ -48,12 +49,29 @@ export function buildProduktMetadata({
     description: meta_desc,
     robots: { index: true, follow: true },
     alternates: { canonical },
+    ...buildProduktIconMetadata({ slug, domain }),
     openGraph: {
       title,
       description: meta_desc,
       type: 'website',
       url: canonical,
       siteName: produktName,
+    },
+  }
+}
+
+/** Standard product favicon metadata pointing at the favicon pipeline route. */
+export function buildProduktIconMetadata(args: {
+  slug: string
+  domain?: string | null
+}): Pick<Metadata, 'icons'> {
+  // Relative paths — always use the current host (avoids wrong NEXT_PUBLIC_BASE_URL).
+  const icon = buildProduktFaviconPath(args.slug)
+  const apple = buildProduktFaviconPath(args.slug, FAVICON_SIZES.apple)
+  return {
+    icons: {
+      icon: [{ url: icon, type: 'image/png', sizes: '48x48' }],
+      apple: [{ url: apple, type: 'image/png', sizes: '180x180' }],
     },
   }
 }

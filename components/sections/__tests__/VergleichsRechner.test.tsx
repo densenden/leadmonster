@@ -55,6 +55,13 @@ describe('VergleichsRechner — initial render', () => {
     expect(screen.getByText(/Wir zeigen die Tarife/i)).toBeInTheDocument()
   })
 
+  it('keeps the results table inside the card, without a horizontal scrollbar', () => {
+    render(<VergleichsRechner {...DEFAULT_PROPS} />)
+    const table = screen.getByTestId('vr-table')
+    expect(table.className).toContain('table-fixed')
+    expect(table.parentElement?.className ?? '').not.toContain('overflow-x')
+  })
+
   it('rendert eine Zeile pro Anbieter mit data-testid', () => {
     render(<VergleichsRechner {...DEFAULT_PROPS} />)
     expect(screen.getByTestId('vr-row-dela')).toBeInTheDocument()

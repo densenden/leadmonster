@@ -22,11 +22,30 @@ vi.mock('@/lib/supabase/server', () => ({
 
 vi.mock('@/lib/convexa/client', () => ({
   pushLeadToConvexa: mockPushLeadToConvexa,
+  isConvexaSyncEnabled: vi.fn().mockResolvedValue(true),
 }))
 
 vi.mock('@/lib/resend/mailer', () => ({
+  isResendEnabled: vi.fn().mockResolvedValue(true),
   sendLeadConfirmation: mockSendLeadConfirmation,
   sendSalesNotification: mockSendSalesNotification,
+}))
+
+vi.mock('@/lib/captcha/verify', () => ({
+  verifyCaptchaToken: vi.fn().mockResolvedValue({ ok: true }),
+}))
+
+vi.mock('@/lib/captcha/config', () => ({
+  getCaptchaServerConfig: vi.fn().mockResolvedValue({
+    enabled: false,
+    provider: 'turnstile',
+    siteKey: null,
+    secretKey: null,
+  }),
+}))
+
+vi.mock('@/lib/leads/save-bot-attempt', () => ({
+  saveBotAttempt: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('next/headers', () => ({
@@ -161,6 +180,24 @@ describe('POST /api/leads — email dispatch integration', () => {
 
     // The update call setting resend_sent=true must have been made
     expect(updateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ resend_sent: true }),
+    )
+  })
+
+  it('skips Resend when isResendEnabled is false', async () => {
+    const updateSpy = vi.fn().mockReturnThis()
+    setupStandardFromMock(updateSpy)
+
+    const { isResendEnabled } = await import('@/lib/resend/mailer')
+    vi.mocked(isResendEnabled).mockResolvedValueOnce(false)
+
+    const { POST } = await import('../route')
+    const response = await POST(makeRequest(VALID_PAYLOAD) as never)
+
+    expect(response.status).toBe(201)
+    expect(mockSendLeadConfirmation).not.toHaveBeenCalled()
+    expect(mockSendSalesNotification).not.toHaveBeenCalled()
+    expect(updateSpy).not.toHaveBeenCalledWith(
       expect.objectContaining({ resend_sent: true }),
     )
   })

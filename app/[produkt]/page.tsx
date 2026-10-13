@@ -2,11 +2,13 @@
 // Render-Logik liegt in app/_components/ProduktHauptseite (geteilt mit der
 // Root-Route app/page.tsx).
 import type { Metadata } from 'next'
-import { createAdminClient } from '@/lib/supabase/server'
+import { notFound } from 'next/navigation'
+import { createAdminClient, createPublicClient } from '@/lib/supabase/server'
 import { buildProduktMetadata } from '@/lib/seo/metadata'
 import { ROOT_PRODUKT_SLUG } from '@/lib/seo/organization'
 import { loadEinstellung } from '@/lib/einstellungen/load'
 import { ProduktHauptseite, loadProduktMetadata } from '@/app/_components/ProduktHauptseite'
+import { isValidProduktSlug } from '@/lib/produkte/is-valid-produkt-slug'
 
 // Re-render at most once per minute so freshly published content appears
 // without admin needing to wait for a manual revalidation.
@@ -45,6 +47,10 @@ export async function generateMetadata({
 }: {
   params: { produkt: string }
 }): Promise<Metadata> {
+  if (!isValidProduktSlug(params.produkt)) {
+    return { title: 'Nicht gefunden' }
+  }
+
   const data = await loadProduktMetadata(params.produkt)
   if (!data) return { title: params.produkt }
 
@@ -52,7 +58,7 @@ export async function generateMetadata({
   // sterbegeld24plus.de bekommen einen Brand-Suffix („Christian Wimmer
   // Versicherungsmakler") statt Domain im Title. Pro-Produkt-Override
   // übersteuert den globalen Default.
-  const supabase = createAdminClient()
+  const supabase = createPublicClient(60)
   const { data: produktRow } = await supabase
     .from('produkte')
     .select('typ, title_suffix_override')
@@ -75,5 +81,8 @@ export async function generateMetadata({
 }
 
 export default async function ProduktPage({ params }: { params: { produkt: string } }) {
+  if (!isValidProduktSlug(params.produkt)) {
+    notFound()
+  }
   return <ProduktHauptseite slug={params.produkt} />
 }

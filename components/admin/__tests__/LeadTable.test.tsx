@@ -16,7 +16,11 @@ function makeLead(overrides: Partial<{
   email: string
   intent_tag: string | null
   convexa_synced: boolean
+  convexa_lead_id: string | null
   convexa_error: string | null
+  resend_sent: boolean
+  privacy_consent_at: string | null
+  client_ip: string | null
   created_at: string
   produkte: { name: string } | null
 }> = {}) {
@@ -27,7 +31,11 @@ function makeLead(overrides: Partial<{
     email: overrides.email ?? 'max@example.de',
     intent_tag: overrides.intent_tag ?? 'sicherheit',
     convexa_synced: overrides.convexa_synced ?? false,
+    convexa_lead_id: overrides.convexa_lead_id ?? null,
     convexa_error: overrides.convexa_error ?? null,
+    resend_sent: overrides.resend_sent ?? false,
+    privacy_consent_at: overrides.privacy_consent_at ?? '2026-04-01T10:00:00.000Z',
+    client_ip: overrides.client_ip ?? '192.168.1.42',
     created_at: overrides.created_at ?? '2026-04-01T10:00:00.000Z',
     produkte: overrides.produkte !== undefined ? overrides.produkte : { name: 'Sterbegeld24Plus' },
   }
@@ -106,7 +114,7 @@ describe('LeadTable — Convexa sync indicators', () => {
     render(
       React.createElement(LeadTable, {
         ...DEFAULT_PROPS,
-        leads: [makeLead({ convexa_synced: true })],
+        leads: [makeLead({ convexa_synced: true, convexa_lead_id: 'cvx-1' })],
       }),
     )
 
@@ -146,17 +154,24 @@ describe('LeadTable — empty state', () => {
   })
 })
 
-describe('LeadTable — overview columns', () => {
-  it('shows only the columns needed to scan a lead', () => {
+describe('LeadTable — GDPR columns', () => {
+  it('shows consent timestamp and client IP in the table row', () => {
     render(
       React.createElement(LeadTable, {
         ...DEFAULT_PROPS,
-        leads: [makeLead()],
+        leads: [
+          makeLead({
+            privacy_consent_at: '2026-07-10T14:30:00.000Z',
+            client_ip: '203.0.113.7',
+          }),
+        ],
       }),
     )
 
+    expect(screen.getByText('203.0.113.7')).toBeDefined()
     const headers = Array.from(document.querySelectorAll('th')).map(h => h.textContent?.trim())
-    expect(headers).toEqual(['Eingang', 'Name', 'E-Mail', 'Produkt', 'Intent', 'Convexa', ''])
+    expect(headers).toContain('Einwilligung')
+    expect(headers).toContain('IP')
   })
 })
 

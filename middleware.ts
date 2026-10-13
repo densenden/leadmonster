@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { lookupRedirect } from '@/lib/redirects/lookup'
+import { isProbePath } from '@/lib/produkte/is-valid-produkt-slug'
 
 const AUTH_REFRESH_TIMEOUT_MS = 2_000
 
@@ -12,11 +13,19 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | undefined>
 }
 
 // Middleware Aufgaben:
-// 1. Redirect-Tabelle abfragen — Vertriebs-pflegbare 301/302 vor jedem Request.
-// 2. Supabase-Session-Cookie auffrischen (nur /admin), damit Auth-State erhalten bleibt.
+// 1. Hard-404 for vuln scanners (/.env, *.php) — avoids ISR 500 noise on /[produkt].
+// 2. Redirect-Tabelle abfragen — Vertriebs-pflegbare 301/302 vor jedem Request.
+// 3. Supabase-Session-Cookie auffrischen (nur /admin), damit Auth-State erhalten bleibt.
 //    Auth-Guards selbst leben in app/admin/(protected)/layout.tsx.
 // DB calls are time-boxed — paused/slow Supabase must not hit MIDDLEWARE_INVOCATION_TIMEOUT.
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Cheap reject before any Supabase / product ISR work.
+  if (isProbePath(pathname)) {
+    return new NextResponse(null, { status: 404 })
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -63,7 +72,6 @@ export async function middleware(request: NextRequest) {
   // ─── Redirect-Lookup ──────────────────────────────────────────────────
   // Nur für GET/HEAD-Requests an öffentliche Pfade. /admin und /api werden
   // ausgenommen, damit interne Routen nicht aus Versehen umgeleitet werden.
-  const { pathname } = request.nextUrl
   const isPublic = !pathname.startsWith('/admin') && !pathname.startsWith('/api')
   const isReadable = request.method === 'GET' || request.method === 'HEAD'
   if (isPublic && isReadable) {

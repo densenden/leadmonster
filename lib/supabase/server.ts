@@ -37,11 +37,7 @@ export function createClient() {
   )
 }
 
-// Service role client — bypasses RLS entirely.
-// Use only in API routes, Server Actions, and admin DB operations.
-// NEVER expose this client or its key to the browser.
-// TODO: Encrypt wert column using AES/pgcrypto (Supabase Vault) before production deployment.
-export function createAdminClient() {
+function getServiceRoleKey(): string {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY
   if (!key) {
     throw new Error(
@@ -54,8 +50,48 @@ export function createAdminClient() {
       'SUPABASE_SECRET_KEY looks like a publishable key — set the service-role secret from Supabase Project Settings → API.',
     )
   }
+  return key
+}
+
+// Service role client — bypasses RLS entirely.
+// Use only in API routes, Server Actions, and admin DB operations.
+// NEVER expose this client or its key to the browser.
+// TODO: Encrypt wert column using AES/pgcrypto (Supabase Vault) before production deployment.
+export function createAdminClient() {
   return createSupabaseClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    key,
+    getServiceRoleKey(),
+    {
+      // Next.js caches fetch() by default — stale einstellungen would keep
+      // feature flags (e.g. Turnstile) stuck on old values after Admin saves.
+      global: {
+        fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+          fetch(input, { ...init, cache: 'no-store' }),
+      },
+    },
+  )
+}
+
+/**
+ * Service-role client for public ISR pages (`revalidate = N`).
+ * MUST NOT use cache: 'no-store' — that flips the page from static to dynamic
+ * at runtime and returns HTTP 500 for unknown /[produkt] slugs (bot probes).
+ * Admin mutations still call createAdminClient() + revalidatePath/revalidateTag.
+ */
+export function createPublicClient(revalidateSeconds = 60) {
+  return createSupabaseClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    getServiceRoleKey(),
+    {
+      global: {
+        fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+          fetch(input, {
+            ...init,
+            // Drop conflicting cache mode; Next ISR uses next.revalidate.
+            cache: undefined,
+            next: { revalidate: revalidateSeconds },
+          } as RequestInit),
+      },
+    },
   )
 }

@@ -20,9 +20,12 @@ export const metadata: Metadata = {
 const TYP_LABELS: Record<string, string> = {
   sterbegeld: 'Sterbegeld',
   pflege:     'Pflege',
-  leben:      'Lebensversicherung',
+  leben:      'Risikoleben',
   unfall:     'Unfall',
   bu:         'Berufsunfähigkeit',
+  kinder:     'Kinder / ADHS',
+  erbschaft:  'Erbschaftsteuer',
+  spezial:    'Spezialnische',
 }
 
 export default async function ProdukteUebersichtPage() {
@@ -72,7 +75,7 @@ export default async function ProdukteUebersichtPage() {
             return (
               <Link
                 key={p.slug}
-                href={`/${p.slug}`}
+                href={p.status === 'aktiv' ? `/${p.slug}` : '/admin/produkte'}
                 className="group block bg-white border border-[#e2e8f0] rounded-lg overflow-hidden hover:shadow-md hover:border-[#02a9e6] transition-all duration-200"
               >
                 <div className="h-1" style={{ backgroundColor: accent }} />
@@ -105,7 +108,7 @@ export default async function ProdukteUebersichtPage() {
                       className="text-sm font-semibold border-b border-transparent group-hover:border-current transition-colors"
                       style={{ color: accent }}
                     >
-                      Zur Seite →
+                      {p.status === 'aktiv' ? 'Zur Seite →' : 'Im Admin bearbeiten →'}
                     </span>
                   </div>
                 </div>

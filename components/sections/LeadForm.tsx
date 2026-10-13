@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
@@ -101,6 +101,7 @@ export function LeadForm({
   datenschutzHref = '/datenschutz',
 }: LeadFormProps) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const successRef = useRef<HTMLDivElement>(null)
   const [awaitingEmailConfirm, setAwaitingEmailConfirm] = useState(false)
 
   const [vorname, setVorname] = useState('')
@@ -343,20 +344,41 @@ export function LeadForm({
     }
   }
 
+  // The success box replaces a tall form. Scroll it under the sticky header
+  // so the email step is on screen, not left above the fold.
+  useEffect(() => {
+    if (status !== 'success') return
+    const node = successRef.current
+    if (node && typeof node.scrollIntoView === 'function') {
+      node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [status])
+
   if (status === 'success') {
     return (
       <div
+        ref={successRef}
         role="status"
-        className="bg-white p-4 sm:p-8 shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] rounded-none"
+        className="scroll-mt-28 border-2 border-[#1a3252] bg-[#e8f4fc] p-6 sm:p-8 shadow-[0_10px_15px_-3px_rgba(0,0,0,0.12)]"
       >
-        <h3 className="font-heading font-bold text-[#1a365d] text-xl mb-3">
+        <h3 className="font-heading font-bold text-[#1a3252] text-2xl mb-3">
           Vielen Dank für Ihre Anfrage!
         </h3>
-        <p className="font-body font-light text-[#666666]">
-          {awaitingEmailConfirm
-            ? 'Bitte bestätigen Sie Ihre E-Mail-Adresse. Wir haben Ihnen einen Link geschickt. Erst nach dem Klick können wir Ihre Anfrage bearbeiten. Schauen Sie auch im Spam-Ordner nach. Der Link ist 72 Stunden gültig.'
-            : 'Wir melden uns innerhalb von 24 Stunden bei Ihnen.'}
-        </p>
+        {awaitingEmailConfirm ? (
+          <>
+            <p className="font-body font-bold text-[#1a3252] text-lg mb-2">
+              Bitte bestätigen Sie Ihre E-Mail-Adresse.
+            </p>
+            <p className="font-body text-[#333333] text-base">
+              Wir haben Ihnen einen Link geschickt. Erst nach dem Klick können wir Ihre Anfrage
+              bearbeiten. Schauen Sie auch im Spam-Ordner nach. Der Link ist 72 Stunden gültig.
+            </p>
+          </>
+        ) : (
+          <p className="font-body text-[#333333] text-base">
+            Wir melden uns innerhalb von 24 Stunden bei Ihnen.
+          </p>
+        )}
       </div>
     )
   }

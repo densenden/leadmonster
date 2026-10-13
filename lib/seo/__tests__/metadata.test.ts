@@ -121,6 +121,28 @@ describe('buildProduktMetadata', () => {
     const og = result.openGraph as Record<string, unknown>
     expect(og.title).toBe('BU Handwerker | Christian Wimmer')
   })
+
+  it('sets product favicon pipeline icons', () => {
+    const result = buildProduktMetadata({
+      slug: 'sterbegeld24plus',
+      meta_title: 'Test',
+      meta_desc: 'Desc',
+      domain: 'https://www.sterbegeld24plus.de',
+    })
+
+    expect(result.icons).toEqual({
+      icon: [{
+        url: '/api/produkte/sterbegeld24plus/icon',
+        type: 'image/png',
+        sizes: '48x48',
+      }],
+      apple: [{
+        url: '/api/produkte/sterbegeld24plus/icon?size=180',
+        type: 'image/png',
+        sizes: '180x180',
+      }],
+    })
+  })
 })
 
 describe('buildInsuranceAgencySchema', () => {

@@ -16,9 +16,12 @@ import type { Produkt, ProduktStatus } from '@/lib/supabase/types'
 const TYP_LABELS: Record<string, string> = {
   sterbegeld: 'Sterbegeld',
   pflege: 'Pflege',
-  leben: 'Leben',
+  leben: 'Risikoleben',
   unfall: 'Unfall',
   bu: 'Berufsunfähigkeit',
+  kinder: 'Kinder / ADHS',
+  erbschaft: 'Erbschaftsteuer',
+  spezial: 'Spezialnische',
 }
 
 // Colored top-bar accent per produkttyp (fallback grey).
@@ -28,6 +31,9 @@ const TYP_ACCENT: Record<string, string> = {
   leben: '#d4af37',
   unfall: '#02a9e6',
   bu: '#1a365d',
+  kinder: '#02a9e6',
+  erbschaft: '#d4af37',
+  spezial: '#718096',
 }
 
 interface ProduktWithStats extends Produkt {

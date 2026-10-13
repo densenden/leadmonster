@@ -25,7 +25,15 @@ import type { FilterAxis } from './filter-config-schema'
 
 /** Bekannte Default-Slugs — bleibt für rückwärtskompatible Type-Hints,
  *  zur Laufzeit ist jeder string ein gültiger Typ (FK auf produkt_typen). */
-export type ProduktTyp = 'sterbegeld' | 'pflege' | 'leben' | 'unfall' | 'bu'
+export type ProduktTyp =
+  | 'sterbegeld'
+  | 'pflege'
+  | 'leben'
+  | 'unfall'
+  | 'bu'
+  | 'kinder'
+  | 'erbschaft'
+  | 'spezial'
 
 export interface ProduktVergleichConfig {
   summen: readonly number[]
@@ -138,6 +146,42 @@ export const PRODUKT_VERGLEICH_CONFIG: Record<ProduktTyp, ProduktVergleichConfig
     beitrag_label: 'Beitrag / Monat',
     summe_suffix: '€',
     produkt_label: 'Unfallversicherung',
+    filter_axes: [],
+  },
+  kinder: {
+    summen: [50000, 100000, 150000, 200000],
+    default_summe: 100000,
+    default_age: 8,
+    min_age: 0,
+    max_age: 17,
+    summe_label: 'Absicherungssumme',
+    beitrag_label: 'Beitrag / Monat',
+    summe_suffix: '€',
+    produkt_label: 'Kinderversicherung (ADHS / besondere Bedarfe)',
+    filter_axes: [],
+  },
+  erbschaft: {
+    summen: [250000, 500000, 1000000, 2000000, 5000000],
+    default_summe: 500000,
+    default_age: 55,
+    min_age: 30,
+    max_age: 85,
+    summe_label: 'Ungefähres Vermögen',
+    beitrag_label: 'Beitrag / Monat',
+    summe_suffix: '€',
+    produkt_label: 'Erbschaftsteuer / Vermögensübergang',
+    filter_axes: [],
+  },
+  spezial: {
+    summen: [5000, 10000, 25000, 50000],
+    default_summe: 10000,
+    default_age: 45,
+    min_age: 18,
+    max_age: 80,
+    summe_label: 'Bedarf / Summe',
+    beitrag_label: 'Beitrag / Monat',
+    summe_suffix: '€',
+    produkt_label: 'Spezialnische',
     filter_axes: [],
   },
 }

@@ -1,7 +1,13 @@
+import type { Metadata } from 'next'
 import { ProduktChrome } from '@/app/_components/ProduktChrome'
 import { createAdminClient } from '@/lib/supabase/server'
 import { ROOT_PRODUKT_SLUG } from '@/lib/seo/organization'
 import { resolveAccentColor } from '@/lib/utils/accent'
+import { buildProduktIconMetadata } from '@/lib/seo/metadata'
+
+export function generateMetadata(): Metadata {
+  return buildProduktIconMetadata({ slug: ROOT_PRODUKT_SLUG })
+}
 
 // Same header/footer as homepage and product pages (root brand).
 export default async function BlogLayout({ children }: { children: React.ReactNode }) {

@@ -1,7 +1,22 @@
-import { createAdminClient } from '@/lib/supabase/server'
+import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
+import { createPublicClient } from '@/lib/supabase/server'
 import { resolveAccentColor } from '@/lib/utils/accent'
 import { ProduktChrome } from '@/app/_components/ProduktChrome'
 import { TrustStoryLine } from '@/components/sections/TrustStoryLine'
+import { buildProduktIconMetadata } from '@/lib/seo/metadata'
+import { isValidProduktSlug } from '@/lib/produkte/is-valid-produkt-slug'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { produkt: string }
+}): Promise<Metadata> {
+  if (!isValidProduktSlug(params.produkt)) {
+    return { title: 'Nicht gefunden' }
+  }
+  return buildProduktIconMetadata({ slug: params.produkt })
+}
 
 export default async function ProduktLayout({
   children,
@@ -10,6 +25,10 @@ export default async function ProduktLayout({
   children: React.ReactNode
   params: { produkt: string }
 }) {
+  if (!isValidProduktSlug(params.produkt)) {
+    notFound()
+  }
+
   let produktName = params.produkt
   let accentColor = '#02a9e6'
   let produktTyp = 'sterbegeld'
@@ -17,14 +36,16 @@ export default async function ProduktLayout({
   let navbarLogoVisible = false
   let navbarLogoUrl: string | null = null
   let navbarLogoAlt: string | null = null
+  let loadedStatus: string | null = null
   try {
-    const supabase = createAdminClient()
+    const supabase = createPublicClient(60)
     const { data } = await supabase
       .from('produkte')
-      .select('name, typ, accent_color, brand_display_name, brand_subline, navbar_logo_visible, navbar_logo_url, navbar_logo_alt')
+      .select('name, typ, status, accent_color, brand_display_name, brand_subline, navbar_logo_visible, navbar_logo_url, navbar_logo_alt')
       .eq('slug', params.produkt)
       .maybeSingle()
     if (data) {
+      loadedStatus = data.status
       // Display-Name: brand_display_name übersteuert den Produktnamen.
       produktName = data.brand_display_name ?? data.name
       accentColor = resolveAccentColor(data.typ, data.accent_color)
@@ -36,6 +57,12 @@ export default async function ProduktLayout({
     }
   } catch {
     // Keep defaults
+  }
+
+  // Draft / archived products must not be public — only aktiv gets a live URL.
+  // notFound() throws; it must stay outside the try/catch above.
+  if (loadedStatus && loadedStatus !== 'aktiv') {
+    notFound()
   }
 
   return (

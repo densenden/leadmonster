@@ -15,9 +15,9 @@ export interface ProduktChromeProps {
   name: string
   /** Akzentfarbe (z. B. resolveAccentColor). */
   accentColor: string
-  /** Show logo left of product name — default false when omitted. */
+  /** Show mark left of product name — default false when omitted. */
   navbarLogoVisible?: boolean
-  /** Custom navbar logo URL; when visible and empty → colored MonsterLogo. */
+  /** Custom square icon URL; when visible and empty → letter circle. */
   navbarLogoUrl?: string | null
   navbarLogoAlt?: string | null
   /** Pfad zur Produkt-Hauptseite — '/' für Root-Produkt, sonst '/<slug>'. */
@@ -124,14 +124,14 @@ export function ProduktChrome({
           {/* Logo row — uses produkt name as wordmark */}
           <div className="flex justify-center mb-6">
             <div className="flex items-center gap-3">
-              {navbarLogoVisible && navbarLogoUrl?.trim() ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={navbarLogoUrl.trim()}
-                  alt={navbarLogoAlt?.trim() || name}
-                  className="h-[34px] w-auto max-w-[140px] object-contain shrink-0"
-                />
-              ) : null}
+              <NavbarLogoMark
+                visible={navbarLogoVisible}
+                customUrl={navbarLogoUrl}
+                customAlt={navbarLogoAlt}
+                accentColor={accentColor}
+                productName={name}
+                size={34}
+              />
               <span className="font-heading font-bold text-lg sm:text-xl text-white tracking-tight text-center">
                 {name}
               </span>

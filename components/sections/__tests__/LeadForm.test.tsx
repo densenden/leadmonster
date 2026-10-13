@@ -31,6 +31,10 @@ describe('LeadForm — structure and state', () => {
     expect(screen.getByLabelText(/E-Mail-Adresse/i)).toBeDefined()
     expect(screen.getByLabelText(/Telefonnummer/i)).toBeDefined()
     expect(screen.getByLabelText(/Geburtsdatum/i)).toBeDefined()
+    expect(screen.getByLabelText(/Geburtsdatum/i).getAttribute('type')).toBe('text')
+    expect(screen.getByLabelText(/Geburtsdatum/i).getAttribute('placeholder')).toBe(
+      'TT.MM.JJJJ',
+    )
     expect(screen.getByLabelText(/Straße und Hausnummer/i)).toBeDefined()
     expect(screen.getByLabelText(/^PLZ/i)).toBeDefined()
     expect(screen.getByLabelText(/^Ort/i)).toBeDefined()
@@ -59,8 +63,12 @@ describe('LeadForm — structure and state', () => {
       expect(screen.getByText('Bitte geben Sie Ihre E-Mail-Adresse ein.')).toBeDefined()
     })
 
-    // fetch must NOT have been called
-    expect(fetchMock).not.toHaveBeenCalled()
+    // Lead submit must NOT have been called (Turnstile config fetch on mount is OK)
+    expect(
+      fetchMock.mock.calls.filter(
+        ([url]) => typeof url === 'string' && url.includes('/api/leads'),
+      ),
+    ).toHaveLength(0)
   })
 
   // ---------------------------------------------------------------------------

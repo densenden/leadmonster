@@ -110,7 +110,7 @@ export default async function VergleichsRechnerPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
       />
-      <main className="max-w-6xl mx-auto px-4 md:px-8 lg:px-0 py-12">
+      <main className="mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8 py-12">
         <nav aria-label="Breadcrumb" className="mb-6">
           <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500">
             <li>

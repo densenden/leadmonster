@@ -3,8 +3,9 @@
 // letzteres rendert das Root-Produkt (sterbegeld24plus) unter `/`. Das Flag
 // `isRoot` steuert, dass die canonical URL `/` statt `/<slug>` ist.
 import { notFound } from 'next/navigation'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/server'
 import { isRowNotFound } from '@/lib/supabase/errors'
+import { isValidProduktSlug } from '@/lib/produkte/is-valid-produkt-slug'
 import { resolveBaseUrl } from '@/lib/seo/organization'
 import {
   buildInsuranceAgencySchema,
@@ -245,7 +246,7 @@ type HauptseiteContentRow = {
 }
 
 async function fetchHauptseiteContent(
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: ReturnType<typeof createPublicClient>,
   slug: string,
   status: 'publiziert' | 'review' | 'entwurf',
 ): Promise<HauptseiteContentRow | null> {
@@ -262,13 +263,18 @@ async function fetchHauptseiteContent(
 }
 
 export async function ProduktHauptseite({ slug, isRoot = false }: ProduktHauptseiteProps) {
-  const supabase = createAdminClient()
+  // Bot probes (/wp.php, /.env) must 404 before any DB fetch — see createPublicClient.
+  if (!isRoot && !isValidProduktSlug(slug)) {
+    notFound()
+  }
+
+  const supabase = createPublicClient(60)
 
   const produktRes = await supabase
     .from('produkte')
     .select('id, name, typ, hero_image_url, hero_image_alt, short_pitch, produkt_config(zielgruppe, fokus)')
     .eq('slug', slug)
-    .single()
+    .maybeSingle()
 
   // Prefer publiziert, then review, then entwurf — avoids empty homepage when content not promoted yet.
   let row: Awaited<ReturnType<typeof fetchHauptseiteContent>> = null
@@ -425,12 +431,13 @@ export async function ProduktHauptseite({ slug, isRoot = false }: ProduktHauptse
  * Wird von generateMetadata() in app/[produkt]/page.tsx und app/page.tsx aufgerufen.
  */
 export async function loadProduktMetadata(slug: string) {
-  const supabase = createAdminClient()
+  if (!isValidProduktSlug(slug)) return null
+  const supabase = createPublicClient(60)
   const { data } = await supabase
     .from('generierter_content')
     .select('meta_title, meta_desc, slug, produkte!inner(slug, name)')
     .eq('page_type', 'hauptseite')
     .eq('produkte.slug', slug)
-    .single()
+    .maybeSingle()
   return data
 }

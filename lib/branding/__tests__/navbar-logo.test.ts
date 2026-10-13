@@ -1,5 +1,19 @@
 import { describe, it, expect } from 'vitest'
-import { resolveNavbarLogoMark } from '../navbar-logo'
+import { resolveNavbarLogoMark, productInitialLetter } from '../navbar-logo'
+
+describe('productInitialLetter', () => {
+  it('takes the first letter', () => {
+    expect(productInitialLetter('Sterbegeld24Plus')).toBe('S')
+  })
+
+  it('skips leading digits', () => {
+    expect(productInitialLetter('24Plus Pflege')).toBe('P')
+  })
+
+  it('uppercases german umlauts', () => {
+    expect(productInitialLetter('ärzte BU')).toBe('Ä')
+  })
+})
 
 describe('resolveNavbarLogoMark', () => {
   it('hides logo by default', () => {
@@ -10,13 +24,13 @@ describe('resolveNavbarLogoMark', () => {
     })).toEqual({ kind: 'hidden' })
   })
 
-  it('uses monster when visible without upload', () => {
+  it('uses letter circle when visible without upload', () => {
     expect(resolveNavbarLogoMark({
       visible: true,
       customUrl: null,
       productName: 'Sterbegeld24Plus',
       accentColor: '#ff0000',
-    })).toEqual({ kind: 'monster', accentColor: '#ff0000' })
+    })).toEqual({ kind: 'initial', letter: 'S', accentColor: '#ff0000' })
   })
 
   it('uses custom url when uploaded', () => {

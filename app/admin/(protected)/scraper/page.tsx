@@ -41,8 +41,12 @@ interface ScrapeResult {
 
 const KATEGORIE_OPTIONS = [
   { value: 'sterbegeld', label: 'Sterbegeld' },
+  { value: 'leben', label: 'Risikolebensversicherung' },
+  { value: 'bu', label: 'Berufsunfähigkeit' },
+  { value: 'kinder', label: 'Kinder / ADHS' },
+  { value: 'erbschaft', label: 'Erbschaftsteuer' },
+  { value: 'spezial', label: 'Spezialnische' },
   { value: 'pflege', label: 'Pflege' },
-  { value: 'leben', label: 'Lebensversicherung' },
   { value: 'unfall', label: 'Unfallversicherung' },
   { value: 'allgemein', label: 'Allgemein' },
   { value: 'krankenzusatz', label: 'Krankenzusatz' },

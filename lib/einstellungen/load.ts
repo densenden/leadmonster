@@ -1,10 +1,11 @@
 // Server-side Loader für `einstellungen`-Schlüssel.
 // Wird gecached pro Request via React-cache.
 import { cache } from 'react'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/server'
 
 export const loadAllEinstellungen = cache(async (): Promise<Record<string, string>> => {
-  const supabase = createAdminClient()
+  // Public ISR-safe client — no-store would 500 /[produkt] on cold paths.
+  const supabase = createPublicClient(60)
   const { data } = await supabase.from('einstellungen').select('schluessel, wert')
   const map: Record<string, string> = {}
   for (const row of data ?? []) {

@@ -154,7 +154,7 @@ function SchutzStars({
   const empty = SCHUTZ_STARS_MAX - filled
   return (
     <span
-      className="inline-flex items-center gap-0.5 text-xl leading-none tracking-tight"
+      className="inline-flex flex-wrap items-center gap-0.5 text-sm leading-none tracking-tight"
       role="img"
       aria-label={`Schutzumfang: ${filled} von ${SCHUTZ_STARS_MAX} Sternen`}
       {...(showTestId ? { 'data-testid': `vr-schutz-stars-${slug}` } : {})}
@@ -205,7 +205,7 @@ function buildInteresseText(args: {
  *
  * Step 1: Geburtsjahr + Wunschsumme wählen → Tabelle aktualisiert sich live
  *         via /api/vergleich-tarife.
- * Step 2: Klick auf "{Anbieter} anfragen" oder "Beratung zu allen Anbietern"
+ * Step 2: Klick auf "Anfragen" oder den globalen CTA
  *         → LeadForm erscheint mit gewuenschterAnbieter als Hidden-Field +
  *         intent_tag='preis' + vorbefülltem Interesse-Text.
  *
@@ -374,7 +374,9 @@ export function VergleichsRechner({
       aria-label="Anbieter-Vergleichsrechner"
       className="py-10 md:py-16 bg-white"
     >
-      <div className="max-w-5xl mx-auto px-4 md:px-6">
+      {/* Same column as the site header (1200px). The table is forced to this
+          width so it cannot grow a horizontal scrollbar. */}
+      <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6">
         <h2 className="font-heading font-bold text-[#1a3252] text-h2-desktop mb-3">
           {headline}
         </h2>
@@ -483,7 +485,7 @@ export function VergleichsRechner({
           ) : (
             <>
               {/* Mobile: stacked cards */}
-              <div className="md:hidden divide-y divide-gray-100" data-testid="vr-cards">
+              <div className="lg:hidden divide-y divide-gray-100" data-testid="vr-cards">
                 {results.map(tarif => {
                   const slug = slugifyAnbieter(tarif.anbieter_name)
                   return (
@@ -568,19 +570,20 @@ export function VergleichsRechner({
                 })}
               </div>
 
-              {/* Desktop: full table */}
-              <div className="hidden md:block overflow-x-auto">
-              <table className="min-w-full" data-testid="vr-table">
+              {/* Desktop table. table-fixed locks the width to the card, so
+                  columns wrap instead of opening a horizontal scrollbar. */}
+              <div className="hidden lg:block">
+              <table className="w-full table-fixed" data-testid="vr-table">
                 <caption className="sr-only">Anbieter-Vergleich — sortiert nach Beitrag aufsteigend</caption>
                 <thead>
                   <tr className="bg-[#1a3252] text-white">
-                    <th scope="col" className="px-4 py-3 text-left text-sm font-medium">
+                    <th scope="col" className="px-3 lg:px-4 py-3 text-left text-sm font-medium">
                       Anbieter
                     </th>
-                    <th scope="col" className="px-4 py-3 text-left text-sm font-medium">
+                    <th scope="col" className="px-3 lg:px-4 py-3 text-left text-sm font-medium">
                       Tarif
                     </th>
-                    <th scope="col" className="px-4 py-3 text-right text-sm font-medium whitespace-nowrap">
+                    <th scope="col" className="px-3 lg:px-4 py-3 text-right text-sm font-medium">
                       {config.beitrag_label}
                     </th>
                     {axes
@@ -589,18 +592,18 @@ export function VergleichsRechner({
                         <th
                           key={a.key}
                           scope="col"
-                          className="px-4 py-3 text-left text-sm font-medium whitespace-nowrap"
+                          className="px-3 lg:px-4 py-3 text-left text-sm font-medium"
                         >
                           {getAxisColumnLabel(a)}
                         </th>
                       ))}
-                    <th scope="col" className="px-4 py-3 text-left text-sm font-medium whitespace-nowrap">
+                    <th scope="col" className="w-[7rem] px-3 lg:px-4 py-3 text-left text-sm font-medium">
                       Schutz
                     </th>
-                    <th scope="col" className="px-4 py-3 text-left text-sm font-medium">
+                    <th scope="col" className="px-3 lg:px-4 py-3 text-left text-sm font-medium">
                       Auszeichnungen
                     </th>
-                    <th scope="col" className="px-4 py-3 text-right text-sm font-medium">
+                    <th scope="col" className="w-[7.5rem] px-3 lg:px-4 py-3 text-right text-sm font-medium">
                       <span className="sr-only">Aktion</span>
                     </th>
                   </tr>
@@ -615,9 +618,9 @@ export function VergleichsRechner({
                       >
                         <th
                           scope="row"
-                          className="px-4 py-3 text-left text-sm font-semibold text-[#1a3252] whitespace-nowrap"
+                          className="px-3 lg:px-4 py-3 text-left text-sm font-semibold text-[#1a3252]"
                         >
-                          <div className="flex flex-col items-start">
+                          <div className="flex flex-col items-start gap-1">
                             {tarif.anbieter_name}
                             <AnbieterLogo
                               anbieterName={tarif.anbieter_name}
@@ -625,10 +628,10 @@ export function VergleichsRechner({
                             />
                           </div>
                         </th>
-                        <td className="px-4 py-3 text-sm text-[#666666]">
+                        <td className="px-3 lg:px-4 py-3 text-sm text-[#666666] break-words">
                           {tarif.tarif_name ?? '—'}
                         </td>
-                        <td className="px-4 py-3 text-right text-base font-bold text-brand-orange whitespace-nowrap">
+                        <td className="px-3 lg:px-4 py-3 text-right text-base font-bold text-brand-orange">
                           {formatBeitrag(tarif.beitrag_eur)} &euro;
                         </td>
                         {axes
@@ -641,13 +644,13 @@ export function VergleichsRechner({
                             return (
                               <td
                                 key={a.key}
-                                className="px-4 py-3 text-sm font-medium text-[#1a3252] whitespace-nowrap"
+                                className="px-3 lg:px-4 py-3 text-sm font-medium text-[#1a3252]"
                               >
                                 {formatAxisCellValue(a, raw)}
                               </td>
                             )
                           })}
-                        <td className="px-4 py-3">
+                        <td className="px-3 lg:px-4 py-3">
                           <SchutzStars
                             anbieterName={tarif.anbieter_name}
                             tarifName={tarif.tarif_name}
@@ -656,12 +659,12 @@ export function VergleichsRechner({
                             showTestId={false}
                           />
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="flex flex-wrap gap-2">
+                        <td className="px-3 lg:px-4 py-3">
+                          <div className="flex flex-wrap gap-1.5">
                             {tarif.badges.map(badge => (
                               <span
                                 key={badge}
-                                className={`text-sm font-body font-bold px-3 py-1.5 rounded-sm shadow-sm ${BADGE_STYLES[badge]}`}
+                                className={`text-xs lg:text-sm font-body font-bold px-2 lg:px-3 py-1 lg:py-1.5 rounded-sm shadow-sm ${BADGE_STYLES[badge]}`}
                               >
                                 {badge === 'bester_schutz' ? '★ ' : ''}
                                 {BADGE_LABEL[badge]}
@@ -669,13 +672,13 @@ export function VergleichsRechner({
                             ))}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-3 lg:px-4 py-3 text-right">
                           <button
                             type="button"
                             onClick={() => setActiveAnbieter(tarif.anbieter_name)}
-                            className="bg-brand-orange text-white font-body font-bold text-sm min-h-[44px] px-4 py-2 rounded-none hover:bg-brand-orange-dark transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-link whitespace-nowrap"
+                            className="bg-brand-orange text-white font-body font-bold text-sm min-h-[44px] w-full px-2 py-2 rounded-none hover:bg-brand-orange-dark transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-link"
                           >
-                            {tarif.anbieter_name} anfragen
+                            Anfragen
                           </button>
                         </td>
                       </tr>

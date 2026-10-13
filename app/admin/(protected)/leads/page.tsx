@@ -1,6 +1,7 @@
 // Admin leads overview — Server Component.
 // Auth guard is handled by the parent layout; no additional auth check required here.
 // Fetches paginated leads with product join and applies URL-driven filters.
+import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/server'
 import { LeadTable } from '@/components/admin/LeadTable'
 
@@ -39,7 +40,7 @@ export default async function LeadsPage({
   let query = supabase
     .from('leads')
     .select(
-      'id, vorname, nachname, email, intent_tag, convexa_synced, convexa_error, created_at, produkte(name)',
+      'id, vorname, nachname, email, intent_tag, convexa_synced, convexa_lead_id, convexa_error, resend_sent, privacy_consent_at, client_ip, created_at, produkte(name)',
       { count: 'exact' },
     )
     .order('created_at', { ascending: false })
@@ -100,9 +101,17 @@ export default async function LeadsPage({
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
-      <div className="mb-6">
-        <h1 className="font-heading text-3xl text-[#333333]">Leads</h1>
-        <p className="mt-1 text-sm text-[#666666]">{totalCount} Leads gesamt</p>
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-3xl text-[#333333]">Leads</h1>
+          <p className="mt-1 text-sm text-[#666666]">{totalCount} Leads gesamt</p>
+        </div>
+        <Link
+          href="/admin/leads/bots"
+          className="text-sm font-medium text-[#02a9e6] hover:underline"
+        >
+          Bot-Versuche anzeigen →
+        </Link>
       </div>
 
       <LeadTable

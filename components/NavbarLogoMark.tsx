@@ -1,5 +1,4 @@
-import { MonsterLogo } from '@/components/MonsterLogo'
-import { resolveNavbarLogoMark } from '@/lib/branding/navbar-logo'
+import { resolveNavbarLogoMark, productInitialLetter } from '@/lib/branding/navbar-logo'
 
 interface NavbarLogoMarkProps {
   visible: boolean
@@ -7,15 +6,18 @@ interface NavbarLogoMarkProps {
   customAlt?: string | null
   accentColor: string
   productName: string
+  /** Pixel size of the circle (header 38, footer 34). */
+  size?: number
 }
 
-/** Logo slot left of the product name in ProduktChrome header. */
+/** Circular product mark left of the product name (letter avatar or square upload). */
 export function NavbarLogoMark({
   visible,
   customUrl,
   customAlt,
   accentColor,
   productName,
+  size = 38,
 }: NavbarLogoMarkProps) {
   const mark = resolveNavbarLogoMark({
     visible,
@@ -33,10 +35,27 @@ export function NavbarLogoMark({
       <img
         src={mark.url}
         alt={mark.alt}
-        className="h-[38px] w-auto max-w-[140px] object-contain shrink-0"
+        width={size}
+        height={size}
+        className="shrink-0 rounded-full object-cover"
+        style={{ width: size, height: size }}
       />
     )
   }
 
-  return <MonsterLogo color={mark.accentColor} size={38} />
+  return (
+    <span
+      className="inline-flex shrink-0 items-center justify-center rounded-full font-heading font-bold text-white select-none"
+      style={{
+        width: size,
+        height: size,
+        backgroundColor: mark.accentColor,
+        fontSize: Math.round(size * 0.45),
+      }}
+      aria-hidden="true"
+      title={productName}
+    >
+      {mark.letter || productInitialLetter(productName)}
+    </span>
+  )
 }

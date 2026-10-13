@@ -8,7 +8,7 @@ export async function fillRequiredLeadFormFields(user: UserEvent): Promise<void>
   await user.type(screen.getByLabelText(/Nachname/i), 'Mustermann')
   await user.type(screen.getByLabelText(/E-Mail-Adresse/i), 'test@example.de')
   await user.type(screen.getByLabelText(/Telefonnummer/i), '0151 12345678')
-  await user.type(screen.getByLabelText(/Geburtsdatum/i), '1960-05-15')
+  await user.type(screen.getByLabelText(/Geburtsdatum/i), '15051960')
   await user.type(screen.getByLabelText(/Straße und Hausnummer/i), 'Musterstraße 12')
   await user.type(screen.getByLabelText(/^PLZ/i), '80331')
   await user.type(screen.getByLabelText(/^Ort/i), 'München')

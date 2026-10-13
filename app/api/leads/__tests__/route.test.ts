@@ -44,11 +44,30 @@ vi.mock('@/lib/supabase/server', () => ({
 
 vi.mock('@/lib/convexa/client', () => ({
   pushLeadToConvexa: vi.fn().mockResolvedValue({ id: 'convexa-001', status: 'created' }),
+  isConvexaSyncEnabled: vi.fn().mockResolvedValue(true),
 }))
 
 vi.mock('@/lib/resend/mailer', () => ({
+  isResendEnabled: vi.fn().mockResolvedValue(true),
   sendLeadConfirmation: vi.fn().mockResolvedValue(true),
   sendSalesNotification: vi.fn().mockResolvedValue(true),
+}))
+
+vi.mock('@/lib/captcha/verify', () => ({
+  verifyCaptchaToken: vi.fn().mockResolvedValue({ ok: true }),
+}))
+
+vi.mock('@/lib/captcha/config', () => ({
+  getCaptchaServerConfig: vi.fn().mockResolvedValue({
+    enabled: false,
+    provider: 'turnstile',
+    siteKey: null,
+    secretKey: null,
+  }),
+}))
+
+vi.mock('@/lib/leads/save-bot-attempt', () => ({
+  saveBotAttempt: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('next/headers', () => ({
@@ -67,15 +86,18 @@ const VALID_PAYLOAD = COMPLETE_LEAD_PAYLOAD
  */
 function makeRequest(
   body: unknown,
-  options: { ip?: string; withCsrf?: boolean } = {},
+  options: { ip?: string; withCsrf?: boolean; cookie?: string } = {},
 ): Request {
-  const { ip = '127.0.0.1', withCsrf = true } = options
+  const { ip = '127.0.0.1', withCsrf = true, cookie } = options
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'x-forwarded-for': ip,
   }
   if (withCsrf) {
     headers['X-Requested-With'] = 'XMLHttpRequest'
+  }
+  if (cookie) {
+    headers.cookie = cookie
   }
   return new Request('http://localhost/api/leads', {
     method: 'POST',
@@ -128,7 +150,8 @@ describe('POST /api/leads', () => {
     expect(body.error.details.some((d: { field: string }) => d.field === 'email')).toBe(true)
   })
 
-  it('Test 3: non-empty website honeypot returns HTTP 200 with { data: { id: "bot" } } and no DB write', async () => {
+  it('Test 3: non-empty website honeypot returns HTTP 200 with { data: { id: "bot" } } and no leads insert', async () => {
+    const { saveBotAttempt } = await import('@/lib/leads/save-bot-attempt')
     const { POST } = await import('../route')
     const payloadWithHoneypot = { ...VALID_PAYLOAD, website: 'http://spam.example.com' }
 
@@ -138,8 +161,11 @@ describe('POST /api/leads', () => {
     const body = await response.json()
     expect(body.data.id).toBe('bot')
 
-    // The insert chain must not have been called
+    // Real leads table must not be written — quarantine goes to lead_bot_attempts instead.
     expect(mockInsertChain.insert).not.toHaveBeenCalled()
+    expect(saveBotAttempt).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: 'honeypot', email: VALID_PAYLOAD.email }),
+    )
   })
 
   it('Test 4: third submission from same IP within 60 min returns HTTP 429 with RATE_LIMIT_EXCEEDED', async () => {
@@ -182,5 +208,167 @@ describe('POST /api/leads', () => {
     expect(
       body.error.details.some((d: { field: string }) => d.field === 'privacyConsent'),
     ).toBe(true)
+  })
+
+  it('Test 7: failed captcha returns HTTP 403 with CAPTCHA_FAILED, quarantines attempt, no leads insert', async () => {
+    const { verifyCaptchaToken } = await import('@/lib/captcha/verify')
+    const { saveBotAttempt } = await import('@/lib/leads/save-bot-attempt')
+    vi.mocked(verifyCaptchaToken).mockResolvedValueOnce({
+      ok: false,
+      code: 'CAPTCHA_FAILED',
+      message: 'Captcha ungültig oder abgelaufen. Bitte erneut bestätigen.',
+    })
+
+    const { POST } = await import('../route')
+    const response = await POST(
+      makeRequest({ ...VALID_PAYLOAD, turnstileToken: 'bad-token' }) as never,
+    )
+
+    expect(response.status).toBe(403)
+    const body = await response.json()
+    expect(body.data).toBeNull()
+    expect(body.error.code).toBe('CAPTCHA_FAILED')
+    expect(mockInsertChain.insert).not.toHaveBeenCalled()
+    expect(saveBotAttempt).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: 'captcha_failed', email: VALID_PAYLOAD.email }),
+    )
+  })
+
+  it('Test 8: too-fast form session cookie when captcha enabled returns HTTP 403 TOO_FAST', async () => {
+    process.env.INTERNAL_SECRET = 'test-route-form-session'
+    const { getCaptchaServerConfig } = await import('@/lib/captcha/config')
+    const { saveBotAttempt } = await import('@/lib/leads/save-bot-attempt')
+    const { createFormSessionToken, FORM_SESSION_COOKIE } = await import(
+      '@/lib/captcha/form-session'
+    )
+    vi.mocked(getCaptchaServerConfig).mockResolvedValueOnce({
+      enabled: true,
+      provider: 'turnstile',
+      siteKey: 'site',
+      secretKey: 'secret',
+    })
+
+    const tooFastToken = createFormSessionToken(Date.now() - 100)
+    const { POST } = await import('../route')
+    const response = await POST(
+      makeRequest(
+        {
+          ...VALID_PAYLOAD,
+          turnstileToken: 'ok-token',
+          formLoadedAt: new Date(Date.now() - 100).toISOString(),
+        },
+        { cookie: `${FORM_SESSION_COOKIE}=${tooFastToken}` },
+      ) as never,
+    )
+
+    expect(response.status).toBe(403)
+    const body = await response.json()
+    expect(body.error.code).toBe('TOO_FAST')
+    expect(mockInsertChain.insert).not.toHaveBeenCalled()
+    expect(saveBotAttempt).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: 'too_fast', email: VALID_PAYLOAD.email }),
+    )
+  })
+
+  it('Test 8b: spam heuristic (VergleichsRechner defaults) quarantines with silent 200', async () => {
+    const { saveBotAttempt } = await import('@/lib/leads/save-bot-attempt')
+    const { POST } = await import('../route')
+    const response = await POST(
+      makeRequest({
+        ...VALID_PAYLOAD,
+        geburtsdatum: '1984-10-03',
+        formPlacement: 'vergleichsrechner',
+        interesse:
+          'Beratungsanfrage für die Sterbegeld24Plus. Geburtsjahr 1961 (65 Jahre), 8.000 €. Bitte um persönlichen Vergleich aller Anbieter.',
+        filterContext: {
+          sterbegeld_summe: 8000,
+          akzeptierte_wartezeit_monate: 0,
+        },
+      }) as never,
+    )
+
+    expect(response.status).toBe(200)
+    const body = await response.json()
+    expect(body.data).toEqual({ id: 'bot' })
+    expect(mockInsertChain.insert).not.toHaveBeenCalled()
+    expect(saveBotAttempt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reason: 'spam_heuristic',
+        email: VALID_PAYLOAD.email,
+        payload: expect.objectContaining({
+          signals: expect.arrayContaining([
+            expect.objectContaining({ code: 'vergleich_defaults_unchanged' }),
+          ]),
+        }),
+      }),
+    )
+  })
+
+  it('Test 8b2: spam heuristic (born after 1990) quarantines with silent 200', async () => {
+    const { saveBotAttempt } = await import('@/lib/leads/save-bot-attempt')
+    const { POST } = await import('../route')
+    const response = await POST(
+      makeRequest({
+        ...VALID_PAYLOAD,
+        geburtsdatum: '1993-02-04',
+        formPlacement: 'vergleichsrechner',
+        interesse: 'Persönliche Beratung bitte',
+        filterContext: { sterbegeld_summe: 15000 },
+      }) as never,
+    )
+
+    expect(response.status).toBe(200)
+    expect(mockInsertChain.insert).not.toHaveBeenCalled()
+    expect(saveBotAttempt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reason: 'spam_heuristic',
+        payload: expect.objectContaining({
+          signals: expect.arrayContaining([
+            expect.objectContaining({ code: 'born_after_1990' }),
+          ]),
+        }),
+      }),
+    )
+  })
+
+  it('Test 8c: missing form session cookie when captcha enabled → FORM_SESSION_INVALID', async () => {
+    const { getCaptchaServerConfig } = await import('@/lib/captcha/config')
+    const { saveBotAttempt } = await import('@/lib/leads/save-bot-attempt')
+    vi.mocked(getCaptchaServerConfig).mockResolvedValueOnce({
+      enabled: true,
+      provider: 'turnstile',
+      siteKey: 'site',
+      secretKey: 'secret',
+    })
+
+    const { POST } = await import('../route')
+    const response = await POST(
+      makeRequest({
+        ...VALID_PAYLOAD,
+        turnstileToken: 'ok-token',
+        formLoadedAt: new Date(Date.now() - 60_000).toISOString(),
+      }) as never,
+    )
+
+    expect(response.status).toBe(403)
+    const body = await response.json()
+    expect(body.error.code).toBe('FORM_SESSION_INVALID')
+    expect(mockInsertChain.insert).not.toHaveBeenCalled()
+    expect(saveBotAttempt).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: 'form_session_invalid' }),
+    )
+  })
+
+  it('Test 9: long hCaptcha token (>2048 chars) passes Zod validation', async () => {
+    const { POST } = await import('../route')
+    const longToken = 'x'.repeat(3000)
+
+    const response = await POST(
+      makeRequest({ ...VALID_PAYLOAD, turnstileToken: longToken }) as never,
+    )
+
+    // Must not be 422 too_big on turnstileToken — hCaptcha tokens are often >2k.
+    expect(response.status).not.toBe(422)
+    expect([200, 201, 403]).toContain(response.status)
   })
 })

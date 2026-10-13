@@ -2,7 +2,14 @@
 export type NavbarLogoMark =
   | { kind: 'hidden' }
   | { kind: 'custom'; url: string; alt: string }
-  | { kind: 'monster'; accentColor: string }
+  | { kind: 'initial'; letter: string; accentColor: string }
+
+/** First letter of the product name for the default circular avatar (e.g. Sterbegeld → S). */
+export function productInitialLetter(name: string): string {
+  const match = name.trim().match(/[A-Za-zÄÖÜäöüß]/)
+  if (!match) return '?'
+  return match[0].toLocaleUpperCase('de-DE')
+}
 
 export function resolveNavbarLogoMark(args: {
   visible: boolean
@@ -20,5 +27,9 @@ export function resolveNavbarLogoMark(args: {
       alt: args.customAlt?.trim() || args.productName,
     }
   }
-  return { kind: 'monster', accentColor: args.accentColor }
+  return {
+    kind: 'initial',
+    letter: productInitialLetter(args.productName),
+    accentColor: args.accentColor,
+  }
 }
